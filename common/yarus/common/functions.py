@@ -1,0 +1,136 @@
+
+import random
+import string
+import time
+
+from yarus.common.repository import Repository
+from yarus.common.channel import Channel
+from yarus.common.user import User
+from yarus.common.link import Link
+from yarus.common.client import Client
+from yarus.common.bind import Bind
+from yarus.common.task import Task
+from yarus.common.exceptions import *
+
+def getnewid():
+	ID = ''.join(random.choices(string.ascii_lowercase + string.digits, k=32))
+	return ID
+
+def connectuser(app, user):
+	if user.name and user.password:
+		info = app.database.get_user_up(user.name, user.password)
+	elif user.token:
+		info = app.database.get_user_t(user.token)
+
+	if not info:
+		return False
+
+	if 'token_expire' in info:
+		if int(time.time()) > info['token_expire']:
+			return False
+
+	return User().load(app.database, info['ID'])
+
+def getrepo(app, repo_id):
+	try:
+		return Repository().load(app.database, repo_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getrepobyname(app, name):
+	try:
+		return Repository().load_by_name(app.database, name)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getchannel(app, channel_id):
+	try:
+		return Channel().load(app.database, channel_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getchannelbyname(app, name):
+	try:
+		return Channel().load_by_name(app.database, name)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getlink(app, channel_id, repo_id):
+	try:
+		return Link().load_link(app.database, channel_id, repo_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getclient(app, client_id):
+	try:
+		return Client().load(app.database, client_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getclientbyip(app, client_ip):
+	try:
+		return Client().load_by_ip(app.database, client_ip)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getbind(app, client_id, repo_id, channel_id):
+	try:
+		return Bind().load_bind(app.database, client_id, repo_id, channel_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getbinds(app, client_id):
+	try:
+		bindedr = app.database.get_binded_repository(client_id)
+		bindedc = app.database.get_binded_channel(client_id)
+		linked = []
+		if bindedc:
+			for item in bindedc:
+				linked.append({'ID': item['ID'], 'name': item['name'], 'type': 'c'})
+		if bindedr:
+			for item in bindedr:
+				linked.append({'ID': item['ID'], 'name': item['name'], 'type': 'r'})
+		return linked
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def gettask(app, task_id):
+	try:
+		return Task().load(app.database, task_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None

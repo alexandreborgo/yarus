@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Repository{% endblock %}
+
+{% block content %}
+<form method="post" action="#">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.name }}{% endif %}" id="name" name="name" placeholder="Repository name">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" placeholder="Description of the repository">{% if data %}{{ data.repository.description }}{% endif %}</textarea>
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="URL">Remote URL of the repository</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.URL }}{% endif %}" id="URL" name="URL" placeholder="http://www.repositories.com/pub/linux/">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="distribution">Distribution</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.repository }}{% endif %}" id="distribution" name="distribution" placeholder="exemple: ubuntu">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="release">Release</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.release }}{% endif %}" id="release" name="release" placeholder="exemple: bionic">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="components">Components</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.components }}{% endif %}" id="components" name="components" placeholder="exemple: os,main,restricted">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="architectures">Architectures</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.architectures }}{% endif %}" id="architectures" name="architectures" placeholder="exemple: amd64,i386">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="type">Repository type</label>
+    <select class="form-control" value="{% if data %}{{ data.repository.type }}{% endif %}" id="type" name="type">
+      <option>APT</option>
+      <option>YUM</option>
+    </select>
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+{% endblock %}

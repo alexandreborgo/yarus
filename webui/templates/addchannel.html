@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Channel{% endblock %}
+
+{% block content %}
+<form method="post" action="#">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.channel.name }}{% endif %}" id="name" name="name" placeholder="channel name">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" placeholder="Description of the channel">{% if data %}{{ data.channel.description }}{% endif %}</textarea>
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+{% endblock %}

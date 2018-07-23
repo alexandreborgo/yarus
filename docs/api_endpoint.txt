@@ -1,0 +1,69 @@
+repositories:
+	
+GET 		/repos/{id} 		get information about the given repository
+GET 		/repos 				list of all repositories
+
+
+POST		/repo			create a repository with the given values
+
+Exemple request :
+/repos
+{
+	"user":{
+		"username": "username",
+		"password": "password"
+	},
+	"new_repo":{
+		"name": "",
+		"id": "",
+		"repo_type": "",
+		"remote_url": "",
+		"description": "",
+		"distribution": "",
+		"components": "",
+		"architectures": ""
+	}
+}
+
+PUT			/repo/{id}			create a repository with the given values
+
+Exemple request :
+/repos/ubuntu_bionic
+{
+	"user":{
+		"username": "username",
+		"password": "password"
+	},
+	"repos":{
+		"name": "",
+		"id": "",
+		"repo_type": "",
+		"remote_url": "",
+		"description": "",
+		"distribution": "",
+		"components": "",
+		"architectures": ""
+	}
+}
+
+users:
+
+GET 		/users/{id} 		get information about the given user
+GET 		/users 				list of all users
+
+POST		/users				create a user with the given values
+
+Exemple request :
+/user
+{
+	"user":{
+		"username": "username",
+		"password": "password"
+	},
+	"new_user":{
+		"name": "",
+		"role_id": "",
+		"mail": "",
+		"password": ""
+	}
+}

@@ -1,0 +1,14 @@
+database:
+  host: localhost
+  user: yarus
+  password: yaruspass
+  database: yarus
+
+proxy:
+  host: 127.0.0.1
+  username: userproxy
+  password: userproxypass
+
+engine:
+  address: 155.6.102.161
+  port: 6821

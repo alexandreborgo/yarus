@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Repositories{% endblock %}
+
+{% block content %}
+
+<div id="options">
+  <a class="btn btn-primary" role="button" href="{{ url_for('addrepository') }}">Add a repository</a>
+</div>
+
+{% if result.data %}
+  <table class="table">
+    <tr style="font-weight: bold;">
+      <td>Name</td>
+      <td>Type</td>
+      <td>Distribution</td>
+      <td>Release</td>
+      <td>Components</td>
+      <td>Architectures</td>
+      <td>Last sync</td>
+      <td>Actions</td>
+    <tr>
+
+    {% for repository in result.data %}
+      <tr>
+        <td>{{ repository.name }}</td>
+        <td>{{ repository.type }}</td>
+        <td>{{ repository.repository }}</td>
+        <td>{{ repository.release }}</td>
+        <td>{{ repository.components }}</td>
+        <td>{{ repository.architectures }}</td>
+        <td>{{ repository.last_sync }}</td>
+        <td>
+          <a href="{{ url_for('seerepository', repo_id=repository.ID) }}"><span class="fas fa-eye actions"></span></a>
+          <a href="{{ url_for('editrepository', repo_id=repository.ID) }}"><span class="fas fa-edit actions"></span></a>
+          <a href="{{ url_for('deleterepository', repo_id=repository.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
+        </td>
+      <tr>
+    {% endfor %}
+  </table>
+{% endif %}
+
+{% endblock %}

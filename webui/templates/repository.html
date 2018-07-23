@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Repository{% endblock %}
+
+{% block content %}
+
+{% if result.data %}
+
+<div id="options">
+    <a class="btn btn-primary" role="button" href="{{ url_for('syncrepository', repo_id=result.data.ID) }}">Sync</a>
+</div>
+
+  <table class="table">
+      <tr>
+        <td style="font-weight: bold;">ID</td>
+        <td>{{ result.data.ID }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Name</td>
+        <td>{{ result.data.name }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Description</td>
+        <td>{{ result.data.description }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">URL</td>
+        <td>{{ result.data.URL }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Distribution</td>
+        <td>{{ result.data.repository }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Release</td>
+        <td>{{ result.data.release }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Components</td>
+        <td>{{ result.data.components }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Architectures</td>
+        <td>{{ result.data.architectures }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Type</td>
+        <td>{{ result.data.type }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Creation date</td>
+        <td>{{ result.data.creation_date }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Last sync</td>
+        <td>{{ result.data.last_sync }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Manager</td>
+        <td>{{ result.data.manager_id }}</td>
+      </tr>
+  </table>
+{% endif %}
+
+{% endblock %}

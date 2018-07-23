@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Channel{% endblock %}
+
+{% block content %}
+
+{% if result.data %}
+
+<div id="options">
+    <a class="btn btn-primary" role="button" href="{{ url_for('checkclient', client_id=result.data.ID) }}">Check</a>
+    <a class="btn btn-primary" role="button" href="{{ url_for('configclient', client_id=result.data.ID) }}">Set repositories/channels</a>
+    <a class="btn btn-primary" role="button" href="{{ url_for('upgradableclient', client_id=result.data.ID) }}">List upgradable packages</a>
+    <a class="btn btn-primary" role="button" href="{{ url_for('updateclient', client_id=result.data.ID) }}">Update</a>
+</div>
+
+  <table class="table">
+      <tr>
+        <td style="font-weight: bold;">ID</td>
+        <td>{{ result.data.ID }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Name</td>
+        <td>{{ result.data.name }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Description</td>
+        <td>{{ result.data.description }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">IP Address</td>
+        <td>{{ result.data.IP }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Type</td>
+        <td>
+          {% if result.data.type == "ubu" %}
+            Ubuntu
+          {% elif result.data.type == "deb" %}
+            Debian
+          {% elif result.data.type == "cen" %}
+            CentOS
+          {% elif result.data.type == "rhl" %}
+            Red Hat Linux Enterprise
+          {% else %}
+            {{ result.data.type }}
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Version</td>
+        <td>{{ result.data.version }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Creation date</td>
+        <td>{{ result.data.creation_date }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Last check</td>
+        <td>{{ result.data.last_check }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Manager</td>
+        <td>{{ result.data.manager_id }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Repositories / Channel binded <span class="badge badge-warning">repository</span> <span class="badge badge-info">channel</span></td>
+        <td>
+          {% for object in result.data.linked %}
+            <a href="{{ url_for('unlinkclient', client_id=result.data.ID, object_id=object.ID, type=object.type) }}">
+              <span class="{% if object.type == 'r' %}badge badge-warning{% else %}badge badge-info{% endif %}">
+                {{ object.name }}
+              </span>
+            </a>
+          {% endfor %}
+        </td>
+      </tr>
+  </table>
+
+  <h3>Link the client to a repository/channel</h3>
+  <form action="{{ url_for('linkclient', client_id=result.data.ID) }}" method="post">
+    <label for="rc">Repository / Channel</label>
+    <select class="form-control" id="rc" name="rc">
+      {% for channel in result.data.channels %}
+        <option value="c:{{ channel.ID }}">{{ channel.name }} (channel)</option>
+      {% endfor %}
+      {% for repository in result.data.repositories %}
+        <option value="r:{{ repository.ID }}">{{ repository.name }} (repository)</option>
+      {% endfor %}
+    <input type="submit" value="Submit" />
+  </form>
+
+{% endif %}
+
+{% endblock %}

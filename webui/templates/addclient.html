@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Client{% endblock %}
+
+{% block content %}
+<form method="post" action="#">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.name }}{% endif %}" id="name" name="name" placeholder="client name">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" placeholder="Description of the client">{% if data %}{{ data.client.description }}{% endif %}</textarea>
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="IP">IP Address</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.IP }}{% endif %}" id="IP" name="IP" placeholder="127.0.0.1">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="distribution">Distribution</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.distribution }}{% endif %}" id="distribution" name="distribution" placeholder="centos">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="version">Version</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.version }}{% endif %}" id="version" name="version" placeholder="7.4">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="type">Client type</label>
+    <select class="form-control" value="{% if data %}{{ data.client.type }}{% endif %}" id="type" name="type">
+      <option>APT</option>
+      <option>YUM</option>
+    </select>
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+{% endblock %}

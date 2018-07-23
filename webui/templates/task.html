@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Task{% endblock %}
+
+{% block content %}
+
+{% if result.data %}
+
+  <table class="table">
+      <tr>
+        <td style="font-weight: bold;">ID</td>
+        <td>{{ result.data.ID }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Action</td>
+        <td>{{ result.data.action }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Object ID</td>
+        <td>{{ result.data.object_id }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Status</td>
+        <td>
+          {% if result.data.status == 'completed' %}
+            <span class="badge badge-success">Completed</span>
+          {% elif result.data.status == 'failed' %}
+            <span class="badge badge-danger">Failed</span>
+          {% elif result.data.status == 'pending' %}
+            <span class="badge badge-secondary">Pending</span>
+          {% elif result.data.status == 'running' %}
+            <span class="badge badge-primary">Running</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Creation date</td>
+        <td>{{ result.data.creation_date }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Start date</td>
+        <td>{{ result.data.start_time }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">End date</td>
+        <td>{{ result.data.end_time }}</td>
+      </tr>
+  </table>
+
+<h3>Logs</h3>
+{% if result.data.logs %}
+<pre>
+{{ result.data.logs }}
+</pre>
+{% else %}
+  No log for this task yet.
+{% endif %}
+
+{% endif %}
+
+{% endblock %}
