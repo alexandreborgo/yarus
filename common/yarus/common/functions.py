@@ -10,6 +10,7 @@ from yarus.common.link import Link
 from yarus.common.client import Client
 from yarus.common.bind import Bind
 from yarus.common.task import Task
+from yarus.common.upgradable import Upgradable
 from yarus.common.exceptions import *
 
 def getnewid():
@@ -118,6 +119,36 @@ def getbinds(app, client_id):
 			for item in bindedr:
 				linked.append({'ID': item['ID'], 'name': item['name'], 'type': 'r'})
 		return linked
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getupgradable(app, client_id, package_id):
+	try:
+		return Upgradable().load_upgradable(app.database, client_id, package_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getupgradablebyinfo(app, client_id, name, release, type):
+	try:
+		return app.database.get_upgradable_by_info(client_id, name, release, type)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getupgradables(app, client_id):
+	try:
+		return app.database.get_upgradables(client_id)
 	except MissingValueException as error:
 		app.log.debug(str(error))
 		return None

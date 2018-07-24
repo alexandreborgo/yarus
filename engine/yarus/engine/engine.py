@@ -583,7 +583,6 @@ def client_add_repository(client_id, repo_id):
         if not repo:
             return jsonify({"status": 103, "message": "No repository found."})
         # check if client can handle repository type
-        print(client.type, repo.type)
         if client.type != repo.type:
             return jsonify({"status": 102, "message": "The repository " + repo.name + " (" + repo.type + ") isn't compatible with the client " + client.name + " (" + client.type + ")"})
         # check if they are already binded
@@ -656,6 +655,58 @@ def client_delete_channel(client_id, channel_id):
         # delete the channel
         bind.delete_bind(app_engine.database)
         return jsonify({"status": 0, "message": "The bind was successfully deleted."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+"""
+    The following functions deal with upgradable packages.
+"""
+@app.route('/api/client/<string:client_id>/upgradable/', methods=['GET'])
+def seeupgradable(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # get the list and return it
+        data = getupgradables(app_engine, client_id)
+        return jsonify({"status": 0, "message": "", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/client/<string:client_id>/upgradable/<string:package_id>/approve', methods=['PUT'])
+def approveupgradable(client_id, package_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        upgradable = getupgradable(app_engine, client_id, package_id)
+        if not upgradable:
+            return jsonify({"status": 103, "message": "No upgradable found."})
+        upgradable.approved = 1
+        upgradable.update(app_engine.database)
+        return jsonify({"status": 0, "message": "Package " + upgradable.name + " approved for update."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/client/<string:client_id>/upgradable/<string:package_id>/disapprove', methods=['PUT'])
+def disapproveupgradable(client_id, package_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        upgradable = getupgradable(app_engine, client_id, package_id)
+        if not upgradable:
+            return jsonify({"status": 103, "message": "No upgradable found."})
+        upgradable.approved = 0
+        upgradable.update(app_engine.database)
+        return jsonify({"status": 0, "message": "Package " + upgradable.name + " disapproved for update."})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:

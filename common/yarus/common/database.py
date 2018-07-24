@@ -129,6 +129,15 @@ class Mysql:
 	def delete_bind(self, client_id, repo_id, channel_id):
 		request = "DELETE FROM yarus_bind WHERE client_id='" + client_id + "' AND repo_id='" + str(repo_id) + "' AND channel_id='" + str(channel_id) + "'"
 		return self.execute(request)
+	def get_upgradable(self, client_id, package_id):
+			request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND ID='" + package_id + "'"
+			return self.get_one(request)
+	def get_upgradable_by_info(self, client_id, name, release, type):
+		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND name='" + name + "' AND `release`='" + release + "' AND type='" + type + "'"
+		return self.get_all(request)
+	def get_upgradables(self, client_id):
+		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' "
+		return self.get_all(request)
 
 	def get_pending_task(self):
 		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC LIMIT 1"

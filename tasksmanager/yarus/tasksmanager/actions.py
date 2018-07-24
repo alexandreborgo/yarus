@@ -7,6 +7,7 @@ import json
 from yarus.common.repository import Repository
 from yarus.common.functions import *
 from yarus.common.exceptions import *
+from yarus.common.upgradable import Upgradable
 from yarus.tasksmanager.ansible import Ansible
 from yarus.tasksmanager.functions import *
 
@@ -217,8 +218,8 @@ def sync_repo(app, repo_id):
 
 					for l in pkg:
 						if "Filename:" in l:
-							pkg_url = re.search('pool\/[\/a-zA-Z0-9-_+*.~]*.deb', l).group()
-							pkg_name = re.search('[a-zA-Z0-9-_+*.~]*.deb', l).group()
+							pkg_url = re.search('pool\/[\/a-zA-Z0-9-_+*.~]*\.deb', l).group()
+							pkg_name = re.search('[a-zA-Z0-9-_+*.~]*\.deb', l).group()
 						elif "SHA256:" in l:
 							signature = l.replace('SHA256: ', '').replace('\n', '')
 
@@ -441,7 +442,12 @@ def upgradable_client(app, client_id):
 	app.log.logtask("Retrieving the list of upgradable packages for client " + client.name + "(" + client.IP + ")")
 
 	ansible = Ansible()
-	playbook = ansible.generate_playbook_upgradable_yum_client(client)
+
+	if client.type == 'YUM':
+		playbook = ansible.generate_playbook_upgradable_yum_client(client)
+	elif client.type == 'APT':
+		playbook = ansible.generate_playbook_upgradable_apt_client(client)
+
 	if  not playbook:
 		return False
 
@@ -449,18 +455,91 @@ def upgradable_client(app, client_id):
 
 	response = ansible.executeplaybook(playbook)
 	if not response:
+		app.log.logtask("No response from Ansible playbook execution.")
 		return False
 
-	print(response)
 	response = json.loads(response)
 	lines = getAnsibleOutput(response, client.IP)
 
-	# two first lines are useless
-	lines.pop(0)
-	lines.pop(0)
+	if len(lines) <= 0:
+		app.log.logtask("No packages need to be updated.")
+		return True
 
-	for line in lines:
-		print(line)
+	if client.type == 'YUM':
+		# first lines is useless
+		lines.pop(0)
+
+		for line in lines:
+			l = line.split(" ")
+			l = list(filter(lambda a: a != '', l))
+			name = l[0].split('.')[0]
+			release = l[1]
+			type = l[2]
+			package_id = getnewid()
+			if getupgradablebyinfo(app, client_id, name, release, type):
+				continue
+			upgradable = Upgradable(name=name, release=release, type=type, ID=package_id, client_id=client_id, approved=0)
+			upgradable.insert(app.database)
+
+	elif client.type == 'APT':
+		# first lines is useless
+		lines.pop(0)
+
+		for line in lines:
+			l = line.split(" ")
+			name, type = l[0].split('/')
+			release = l[1]
+			package_id = getnewid()
+			if getupgradablebyinfo(app, client_id, name, release, type):
+				continue
+			upgradable = Upgradable(name=name, release=release, type=type, ID=package_id, client_id=client_id, approved=0)
+			upgradable.insert(app.database)
+
+	os.remove(playbook)
+	return True
+
+	return False
+
+def approved_update_client(app, client_id):
+	return False
+
+def all_update_client(app, client_id):
+	# get client
+	client = getclient(app, client_id)
+
+	if not client:
+		return False
+
+	app.log.logtask("Updating all package of client " + client.name + " (" + client.IP + ")")
+
+	ansible = Ansible()
+
+	upgradables = getupgradables(app, client_id)
+
+	package_list = []
+
+	for package in upgradables:
+		package_list.append(package['name'])
+
+	if client.type == 'YUM':
+		playbook = ansible.generate_playbook_all_update_yum_client(client, package_list)
+	elif client.type == 'APT':
+		playbook = ansible.generate_playbook_all_update_apt_client(client, package_list)
+
+	if  not playbook:
+		app.log.logtask("Error during the generation of the playbook.")
+		return False
+
+	show_playbook(app, playbook)
+
+	response = ansible.executeplaybook(playbook)
+
+	if not response:
+		app.log.logtask("No response from Ansible playbook execution.")
+		return False
+
+	response = json.loads(response)
+	app.log.logtask(response)
 
 	os.remove(playbook)
 	return True

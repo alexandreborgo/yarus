@@ -81,8 +81,7 @@ def checkingSignature(path, signature):
 	# open the local file
 	try:
 		f = open(path, 'rb')
-	except:
-		print("file not found: " + path)
+	except Exception as error:
 		return False
 
 	# read data and calculate hash

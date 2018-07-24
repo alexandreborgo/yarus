@@ -275,7 +275,7 @@ def clients():
     result = callapi("get", "/clients")
     return render_template('clients.html', result=result, connected='1')
 @app.route('/client/<string:client_id>/see/', methods=['GET'])
-def seeclient(client_id):
+def seeclient(client_id, status=0, message=""):
     if not checksession():
         return redirect(url_for('home'))
 
@@ -286,6 +286,11 @@ def seeclient(client_id):
     result['data']['channels'] = result2['data']
     result2 = callapi("get", "/repositories")
     result['data']['repositories'] = result2['data']
+    result2 = callapi("get", "/client/" + client_id + "/upgradable/")
+    result['data']['upgradables'] = result2['data']
+    if message != "":
+        result['message'] = message
+        result['status'] = status
     return render_template('client.html', result=result, connected='1')
 @app.route('/client/<string:client_id>/link/', methods=['POST'])
 def linkclient(client_id):
@@ -409,13 +414,28 @@ def configclient(client_id):
     result2 = callapi("get", "/repositories")
     result['data']['repositories'] = result2['data']
     return render_template('client.html', result=result, connected='1')
-@app.route('/client/<string:client_id>/update/', methods=['GET'])
-def updateclient(client_id):
+@app.route('/client/<string:client_id>/updateall/', methods=['GET'])
+def allupdateclient(client_id):
     if not checksession():
         return redirect(url_for('home'))
     data = {}
     new_task = {}
-    new_task['action'] = 'update_client'
+    new_task['action'] = 'all_update_client'
+    new_task['object_id'] = client_id
+    data['task'] = new_task
+    result2 = callapi("post", "/task", data)
+    result = callapi("get", "/client/" + client_id)
+    result['message'] = result2['message']
+    result2 = callapi("get", "/repositories")
+    result['data']['repositories'] = result2['data']
+    return render_template('client.html', result=result, connected='1')
+@app.route('/client/<string:client_id>/updateapproved/', methods=['GET'])
+def approvedupdateclient(client_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    new_task = {}
+    new_task['action'] = 'approved_update_client'
     new_task['object_id'] = client_id
     data['task'] = new_task
     result2 = callapi("post", "/task", data)
@@ -433,12 +453,20 @@ def upgradableclient(client_id):
     new_task['action'] = 'upgradable_client'
     new_task['object_id'] = client_id
     data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    result = callapi("get", "/client/" + client_id)
-    result['message'] = result2['message']
-    result2 = callapi("get", "/repositories")
-    result['data']['repositories'] = result2['data']
-    return render_template('client.html', result=result, connected='1')
+    result = callapi("post", "/task", data)
+    return seeclient(client_id, result['status'], result['message'])
+@app.route('/client/<string:client_id>/approve/<string:package_id>', methods=['GET'])
+def approveupgradable(client_id, package_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    result = callapi("put", "/client/" + client_id + "/upgradable/" + package_id + "/approve")
+    return seeclient(client_id, result['status'], result['message'])
+@app.route('/client/<string:client_id>/disapprove/<string:package_id>', methods=['GET'])
+def disapproveupgradable(client_id, package_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    result = callapi("put", "/client/" + client_id + "/upgradable/" + package_id + "/disapprove")
+    return seeclient(client_id, result['status'], result['message'])
 
 """
 The following functions deal with tasks.
