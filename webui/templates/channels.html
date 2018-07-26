@@ -1,35 +1,61 @@
 {% extends "base.html" %}
 
 {% block title %}Channels{% endblock %}
+{% block pagetitle %}<i class="fas fa-cubes"></i> Channels{% endblock %}
 
 {% block content %}
 
-<div id="options">
-  <a class="btn btn-primary" role="button" href="{{ url_for('addchannel') }}">Add a channel</a>
-</div>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    List of channels
+    <div class="pull-right">
+        <div class="btn-group">
+            <a href="{{ url_for('addchannel') }}" type="button" class="btn btn-default btn-xs">
+                Add a channel
+            </a>
+        </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
 {% if result.data %}
-  <table class="table">
-    <tr style="font-weight: bold;">
-      <td>Name</td>
-      <td>Description</td>
-      <td>Last sync</td>
-      <td>Actions</td>
-    <tr>
-
-    {% for channel in result.data %}
+<table id="channel-table">
+    <thead>
       <tr>
-        <td>{{ channel.name }}</td>
-        <td>{{ channel.description }}</td>
-        <td>{{ channel.last_sync }}</td>
-        <td>
-          <a href="{{ url_for('seechannel', channel_id=channel.ID) }}"><span class="fas fa-eye actions"></span></a>
-          <a href="{{ url_for('editchannel', channel_id=channel.ID) }}"><span class="fas fa-edit actions"></span></a>
-          <a href="{{ url_for('deletechannel', channel_id=channel.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
-        </td>
-      <tr>
-    {% endfor %}
+        <th>Name</th>
+        <th>Description</th>
+        <th>Last sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for channel in result.data %}
+        <tr>
+          <td>{{ channel.name }}</td>
+          <td>{{ channel.description }}</td>
+          <td>{{ channel.last_sync }}</td>
+          <td>
+            <a href="{{ url_for('seechannel', channel_id=channel.ID) }}"><span class="fas fa-eye actions"></span></a>
+            <a href="{{ url_for('editchannel', channel_id=channel.ID) }}"><span class="fas fa-edit actions"></span></a>
+            <a href="{{ url_for('deletechannel', channel_id=channel.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
 {% endif %}
+      </div>
+      <!-- /.row (nested) -->
+  </div>
+  <!-- /.panel-body -->
+</div>
+{% endblock %}
 
+{% block pagejs %}
+<script>
+  $(document).ready( function () {
+    $('#channel-table').DataTable();
+  } );
+</script>
 {% endblock %}

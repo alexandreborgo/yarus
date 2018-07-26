@@ -132,6 +132,10 @@ class Mysql:
 	def get_upgradable(self, client_id, package_id):
 			request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND ID='" + package_id + "'"
 			return self.get_one(request)
+	def remove_upgradables(self, client_id):
+		request = "DELETE FROM yarus_upgradable WHERE client_id='" + client_id + "'"
+		return self.execute(request)
+		
 	def get_upgradable_by_info(self, client_id, name, release, type):
 		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND name='" + name + "' AND `release`='" + release + "' AND type='" + type + "'"
 		return self.get_all(request)

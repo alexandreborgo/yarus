@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Groups{% endblock %}
+{% block pagetitle %}<i class="fas fa-server"></i> Groups{% endblock %}
+
+{% block content %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    List of groups
+    <div class="pull-right">
+        <div class="btn-group">
+            <a href="{{ url_for('addgroup') }}" type="button" class="btn btn-default btn-xs">
+                Create a groups
+            </a>
+        </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+{% if result.data %}
+  <table id="groups-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Creation date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for group in result.data %}
+        <tr>
+          <td>{{ group.name }}</td>
+          <td>{{ group.description }}</td>
+          <td>{{ group.creation_date }}</td>
+          <td>
+            <a href="{{ url_for('seegroup', group_id=group.ID) }}"><span class="fas fa-eye actions"></span></a>
+            <a href="{{ url_for('editgroup', group_id=group.ID) }}"><span class="fas fa-edit actions"></span></a>
+            <a href="{{ url_for('deletegroup', group_id=group.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+{% endif %}
+      </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block pagejs %}
+<script>
+  $(document).ready( function () {
+    $('#groups-table').DataTable();
+  } );
+</script>
+{% endblock %}

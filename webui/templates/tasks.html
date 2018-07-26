@@ -1,46 +1,70 @@
 {% extends "base.html" %}
 
 {% block title %}Tasks{% endblock %}
+{% block pagetitle %}<i class="fas fa-tasks"></i> Tasks{% endblock %}
 
 {% block content %}
 
-{% if result.data %}
-  <table class="table">
-    <tr style="font-weight: bold;">
-      <td>Action</td>
-      <td>Object ID</td>
-      <td>Status</td>
-      <td>Creation date</td>
-      <td>Start date</td>
-      <td>End date</td>
-      <td>Actions</td>
-    <tr>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    List of tasks
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
-    {% for task in result.data %}
-      <tr>
-        <td>{{ task.action }}</td>
-        <td>{{ task.object_id }}</td>
-        <td>
-          {% if task.status == 'completed' %}
-            <span class="badge badge-success">Completed</span>
-          {% elif task.status == 'failed' %}
-            <span class="badge badge-danger">Failed</span>
-          {% elif task.status == 'pending' %}
-            <span class="badge badge-secondary">Pending</span>
-          {% elif task.status == 'running' %}
-            <span class="badge badge-primary">Running</span>
-          {% endif %}
-        </td>
-        <td>{{ task.creation_date }}</td>
-        <td>{{ task.start_time }}</td>
-        <td>{{ task.end_time }}</td>
-        <td>
-          <a href="{{ url_for('seetask', task_id=task.ID) }}"><span class="fas fa-eye actions"></span></a>
-          <a href="{{ url_for('deletetask', task_id=task.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
-        </td>
-      <tr>
-    {% endfor %}
+{% if result.data %}
+  <table id="tasks-table">
+    <thead>
+      <tr style="font-weight: bold;">
+        <td>Action</td>
+        <td>Object ID</td>
+        <td>Status</td>
+        <td>Creation date</td>
+        <td>Start date</td>
+        <td>End date</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in result.data %}
+        <tr>
+          <td>{{ task.action }}</td>
+          <td>{{ task.object_id }}</td>
+          <td>
+            {% if task.status == 'completed' %}
+              <span class="label label-success">Completed</span>
+            {% elif task.status == 'failed' %}
+              <span class="label label-danger">Failed</span>
+            {% elif task.status == 'pending' %}
+            <span class="label label-info">Pending</span>
+            {% elif task.status == 'running' %}
+              <span class="label label-primary">Running</span>
+            {% endif %}
+          </td>
+          <td>{{ task.creation_date }}</td>
+          <td>{{ task.start_time }}</td>
+          <td>{{ task.end_time }}</td>
+          <td>
+            <a href="{{ url_for('seetask', task_id=task.ID) }}"><span class="fas fa-eye actions"></span></a>
+            <a href="{{ url_for('deletetask', task_id=task.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
 {% endif %}
+</div>
+<!-- /.row (nested) -->
+</div>
+<!-- /.panel-body -->
+</div>
 
+{% endblock %}
+
+{% block pagejs %}
+<script>
+  $(document).ready( function () {
+    $('#tasks-table').DataTable();
+  } );
+</script>
 {% endblock %}

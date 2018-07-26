@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Channel{% endblock %}
-{% block pagetitle %}<i class="fas fa-cubes"></i> Channel{% endblock %}
+{% block title %}Group{% endblock %}
+{% block pagetitle %}<i class="fas fa-server"></i> Group{% endblock %}
 
 {% block content %}
 
@@ -9,14 +9,7 @@
 
 <div class="panel panel-default">
   <div class="panel-heading">
-    Channel's information
-    <div class="pull-right">
-        <div class="btn-group">
-            <a href="{{ url_for('syncchannel', channel_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-                Sync
-            </a>
-        </div>
-    </div>
+    Group's information
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
@@ -39,19 +32,13 @@
         <td>{{ result.data.creation_date }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Last sync</td>
-        <td>{{ result.data.last_sync }}</td>
-      </tr>
-      <tr>
         <td style="font-weight: bold;">Manager</td>
         <td>{{ result.data.manager_id }}</td>
       </tr>
       <tr>
         <td style="font-weight: bold;">Repositories linked</td>
         <td>
-          {% for link in result.data.links %}
-            <a href="{{ url_for('unlinkchannel', channel_id=result.data.ID, repo_id=link.ID) }}"><span class="label label-warning">{{ link.name }}</span></a>
-          {% endfor %}
+          n
         </td>
       </tr>
   </table>
@@ -61,17 +48,17 @@
 
   <div class="panel panel-default">
     <div class="panel-heading">
-      Add a repository to the channel
+      Add a system to the group
     </div>
     <div class="panel-body">
       <div class="row" style="padding:15px;">
 
-        <form action="{{ url_for('linkchannel', channel_id=result.data.ID) }}" method="post">
+        <form action="{{ url_for('linkgroup', group_id=result.data.ID) }}" method="post">
           <div class="form-group">
-            <label for="repository">Repository</label>
-            <select class="form-control" id="repository" name="repository">
-              {% for repository in result.data.repositories %}
-                <option value="{{ repository.ID }}">{{ repository.name }}</option>
+            <label for="client">System</label>
+            <select class="form-control" id="client" name="client">
+              {% for client in result.data.clients %}
+                <option value="{{ client.ID }}">{{ client.name }}</option>
               {% endfor %}
             </select>
           </div>

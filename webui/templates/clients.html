@@ -1,47 +1,63 @@
 {% extends "base.html" %}
 
 {% block title %}Client{% endblock %}
+{% block pagetitle %}<i class="fas fa-server"></i> Systems{% endblock %}
 
 {% block content %}
 
-<div id="options">
-  <a class="btn btn-primary" role="button" href="{{ url_for('addclient') }}">Add a client</a>
-</div>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    List of systems
+    <div class="pull-right">
+        <div class="btn-group">
+            <a href="{{ url_for('addclient') }}" type="button" class="btn btn-default btn-xs">
+                Add a system
+            </a>
+        </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
 {% if result.data %}
-  <table class="table">
-    <tr style="font-weight: bold;">
-      <td>Name</td>
-      <td>Description</td>
-      <td>Distribution</td>
-      <td>Release</td>
-      <td>Actions</td>
-    <tr>
-
-    {% for client in result.data %}
+  <table id="clients-table">
+    <thead>
       <tr>
-        <td>{{ client.name }}</td>
-        <td>{{ client.description }}</td>
-        <td>
-          {% if client.type == "ubu" %}
-            Ubuntu
-          {% elif client.type == "deb" %}
-            Debian
-          {% elif client.type == "cen" %}
-            CentOS
-          {% elif client.type == "rhl" %}
-            Red Hat Linux Enterprise
-          {% endif %}
-        </td>
-        <td>{{ client.version }}</td>
-        <td>
-          <a href="{{ url_for('seeclient', client_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
-          <a href="{{ url_for('editclient', client_id=client.ID) }}"><span class="fas fa-edit actions"></span></a>
-          <a href="{{ url_for('deleteclient', client_id=client.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
-        </td>
-      <tr>
-    {% endfor %}
+        <th>Name</th>
+        <th>Description</th>
+        <th>Distribution</th>
+        <th>Release</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for client in result.data %}
+        <tr>
+          <td>{{ client.name }}</td>
+          <td>{{ client.description }}</td>
+          <td>{{ client.distribution }}</td>
+          <td>{{ client.version }}</td>
+          <td>
+            <a href="{{ url_for('seeclient', client_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
+            <a href="{{ url_for('editclient', client_id=client.ID) }}"><span class="fas fa-edit actions"></span></a>
+            <a href="{{ url_for('deleteclient', client_id=client.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
   </table>
 {% endif %}
+      </div>
+  </div>
+</div>
 
+
+{% endblock %}
+
+{% block pagejs %}
+<script>
+  $(document).ready( function () {
+    $('#clients-table').DataTable();
+  } );
+</script>
 {% endblock %}

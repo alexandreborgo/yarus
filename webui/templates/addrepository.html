@@ -1,8 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Repository{% endblock %}
+{% block pagetitle %}<i class="fas fa-cubes"></i> Repository{% endblock %}
+
 
 {% block content %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Add a repository
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
 <form method="post" action="#">
   <div class="form-group">
     <label for="name">Name</label>
@@ -65,5 +75,11 @@
   </div>
   <button type="submit" class="btn btn-primary">Submit</button>
 </form>
+
+      </div>
+      <!-- /.row (nested) -->
+  </div>
+  <!-- /.panel-body -->
+</div>
 
 {% endblock %}

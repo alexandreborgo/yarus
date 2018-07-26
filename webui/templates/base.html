@@ -1,54 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css" integrity="sha384-Smlep5jCw/wG7hdkwQ/Z5nLIefveQRIY9nfy6xoR1uRYBtpZgI6339F5dgvm/e9B" crossorigin="anonymous">
-    <title>YARUS - {% block title %}{% endblock %}</title>
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">YARUS</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
-        <a class="nav-item nav-link active" href="{{ url_for('home') }}">Index</a>
-        {% if connected %}
-        <a class="nav-item nav-link" href="{{ url_for('repositories') }}">Repositories</a>
-        <a class="nav-item nav-link" href="{{ url_for('channels') }}">Channels</a>
-        <a class="nav-item nav-link" href="{{ url_for('clients') }}">Clients</a>
-        <a class="nav-item nav-link" href="">Groups</a>
-        <a class="nav-item nav-link" href="{{ url_for('tasks') }}">Tasks</a>
-        <a class="nav-item nav-link" href="">Scheduler</a>
-        <a class="nav-item nav-link" href="{{ url_for('logout') }}">Log out</a>
-        {% endif %}
-      </div>
-    </div>
-  </nav>
-  <div class="container-fluid">
-    {% if result %}
-      {% if result.message %}
-        {% if  result.status == -1 %}
-          <div class="alert alert-warning" role="alert">
-            {{ result.message }}
-          </div>
-        {% elif result.status != 0 %}
-        <div class="alert alert-danger" role="alert">
-          {{ result.message }}
-        </div>
-        {% else %}
-        <div class="alert alert-success" role="alert">
-          {{ result.message }}
-        </div>
-        {% endif %}
-      {% endif %}
-    {% endif %}
 
-    {% block content %}{% endblock %}
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em" crossorigin="anonymous"></script>
-  </div>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>YARUS - {% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+    
+    <!-- MetisMenu CSS -->
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/metisMenu/2.7.9/metisMenu.min.css" crossorigin="anonymous">
+
+    <!-- DataTable CSS -->
+    <link rel="stylesheet" href="http://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" crossorigin="anonymous">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='sb-admin-2.css') }}" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" crossorigin="anonymous">
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">YARUS</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <ul class="nav navbar-top-links navbar-right">
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    {% if connected %}
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                        </li>
+                        <li><a href="#"><i class="fas fa-cog"></i> Settings</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                    <!-- /.dropdown-user -->
+                </li>
+                <!-- /.dropdown -->
+            </ul>
+            <!-- /.navbar-top-links -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+                      {% if connected %}
+                        <li>
+                            <a href="{{ url_for('home') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fas fa-cubes"></i> Repositories<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="{{ url_for('repositories') }}">Repositories</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('channels') }}">Channels</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fas fa-server"></i> Systems<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="{{ url_for('clients') }}">Systems</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('groups') }}">Groups</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('tasks') }}"><i class="fas fa-tasks"></i> Tasks</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('home') }}"><i class="fas fa-users"></i> Users</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('home') }}"><i class="fas fa-users"></i> Users</a>
+                        </li>
+                      {% endif %}
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">{% block pagetitle %}{% endblock %}</h1>
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+				<div class="row">
+					<div class="col-lg-12">
+							<div class="row" style="padding:15px;">
+                  {% if result %}
+                    {% if result.message %}
+                      {% if  result.status == -1 %}
+                        <div class="alert alert-warning" role="alert">
+                          {{ result.message }}
+                        </div>
+                      {% elif result.status != 0 %}
+                      <div class="alert alert-danger" role="alert">
+                        {{ result.message }}
+                      </div>
+                      {% else %}
+                      <div class="alert alert-success" role="alert">
+                        {{ result.message }}
+                      </div>
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+							</div>
+							<!-- /.row (nested) -->
+
+            {% block content %}{% endblock %}
+						<!-- /.panel -->
+					</div>
+					<!-- /.col-lg-12 -->
+				</div>
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/metisMenu/2.7.9/metisMenu.min.js"></script>
+
+    <!-- DataTable JavaScript -->
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="{{ url_for('static', filename='sb-admin-2.js') }}"></script>
+
+    {% block pagejs %}{% endblock %}
+
 </body>
+
 </html>

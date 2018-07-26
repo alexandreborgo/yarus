@@ -473,6 +473,7 @@ def create_client():
             client.setDescription(data['client']['description'])
             client.setVersion(data['client']['version'])
             client.setType(data['client']['type'])
+            client.setDistribution(data['client']['distribution'])
             client.setManagerID(user.ID)
             client.setCreationDate()
         except MissingValueException as error:
@@ -515,6 +516,7 @@ def update_client(client_id):
             client.setName(data['client']['name'])
             client.setDescription(data['client']['description'])
             client.setVersion(data['client']['version'])
+            client.setDistribution(data['client']['distribution'])
             client.setType(data['client']['type'])
         except MissingValueException as error:
             app_engine.log.debug(str(error))
@@ -550,6 +552,128 @@ def delete_client(client_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
+
+"""
+The following functions deal with group of clients.
+"""
+@app.route('/api/groups', methods=['GET'])
+def list_groups():
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # get the list and return it
+        data = app_engine.database.get_all_object('yarus_group')
+        return jsonify({"status": 0, "message": "", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/group/<string:group_id>', methods=['GET'])
+def see_group(group_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # get the group and return the data
+        group = getgroup(app_engine, group_id)
+        if not group:
+            return jsonify({"status": 103, "message": "No group found."})
+        data = group.todata()
+        return jsonify({"status": 0, "message": "", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/group', methods=['POST'])
+def create_group():
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+
+        # create a new repository
+        client = Client()
+        # extract information from received data about the new repository
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        # validate new data
+        try:
+            client.setID(getnewid())
+            client.setIP(data['client']['IP'])
+            client.setName(data['client']['name'])
+            client.setDescription(data['client']['description'])
+            client.setVersion(data['client']['version'])
+            client.setType(data['client']['type'])
+            client.setDistribution(data['client']['distribution'])
+            client.setManagerID(user.ID)
+            client.setCreationDate()
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+        # check if the repository already exist in the database
+        if getclientbyip(app_engine, client.IP):
+            return jsonify({"status": 102, "message": "Client with the IP " + client.IP + " already exists in the database."})
+        # push the new repository to the database
+        client.insert(app_engine.database)
+        return jsonify({"status": 0, "message": "The client " + client.name + " was successfully created."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/group/<string:group_id>', methods=['PUT'])
+def update_group(group_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # check if the repository exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+        # extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 1, "message": "The content must be JSON format."})
+        # validate datarepository
+        try:
+            client.setIP(data['client']['IP'])
+            client.setName(data['client']['name'])
+            client.setDescription(data['client']['description'])
+            client.setVersion(data['client']['version'])
+            client.setDistribution(data['client']['distribution'])
+            client.setType(data['client']['type'])
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+        # update the database
+        client.update(app_engine.database)
+        return jsonify({"status": 0, "message": "The client was successfully updated."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/group/<string:group_id>', methods=['DELETE'])
+def delete_group(group_id):
+    pass
 
 """
     The following functions deal with links between client and channels/repositories.

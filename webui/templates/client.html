@@ -1,18 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Channel{% endblock %}
+{% block title %}System{% endblock %}
+{% block pagetitle %}<i class="fas fa-server"></i> System{% endblock %}
 
 {% block content %}
 
 {% if result.data %}
 
-<div id="options">
-    <a class="btn btn-primary" role="button" href="{{ url_for('checkclient', client_id=result.data.ID) }}">Check</a>
-    <a class="btn btn-primary" role="button" href="{{ url_for('configclient', client_id=result.data.ID) }}">Set repositories/channels</a>
-    <a class="btn btn-primary" role="button" href="{{ url_for('upgradableclient', client_id=result.data.ID) }}">List upgradable packages</a>
-    <a class="btn btn-primary" role="button" href="{{ url_for('approvedupdateclient', client_id=result.data.ID) }}">Update APPROVED</a>
-    <a class="btn btn-primary" role="button" href="{{ url_for('allupdateclient', client_id=result.data.ID) }}">Update ALL</a>
-</div>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    System's information
+    <div class="pull-right">
+      <div class="btn-group">
+          <a href="{{ url_for('checkclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              Check
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('configclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              Configure
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('upgradableclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              List upgradable packages
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('approvedupdateclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Update approved
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('allupdateclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Update all
+          </a>
+      </div>
+
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
   <table class="table">
       <tr>
@@ -64,11 +92,11 @@
         <td>{{ result.data.manager_id }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Repositories / Channel binded <span class="badge badge-warning">repository</span> <span class="badge badge-info">channel</span></td>
+        <td style="font-weight: bold;">Repositories / Channel binded <span class="label label-warning">repository</span> <span class="label label-info">channel</span></td>
         <td>
           {% for object in result.data.linked %}
             <a href="{{ url_for('unlinkclient', client_id=result.data.ID, object_id=object.ID, type=object.type) }}">
-              <span class="{% if object.type == 'r' %}badge badge-warning{% else %}badge badge-info{% endif %}">
+              <span class="{% if object.type == 'r' %}label label-warning{% else %}label label-info{% endif %}">
                 {{ object.name }}
               </span>
             </a>
@@ -76,47 +104,76 @@
         </td>
       </tr>
   </table>
+</div>
+</div>
+</div>
 
-  <h3>Link the client to a repository/channel</h3>
-  <form action="{{ url_for('linkclient', client_id=result.data.ID) }}" method="post">
-    <label for="rc">Repository / Channel</label>
-    <select class="form-control" id="rc" name="rc">
-      {% for channel in result.data.channels %}
-        <option value="c:{{ channel.ID }}">{{ channel.name }} (channel)</option>
-      {% endfor %}
-      {% for repository in result.data.repositories %}
-        <option value="r:{{ repository.ID }}">{{ repository.name }} (repository)</option>
-      {% endfor %}
-    <input type="submit" value="Submit" />
-  </form><br /><br />
+<div class="panel panel-default">
+  <div class="panel-heading">Link repositories and channels</div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+      <form action="{{ url_for('linkclient', client_id=result.data.ID) }}" method="post">
+        <div class="form-group">
+          <label for="rc">Repository / Channel</label>
+          <select class="form-control" id="rc" name="rc">
+            {% for channel in result.data.channels %}
+              <option value="c:{{ channel.ID }}">{{ channel.name }} (channel)</option>
+            {% endfor %}
+            {% for repository in result.data.repositories %}
+              <option value="r:{{ repository.ID }}">{{ repository.name }} (repository)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Submit</button>
+      </form>
+    </div>
+  </div>
+</div>
 
-  <h3>List of upgradable packages:</h3>
-  {% if result.data.upgradables %}
-    <table class="table">
-      <tr style="font-weight: bold;">
-        <td>Name</td>
-        <td>Release</td>
-        <td>From</td>
-        <td>Approved</td>
-      <tr>
-
-      {% for package in result.data.upgradables %}
-        <tr>
-          <td>{{ package.name }}</td>
-          <td>{{ package.release }}</td>
-          <td>{{ package.type }}</td>
-          <td>
-            {% if package.approved == 0 %}
-              <a href="{{ url_for('approveupgradable', client_id=result.data.ID, package_id=package.ID) }}"><span class="badge badge-danger">No</span></a>
-            {% elif package.approved == 1 %}
-              <a href="{{ url_for('disapproveupgradable', client_id=result.data.ID, package_id=package.ID) }}"><span class="badge badge-success">Yes</span></a>
-            {% endif %}
-          </td>
-        <tr>
-      {% endfor %}
-    </table>
-  {% endif %}
+<div class="panel panel-default">
+  <div class="panel-heading">List of upgradable packages</div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+      {% if result.data.upgradables %}
+        <table id="upgradables-table">
+          <thead>
+            <tr>
+              <td>Name</td>
+              <td>Release</td>
+              <td>From</td>
+              <td>Approved</td>
+            </tr>
+          </thead>
+          <tbody>
+            {% for package in result.data.upgradables %}
+              <tr>
+                <td>{{ package.name }}</td>
+                <td>{{ package.release }}</td>
+                <td>{{ package.type }}</td>
+                <td>
+                  {% if package.approved == 0 %}
+                    <a href="{{ url_for('approveupgradable', client_id=result.data.ID, package_id=package.ID) }}"><span class="label label-danger">No</span></a>
+                  {% elif package.approved == 1 %}
+                    <a href="{{ url_for('disapproveupgradable', client_id=result.data.ID, package_id=package.ID) }}"><span class="label label-success">Yes</span></a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </div>
+</div>
 
 {% endif %}
 
+{% endblock %}
+
+{% block pagejs %}
+<script>
+  $(document).ready( function () {
+    $('#upgradables-table').DataTable();
+  } );
+</script>
 {% endblock %}

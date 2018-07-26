@@ -88,5 +88,5 @@ class YarusTasksManager():
 				self.app.database.close()
 			else:
 				print("No task to execute.")
-			print("Waiting for " + str(WAIT) + " seconds before next check.")
-			time.sleep(WAIT)
+				print("Waiting for " + str(WAIT) + " seconds before next check.")
+				time.sleep(WAIT)

@@ -1,12 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Client{% endblock %}
+{% block title %}System{% endblock %}
+{% block pagetitle %}<i class="fas fa-server"></i> System{% endblock %}
+
 
 {% block content %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Add a system
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
 <form method="post" action="#">
   <div class="form-group">
     <label for="name">Name</label>
-    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.name }}{% endif %}" id="name" name="name" placeholder="client name">
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.name }}{% endif %}" id="name" name="name" placeholder="system name">
     <div class="invalid-feedback">
         Must not be empty.
     </div>
@@ -40,7 +50,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="type">Client type</label>
+    <label for="type">System type</label>
     <select class="form-control" value="{% if data %}{{ data.client.type }}{% endif %}" id="type" name="type">
       <option>APT</option>
       <option>YUM</option>
@@ -51,5 +61,11 @@
   </div>
   <button type="submit" class="btn btn-primary">Create</button>
 </form>
+
+      </div>
+      <!-- /.row (nested) -->
+  </div>
+  <!-- /.panel-body -->
+</div>
 
 {% endblock %}

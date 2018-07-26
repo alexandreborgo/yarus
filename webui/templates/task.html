@@ -1,10 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Task{% endblock %}
+{% block pagetitle %}<i class="fas fa-tasks"></i> Task{% endblock %}
 
 {% block content %}
 
 {% if result.data %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Task's information
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
   <table class="table">
       <tr>
@@ -23,13 +31,13 @@
         <td style="font-weight: bold;">Status</td>
         <td>
           {% if result.data.status == 'completed' %}
-            <span class="badge badge-success">Completed</span>
+            <span class="label label-success">Completed</span>
           {% elif result.data.status == 'failed' %}
-            <span class="badge badge-danger">Failed</span>
+            <span class="label label-danger">Failed</span>
           {% elif result.data.status == 'pending' %}
-            <span class="badge badge-secondary">Pending</span>
+            <span class="label label-info">Pending</span>
           {% elif result.data.status == 'running' %}
-            <span class="badge badge-primary">Running</span>
+            <span class="label label-primary">Running</span>
           {% endif %}
         </td>
       </tr>
@@ -46,15 +54,26 @@
         <td>{{ result.data.end_time }}</td>
       </tr>
   </table>
+</div>
+</div>
+</div>
 
-<h3>Logs</h3>
-{% if result.data.logs %}
-<pre>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Task's logs
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+      {% if result.data.logs %}
+      <pre>
 {{ result.data.logs }}
-</pre>
-{% else %}
-  No log for this task yet.
-{% endif %}
+      </pre>
+      {% else %}
+        No log for this task yet.
+      {% endif %}
+    </div>
+  </div>
+</div>
 
 {% endif %}
 

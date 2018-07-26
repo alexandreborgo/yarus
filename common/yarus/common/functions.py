@@ -10,6 +10,7 @@ from yarus.common.link import Link
 from yarus.common.client import Client
 from yarus.common.bind import Bind
 from yarus.common.task import Task
+from yarus.common.group import Group
 from yarus.common.upgradable import Upgradable
 from yarus.common.exceptions import *
 
@@ -98,6 +99,16 @@ def getclientbyip(app, client_ip):
 		app.log.debug(str(error))
 		return None
 
+def getgroup(app, group_id):
+	try:
+		return Group().load(app.database, group_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
 def getbind(app, client_id, repo_id, channel_id):
 	try:
 		return Bind().load_bind(app.database, client_id, repo_id, channel_id)
@@ -129,6 +140,16 @@ def getbinds(app, client_id):
 def getupgradable(app, client_id, package_id):
 	try:
 		return Upgradable().load_upgradable(app.database, client_id, package_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def removeupgradables(app, client_id):
+	try:
+		app.database.remove_upgradables(client_id)
 	except MissingValueException as error:
 		app.log.debug(str(error))
 		return None

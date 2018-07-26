@@ -1,14 +1,25 @@
 {% extends "base.html" %}
 
 {% block title %}Repository{% endblock %}
+{% block pagetitle %}<i class="fas fa-cubes"></i> Repository{% endblock %}
 
 {% block content %}
 
-{% if result.data %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Repository's information
+    <div class="pull-right">
+        <div class="btn-group">
+            <a href="{{ url_for('syncrepository', repo_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+                Sync
+            </a>
+        </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
-<div id="options">
-    <a class="btn btn-primary" role="button" href="{{ url_for('syncrepository', repo_id=result.data.ID) }}">Sync</a>
-</div>
+{% if result.data %}
 
   <table class="table">
       <tr>
@@ -61,5 +72,9 @@
       </tr>
   </table>
 {% endif %}
+
+      </div>
+  </div>
+</div>
 
 {% endblock %}

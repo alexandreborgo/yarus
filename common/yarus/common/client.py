@@ -12,6 +12,7 @@ class Client(YarusObject):
 		self.version = ""
 		self.name = ""
 		self.description = ""
+		self.distribution = ""
 		self.manager_id = 0
 		self.last_check = 0
 		self.creation_date = 0
@@ -57,3 +58,13 @@ class Client(YarusObject):
 				raise(InvalidValueException("The given repository type (" + rtype + ") is invalid."))
 		else:
 			raise(MissingValueException("The repository type is missing."))
+
+	def setDistribution(self, distribution):
+		if distribution:
+			if re.match("^[a-zA-z0-9\-\_\.]*$", distribution):
+				self.distribution = distribution
+				return True
+			else:
+				raise(InvalidValueException("The given distribution (" + distribution + ") is invalid."))
+		else:
+			raise(MissingValueException("The distribution is missing."))
