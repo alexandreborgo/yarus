@@ -12,6 +12,7 @@ from yarus.common.bind import Bind
 from yarus.common.task import Task
 from yarus.common.group import Group
 from yarus.common.upgradable import Upgradable
+from yarus.common.grouped import Grouped
 from yarus.common.exceptions import *
 
 def getnewid():
@@ -108,6 +109,24 @@ def getgroup(app, group_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+def getgrouped(app, group_id, client_id):
+	try:
+		return Grouped().load_grouped(app.database, client_id, group_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getgroupbyname(app, name):
+	try:
+		return Group().load_by_name(app.database, name)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
 
 def getbind(app, client_id, repo_id, channel_id):
 	try:
@@ -170,6 +189,16 @@ def getupgradablebyinfo(app, client_id, name, release, type):
 def getupgradables(app, client_id):
 	try:
 		return app.database.get_upgradables(client_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getapprovedupgradables(app, client_id):
+	try:
+		return app.database.get_approved_upgradables(client_id)
 	except MissingValueException as error:
 		app.log.debug(str(error))
 		return None

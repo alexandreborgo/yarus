@@ -11,14 +11,14 @@ class LogSystem:
 			print("DEBUG: " + message)
 
 	def error(self, errmsg):
-		print("ERROR: " + errmsg)
+		print("ERROR: " + str(errmsg))
 		try:
 			file = open(self.log_file, 'a')
 			file.write(str(datetime.datetime.now()) + ": " + errmsg + "\n")
 			file.close()
 		except IOError as error:
 			print("Unable to write the error into the log file: " + self.log_file)
-			print("ERROR: " + error)
+			print("ERROR: " + str(error))
 			return False
 
 	def settasklogfile(self, task):

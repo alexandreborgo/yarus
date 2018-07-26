@@ -60,9 +60,9 @@ def home():
                         session['token'] = result['data']['token']
                         print(session['token'])
             else:
-                return render_template('home.html', invalid='1')
+                return render_template('login.html', invalid='1')
         else:
-            return render_template('home.html', invalid='1')
+            return render_template('login.html', invalid='1')
 
     if not checksession():
         return render_template('login.html')
@@ -327,7 +327,6 @@ def seeclient(client_id, status=0, message=""):
 def linkclient(client_id):
     if not checksession():
         return redirect(url_for('home'))
-    result = callapi("get", "/client/" + client_id)
     if request.method == 'POST':
         if request.form['rc']:
             type, ID = request.form['rc'].split(':')
@@ -342,7 +341,6 @@ def linkclient(client_id):
 def unlinkclient(client_id, object_id, type):
     if not checksession():
         return redirect(url_for('home'))
-    result = callapi("get", "/client/" + client_id)
     if type == 'r':
         result2 = callapi("delete", "/client/" + client_id + "/repository/" + object_id)
     elif type == 'c':
@@ -482,14 +480,15 @@ def groups():
         return redirect(url_for('home'))
     result = callapi("get", "/groups")
     return render_template('groups.html', result=result, connected='1')
+
 @app.route('/group/<string:group_id>/see/', methods=['GET'])
 def seegroup(group_id, status=0, message=""):
     if not checksession():
         return redirect(url_for('home'))
 
     result = callapi("get", "/group/" + group_id)
-    # result2 = callapi("get", "/group/" + group_id + "/repositories")
-    # result['data']['links'] = result2['data']
+    result2 = callapi("get", "/group/" + group_id + "/clients")
+    result['data']['links'] = result2['data']
     result2 = callapi("get", "/clients")
     result['data']['clients'] = result2['data']
 
@@ -500,27 +499,63 @@ def seegroup(group_id, status=0, message=""):
     return render_template('group.html', result=result, connected='1')
 @app.route('/group/add/', methods=['GET', 'POST'])
 def addgroup():
-    pass
+    if not checksession():
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        data = {}
+        data['group'] = {}
+        data['group']['name'] = request.form['name']
+        data['group']['description'] = request.form['description']
+        result = callapi("post", "/group", data)
+        return render_template('addgroup.html', result=result, connected='1', data=data)
+
+    return render_template('addgroup.html', connected='1')
+
 @app.route('/group/<string:group_id>/edit/', methods=['GET', 'POST'])
 def editgroup(group_id):
-    pass
+    if not checksession():
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        data = {}
+        data['group'] = {}
+        data['group']['name'] = request.form['name']
+        data['group']['description'] = request.form['description']
+        result = callapi("put", "/group/" + group_id, data)
+        return render_template('addgroup.html', result=result, connected='1', data=data)
+
+    result = callapi("get", "/group/" + group_id)
+    data = {}
+    data['group'] = result['data']
+    return render_template('addgroup.html', data=data, connected='1')
+
 @app.route('/group/<string:group_id>/delete/', methods=['GET'])
 def deletegroup(group_id):
-    pass
+    if not checksession():
+        return redirect(url_for('home'))
+    result2 = callapi("delete", "/group/" + group_id)
+    result = callapi("get", "/groups")
+    result['message'] = result2['message']
+    return render_template('groups.html', result=result, connected='1')
+
 @app.route('/group/<string:group_id>/link/', methods=['POST'])
 def linkgroup(group_id):
     if not checksession():
         return redirect(url_for('home'))
-        
-        if request.form['repository']:
-            result2 = callapi("post", "/group/" + group_id + "/client/" + request.form['client'])
-            result['message'] = result2['message']
-            result['status'] = result2['status']
+    if request.method == 'POST':
+        if request.form['client']:
+            result2 = callapi("post", "/group/" + group_id + "/link/" + request.form['client'])
+            return seegroup(group_id, result2['status'], result2['message'])    
+    return seegroup(group_id, "1", "Unknown error")
 
-            return seegroup(group_id, result['status'], result['message'])
+@app.route('/group/<string:group_id>/unlink/<string:client_id>', methods=['GET'])
+def unlinkgroup(group_id, client_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    result2 = callapi("delete", "/group/" + group_id + "/unlink/" + client_id)    
+    return seegroup(group_id, result2['status'], result2['message'])
 
-        else:
-            return seegroup(group_id)
 """
 The following functions deal with tasks.
 """

@@ -5,9 +5,9 @@ from yarus.common.exceptions import *
 
 class Grouped(YarusObject):
 
-	def __init__(self):
-		self.client_id = ""
-		self.group_id = ""
+	def __init__(self, client_id="", group_id=""):
+		self.client_id = client_id
+		self.group_id = group_id
 
 	def load_grouped(self, database, client_id, group_id):
 		object_tmp = database.get_grouped(client_id, group_id)

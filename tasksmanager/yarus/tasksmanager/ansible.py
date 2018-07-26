@@ -91,7 +91,7 @@ class Ansible:
 		playbook.close()
 		return '/var/lib/yarus/playbooks/' + client.ID + '.yml'
 
-	def generate_playbook_all_update_yum_client(self, client, package_list):
+	def generate_playbook_update_client(self, client, package_list):
 		playbook = open('/var/lib/yarus/playbooks/' + client.ID + '.yml', "w")
 		playbook.write("---\n")
 		playbook.write("- hosts: " + client.IP + "\n")
@@ -99,31 +99,20 @@ class Ansible:
 		playbook.write("  gather_facts: no\n")
 		playbook.write("  tasks:\n")
 		playbook.write("  - name: upgrade\n")
-		playbook.write("    yum:\n")
+		if client.type == 'YUM':
+			playbook.write("    yum:\n")
+		elif client.type == 'APT':
+			playbook.write("    apt:\n")
 		playbook.write("     name: \"{{ item }}\"\n")
 		playbook.write("     state: latest\n")
 		playbook.write("    with_items:  \n")
-		playbook.write("  - name: upgradable\n")
-		playbook.write("    command: yum list updates -q\n")
 		for package in package_list:
 			playbook.write("     - " + package + "  \n")
-		playbook.close()
-		return '/var/lib/yarus/playbooks/' + client.ID + '.yml'
-	def generate_playbook_all_update_apt_client(self, client, package_list):
-		playbook = open('/var/lib/yarus/playbooks/' + client.ID + '.yml', "w")
-		playbook.write("---\n")
-		playbook.write("- hosts: " + client.IP + "\n")
-		playbook.write("  remote_user: root\n")
-		playbook.write("  gather_facts: no\n")
-		playbook.write("  tasks:\n")
-		playbook.write("  - name: upgrade\n")
-		playbook.write("    apt:\n")
-		playbook.write("     name: \"{{ item }}\"\n")
-		playbook.write("     state: latest\n")
-		playbook.write("    with_items:  \n")
 		playbook.write("  - name: upgradable\n")
-		playbook.write("    command: apt list  --upgradable\n")
-		for package in package_list:
-			playbook.write("     - " + package + "  \n")
+		if client.type == 'YUM':
+			playbook.write("    command: yum list updates -q\n")
+		elif client.type == 'APT':
+			playbook.write("    command: apt list  --upgradable\n")
 		playbook.close()
 		return '/var/lib/yarus/playbooks/' + client.ID + '.yml'
+	

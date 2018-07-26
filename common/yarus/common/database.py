@@ -142,7 +142,20 @@ class Mysql:
 	def get_upgradables(self, client_id):
 		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' "
 		return self.get_all(request)
+	def get_approved_upgradables(self, client_id):
+		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
+		return self.get_all(request)
 
 	def get_pending_task(self):
 		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC LIMIT 1"
 		return self.get_one(request)
+
+	def get_grouped(self, client_id, group_id):
+		request = "SELECT * FROM yarus_grouped WHERE client_id='" + client_id + "' AND group_id='" + group_id + "'"
+		return self.get_one(request)
+	def get_groupeds(self, group_id):
+		request = "SELECT * FROM yarus_grouped INNER JOIN yarus_client ON yarus_grouped.client_id=yarus_client.ID WHERE group_id='" + group_id + "'"
+		return self.get_all(request)
+	def delete_grouped(self, client_id, group_id):
+		request = "DELETE FROM yarus_grouped WHERE client_id='" + client_id + "' AND group_id='" + group_id + "'"
+		return self.execute(request)

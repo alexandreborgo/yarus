@@ -598,7 +598,7 @@ def approved_update_client(app, client_id):
 	ansible = Ansible()
 
 	# get list of approved packages
-	upgradables = getupgradables(app, client_id)
+	upgradables = getapprovedupgradables(app, client_id)
 
 	# generating package names list
 	package_list = []
@@ -611,10 +611,7 @@ def approved_update_client(app, client_id):
 		return True
 
 	# generating playbook
-	if client.type == 'YUM':
-		playbook = ansible.generate_playbook_all_update_yum_client(client, package_list)
-	elif client.type == 'APT':
-		playbook = ansible.generate_playbook_all_update_apt_client(client, package_list)
+	playbook = ansible.generate_playbook_update_client(client, package_list)
 
 	if  not playbook:
 		app.log.logtask("Error during the generation of the playbook.")

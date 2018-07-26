@@ -36,9 +36,11 @@
         <td>{{ result.data.manager_id }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Repositories linked</td>
+        <td style="font-weight: bold;">Clients</td>
         <td>
-          n
+          {% for link in result.data.links %}
+            <a href="{{ url_for('unlinkgroup', group_id=result.data.ID, client_id=link.ID) }}"><span class="label label-primary">{{ link.name }}</span></a>
+          {% endfor %}
         </td>
       </tr>
   </table>

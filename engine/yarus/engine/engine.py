@@ -597,22 +597,18 @@ def create_group():
             return user
 
         # create a new repository
-        client = Client()
+        group = Group()
         # extract information from received data about the new repository
         data = extract_data()
         if not data:
             return jsonify({"status": 101, "message": "The content must be JSON format."})
         # validate new data
         try:
-            client.setID(getnewid())
-            client.setIP(data['client']['IP'])
-            client.setName(data['client']['name'])
-            client.setDescription(data['client']['description'])
-            client.setVersion(data['client']['version'])
-            client.setType(data['client']['type'])
-            client.setDistribution(data['client']['distribution'])
-            client.setManagerID(user.ID)
-            client.setCreationDate()
+            group.setID(getnewid())
+            group.setName(data['group']['name'])
+            group.setDescription(data['group']['description'])
+            group.setManagerID(user.ID)
+            group.setCreationDate()
         except MissingValueException as error:
             app_engine.log.debug(str(error))
             return jsonify({"status": 100, "message": str(error)})
@@ -623,11 +619,11 @@ def create_group():
             app_engine.log.debug(str(error))
             return jsonify({"status": 101, "message": str(error)})
         # check if the repository already exist in the database
-        if getclientbyip(app_engine, client.IP):
-            return jsonify({"status": 102, "message": "Client with the IP " + client.IP + " already exists in the database."})
+        if getgroupbyname(app_engine, group.name):
+            return jsonify({"status": 102, "message": "Group with the name " + group.name + " already exists in the database."})
         # push the new repository to the database
-        client.insert(app_engine.database)
-        return jsonify({"status": 0, "message": "The client " + client.name + " was successfully created."})
+        group.insert(app_engine.database)
+        return jsonify({"status": 0, "message": "The group " + group.name + " was successfully created."})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
@@ -640,21 +636,17 @@ def update_group(group_id):
         if type(user) != User:
             return user
         # check if the repository exists
-        client = getclient(app_engine, client_id)
-        if not client:
-            return jsonify({"status": 103, "message": "No client found."})
+        group = getgroup(app_engine, group_id)
+        if not group:
+            return jsonify({"status": 103, "message": "No group found."})
         # extract data
         data = extract_data()
         if not data:
             return jsonify({"status": 1, "message": "The content must be JSON format."})
         # validate datarepository
         try:
-            client.setIP(data['client']['IP'])
-            client.setName(data['client']['name'])
-            client.setDescription(data['client']['description'])
-            client.setVersion(data['client']['version'])
-            client.setDistribution(data['client']['distribution'])
-            client.setType(data['client']['type'])
+            group.setName(data['group']['name'])
+            group.setDescription(data['group']['description'])
         except MissingValueException as error:
             app_engine.log.debug(str(error))
             return jsonify({"status": 100, "message": str(error)})
@@ -665,15 +657,89 @@ def update_group(group_id):
             app_engine.log.debug(str(error))
             return jsonify({"status": 101, "message": str(error)})
         # update the database
-        client.update(app_engine.database)
-        return jsonify({"status": 0, "message": "The client was successfully updated."})
+        group.update(app_engine.database)
+        return jsonify({"status": 0, "message": "The group was successfully updated."})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
 @app.route('/api/group/<string:group_id>', methods=['DELETE'])
 def delete_group(group_id):
-    pass
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # check if the group exists
+        group = getgroup(app_engine, group_id)
+        if not group:
+            return jsonify({"status": 103, "message": "The group doesn't exist in the database."})
+        # delete the group
+        group.delete(app_engine.database)
+        return jsonify({"status": 0, "message": "The group was successfully deleted."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+@app.route('/api/group/<string:group_id>/clients', methods=['GET'])
+def group_clients(group_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # get the list and return it
+        data = app_engine.database.get_groupeds(group_id)
+        return jsonify({"status": 0, "message": "", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/group/<string:group_id>/link/<string:client_id>', methods=['POST'])
+def group_link(group_id, client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # check if group and channel exists
+        group = getgroup(app_engine, group_id)
+        if not group:
+            return jsonify({"status": 103, "message": "No group found."})
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+        # check if they are already binded
+        if getgrouped(app_engine, group_id, client_id):
+            return jsonify({"status": 102, "message": "The client " + client.name + " is already in the group " + group.name})
+        # create the bind
+        new_grouped = Grouped(client.ID, group.ID)
+        # push the bind to the database
+        new_grouped.insert(app_engine.database)
+        return jsonify({"status": 0, "message": "The client " + client.name + " was successfully added to the group " + group.name + "."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+@app.route('/api/group/<string:group_id>/unlink/<string:client_id>', methods=['DELETE'])
+def group_unlink(group_id, client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # check if the grouped exists
+        grouped = getgrouped(app_engine, group_id, client_id)
+        if not grouped:
+            return jsonify({"status": 103, "message": "The link doesn't exist in the database."})
+        # delete the grouped
+        grouped.delete_grouped(app_engine.database)
+        return jsonify({"status": 0, "message": "The link was successfully deleted."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
 
 """
     The following functions deal with links between client and channels/repositories.

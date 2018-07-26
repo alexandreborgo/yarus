@@ -34,7 +34,7 @@ def checkConnection(url):
 		proxies = {
               "http"  : "proxy.reseau.ratp:80"
             }
-		if requests.get(url, proxies=proxies).status_code == 200:
+		if requests.get(url).status_code == 200:
 			return True
 		return False
 	except Exception as exception:
@@ -46,7 +46,7 @@ def getFile_rsync(remote, local, file):
 	try:
 		remote = remote.replace('http', 'rsync')
 		rsync_cmd = "rsync -azq --no-o --copy-links " + remote + "/" + file + " " + local
-		result = subprocess.call(rsync_cmd, shell=True, env={'RSYNC_PROXY': 'proxy.reseau.ratp:80'})
+		result = subprocess.call(rsync_cmd, shell=True) # , env={'RSYNC_PROXY': 'proxy.reseau.ratp:80'}
 		# check rsync result
 		if result == 20:
 			print("TOTO")

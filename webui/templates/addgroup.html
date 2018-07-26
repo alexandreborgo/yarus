@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Group{% endblock %}
+{% block pagetitle %}<i class="fas fa-cubes"></i> Group{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Add a group
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+<form method="post" action="#">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.group.name }}{% endif %}" id="name" name="name" placeholder="group name">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" placeholder="Description of the group">{% if data %}{{ data.group.description }}{% endif %}</textarea>
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+      </div>
+      <!-- /.row (nested) -->
+  </div>
+  <!-- /.panel-body -->
+</div>
+
+{% endblock %}
