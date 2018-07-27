@@ -86,7 +86,7 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://ajax.googleapis.com/ https://stackpath.bootstrapcdn.com/ https://cdnjs.cloudflare.com/ http://cdnjs.cloudflare.com/ https://use.fontawesome.com/ https://cdn.datatables.net/ http://cdn.datatables.net/"
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://debug.datatables.net/ https://api.datatables.net/ https://ajax.googleapis.com/ https://stackpath.bootstrapcdn.com/ https://cdnjs.cloudflare.com/ http://cdnjs.cloudflare.com/ https://use.fontawesome.com/ https://cdn.datatables.net/ http://cdn.datatables.net/"
     return response
 
 """
@@ -555,6 +555,68 @@ def unlinkgroup(group_id, client_id):
         return redirect(url_for('home'))
     result2 = callapi("delete", "/group/" + group_id + "/unlink/" + client_id)    
     return seegroup(group_id, result2['status'], result2['message'])
+
+
+@app.route('/group/<string:group_id>/check/', methods=['GET'])
+def checkgroup(group_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    new_task = {}
+    new_task['action'] = 'check_group'
+    new_task['object_id'] = group_id
+    data['task'] = new_task
+    result2 = callapi("post", "/task", data)
+    return seegroup(group_id, result2['status'], result2['message'])
+
+@app.route('/group/<string:group_id>/config/', methods=['GET'])
+def configgroup(group_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    new_task = {}
+    new_task['action'] = 'config_group'
+    new_task['object_id'] = group_id
+    data['task'] = new_task
+    result2 = callapi("post", "/task", data)
+    return seegroup(group_id, result2['status'], result2['message'])
+
+@app.route('/group/<string:group_id>/updateall/', methods=['GET'])
+def allupdategroup(group_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    new_task = {}
+    new_task['action'] = 'all_update_group'
+    new_task['object_id'] = group_id
+    data['task'] = new_task
+    result2 = callapi("post", "/task", data)
+    return seegroup(group_id, result2['status'], result2['message'])
+
+@app.route('/group/<string:group_id>/updateapproved/', methods=['GET'])
+def approvedupdategroup(group_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    new_task = {}
+    new_task['action'] = 'approved_update_group'
+    new_task['object_id'] = group_id
+    data['task'] = new_task
+    result2 = callapi("post", "/task", data)
+    return seegroup(group_id, result2['status'], result2['message'])
+
+@app.route('/group/<string:group_id>/upgradable/', methods=['GET'])
+def upgradablegroup(group_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    new_task = {}
+    new_task['action'] = 'upgradable_group'
+    new_task['object_id'] = group_id
+    data['task'] = new_task
+    result = callapi("post", "/task", data)
+    return seegroup(group_id, result['status'], result['message'])
+
 
 """
 The following functions deal with tasks.

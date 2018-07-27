@@ -8,7 +8,7 @@ from yarus.common.task import Task
 from yarus.common.exceptions import *
 from yarus.common.const import TASK_ACTIONS
 
-WAIT = 20
+WAIT = 5
 
 class YarusTasksManager():
 

@@ -70,6 +70,7 @@ def add_upgradable(app, client, lines):
 			upgradable = Upgradable(name=name, release=release, type=type, ID=package_id, client_id=client.ID, approved=0)
 			upgradable.insert(app.database)
 
+# --------------------------------------------------------
 
 def sync_repo(app, repo_id):
 
@@ -348,6 +349,8 @@ def sync_channel(app, channel_id):
 
 	return True
 
+# --------------------------------------------------------
+
 def check_client(app, client_id):
 	# get client
 	client = getclient(app, client_id)
@@ -525,7 +528,7 @@ def all_update_client(app, client_id):
 		app.log.logtask("No client with the ID: " + cliend_id)
 		return False
 
-	app.log.logtask("Updating approved packages of client " + client.name + " (" + client.IP + ")")
+	app.log.logtask("Updating all packages of client " + client.name + " (" + client.IP + ")")
 
 	ansible = Ansible()
 
@@ -543,10 +546,7 @@ def all_update_client(app, client_id):
 		return True
 
 	# generating playbook
-	if client.type == 'YUM':
-		playbook = ansible.generate_playbook_all_update_yum_client(client, package_list)
-	elif client.type == 'APT':
-		playbook = ansible.generate_playbook_all_update_apt_client(client, package_list)
+	playbook = ansible.generate_playbook_update_client(client, package_list)
 
 	if  not playbook:
 		app.log.logtask("Error during the generation of the playbook.")
@@ -650,3 +650,70 @@ def approved_update_client(app, client_id):
 	os.remove(playbook)
 
 	return True
+
+# --------------------------------------------------------
+
+def check_group(app, group_id):
+	# get group
+	group = getgroup(app, group_id)
+
+	if not group:
+		app.log.logtask("The group with ID: " + group_id + " doesn't exist in the database")
+		return False
+		
+	app.log.logtask("Check group " + group.name + ".")
+
+	groupeds = app.database.get_groupeds(group.ID)
+	
+	if not groupeds:
+		app.log.logtask("No clients found in group " + group.name + ".")
+		return False
+
+	ansible = Ansible()
+
+	# generating playbook
+	playbook = ansible.generate_playbook_check_group(group, groupeds)
+
+	if  not playbook:
+		app.log.logtask("Error during the generation of the playbook.")
+		return False
+
+	# log the playbook
+	show_playbook(app, playbook)
+
+	# execute the playbook
+	response = ansible.executeplaybook(playbook)
+
+	if not response:
+		app.log.logtask("No response from Ansible playbook execution.")
+		return False
+
+	# load the response
+	response = json.loads(response)
+	
+	# check for failure
+	fail = False
+	for client in groupeds:
+		if taskFailed(response, client['IP']):
+			app.log.logtask("Client " + client['name'] + " (" + client['IP'] + "): can't be reach by Ansible.")
+			fail = True
+		else:
+			app.log.logtask("Client " + client['name'] + " (" + client['IP'] + "): OK")
+
+	if fail:
+		app.log.logtask("One or more client couldn't be reached.")
+		return False
+
+	return True
+
+def config_group(app, group_id):
+	pass
+
+def upgradable_group(app, group_id):
+	pass
+
+def all_update_group(app, group_id):
+	pass
+
+def approved_update_group(app, group_id):
+	pass

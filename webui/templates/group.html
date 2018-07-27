@@ -10,6 +10,33 @@
 <div class="panel panel-default">
   <div class="panel-heading">
     Group's information
+    <div class="pull-right">
+      <div class="btn-group">
+          <a href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              Check
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              Configure
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              List upgradable packages
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Update approved
+          </a>
+      </div>
+      <div class="btn-group">
+          <a href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Update all
+          </a>
+      </div>
+    </div>
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">

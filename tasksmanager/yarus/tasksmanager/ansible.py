@@ -115,4 +115,18 @@ class Ansible:
 			playbook.write("    command: apt list  --upgradable\n")
 		playbook.close()
 		return '/var/lib/yarus/playbooks/' + client.ID + '.yml'
+
+	def generate_playbook_check_group(self, group, grouped):
+		playbook = open('/var/lib/yarus/playbooks/' + group.ID + '.yml', "w")
+		playbook.write("---\n")
+		playbook.write("- hosts:\n")
+		for client in grouped:
+			playbook.write("  - " + client['IP'] + "\n")
+		playbook.write("  remote_user: root\n")
+		playbook.write("  gather_facts: no\n")
+		playbook.write("  tasks:\n")
+		playbook.write("  - name: check\n")
+		playbook.write("    ping:\n")		
+		playbook.close()
+		return '/var/lib/yarus/playbooks/' + group.ID + '.yml'
 	
