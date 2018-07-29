@@ -10,6 +10,7 @@ class Repository(YarusObject):
 		self.URL = ""
 		self.repository = ""
 		self.release = ""
+		self.path = ""
 		self.components = ""
 		self.architectures = ""
 		self.type = ""
@@ -49,6 +50,15 @@ class Repository(YarusObject):
 				raise(InvalidValueException("The given release (" + release + ") is invalid."))
 		else:
 			raise(MissingValueException("The release is missing."))
+	def setPath(self, path):
+		if path:
+			if re.match("^[a-zA-z0-9\-\_\.]*$", path):
+				self.path = path
+				return True
+			else:
+				raise(InvalidValueException("The given path (" + path + ") is invalid."))
+		else:
+			raise(MissingValueException("The path is missing."))
 	def setComponents(self, components):
 		if components:
 			if re.match("^[a-zA-z0-9\-\_\.,]*$", components):

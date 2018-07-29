@@ -143,6 +143,9 @@ def create_repository():
             new_repo.setDescription(data['repository']['description'])
             new_repo.setType(data['repository']['type'])
             new_repo.setRelease(data['repository']['release'])
+            if new_repo.type == 'APT':
+                print(data['repository'])
+                new_repo.setPath(data['repository']['path'])
             new_repo.setRepository(data['repository']['repository'])
             new_repo.setComponents(data['repository']['components'])
             new_repo.setArchitectures(data['repository']['architectures'])
@@ -189,6 +192,8 @@ def update_repository(repo_id):
             repo.setDescription(data['repository']['description'])
             repo.setType(data['repository']['type'])
             repo.setRelease(data['repository']['release'])
+            if repo.type == 'APT':
+                repo.setPath(data['repository']['path'])
             repo.setRepository(data['repository']['repository'])
             repo.setComponents(data['repository']['components'])
             repo.setArchitectures(data['repository']['architectures'])

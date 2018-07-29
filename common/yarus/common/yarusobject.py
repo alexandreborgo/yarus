@@ -61,7 +61,7 @@ class YarusObject:
 
 	def setName(self, name):
 		if name:
-			if re.match("^[a-zA-z0-9-_ ]*$", name):
+			if re.match("^[a-zA-z0-9-_. ]*$", name):
 				self.name = name
 				return True
 			else:

@@ -125,6 +125,7 @@ def addrepository():
         data['repository']['type'] = request.form['type']
         data['repository']['repository'] = request.form['distribution']
         data['repository']['release'] = request.form['release']
+        data['repository']['path'] = request.form['path']
         data['repository']['components'] = request.form['components']
         data['repository']['architectures'] = request.form['architectures']
         data['repository']['name'] = request.form['name']
