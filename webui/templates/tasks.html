@@ -16,6 +16,8 @@
   <table id="tasks-table">
     <thead>
       <tr style="font-weight: bold;">
+        <td></td>
+        <td>ID</td>
         <td>Action</td>
         <td>Object ID</td>
         <td>Status</td>
@@ -28,6 +30,8 @@
     <tbody>
       {% for task in result.data %}
         <tr>
+          <td></td>
+          <td>{{ task.ID }}</td>
           <td>{{ task.action }}</td>
           <td>{{ task.object_id }}</td>
           <td>
@@ -46,7 +50,6 @@
           <td>{{ task.end_time }}</td>
           <td>
             <a href="{{ url_for('seetask', task_id=task.ID) }}"><span class="fas fa-eye actions"></span></a>
-            <a href="{{ url_for('deletetask', task_id=task.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
           </td>
         </tr>
       {% endfor %}
@@ -64,7 +67,40 @@
 {% block pagejs %}
 <script>
   $(document).ready( function () {
-    $('#tasks-table').DataTable();
-  } );
+    var table = $('#tasks-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('deletetasks', tasks_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+
+    table.column( 1 ).visible( false );
+
+  });
 </script>
 {% endblock %}

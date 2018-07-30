@@ -10,33 +10,6 @@
 <div class="panel panel-default">
   <div class="panel-heading">
     Group's information
-    <div class="pull-right">
-      <div class="btn-group">
-          <a href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-              Check
-          </a>
-      </div>
-      <div class="btn-group">
-          <a href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-              Configure
-          </a>
-      </div>
-      <div class="btn-group">
-          <a href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-              List upgradable packages
-          </a>
-      </div>
-      <div class="btn-group">
-          <a href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-            Update approved
-          </a>
-      </div>
-      <div class="btn-group">
-          <a href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-            Update all
-          </a>
-      </div>
-    </div>
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
@@ -62,41 +35,187 @@
         <td style="font-weight: bold;">Manager</td>
         <td>{{ result.data.manager_id }}</td>
       </tr>
-      <tr>
-        <td style="font-weight: bold;">Clients</td>
-        <td>
-          {% for link in result.data.links %}
-            <a href="{{ url_for('unlinkgroup', group_id=result.data.ID, client_id=link.ID) }}"><span class="label label-primary">{{ link.name }}</span></a>
-          {% endfor %}
-        </td>
-      </tr>
   </table>
         </div>
     </div>
-  </div>
+</div>
 
-  <div class="panel panel-default">
+<div class="panel panel-default">
     <div class="panel-heading">
-      Add a system to the group
+      Actions
     </div>
     <div class="panel-body">
-      <div class="row" style="padding:15px;">
+      <div class="row" style="padding:15px;">      
+        
+          <button href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+              Check
+          </button>
+      
+      
+          <button href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+              Configure
+          </button>
+      
+          <button href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+              List upgradable packages
+          </button>
+      
+          <button href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+            Update approved
+          </button>
+      
+          <button href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+            Update all
+          </button>
+      </div>
+    </div>
+  </div>
 
-        <form action="{{ url_for('linkgroup', group_id=result.data.ID) }}" method="post">
-          <div class="form-group">
-            <label for="client">System</label>
-            <select class="form-control" id="client" name="client">
-              {% for client in result.data.clients %}
-                <option value="{{ client.ID }}">{{ client.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary mb-2">Add</button>
-        </form>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Systems in the group
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
 
+      <table id="systemsin-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Distribution</th>
+            <th>Release</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in result.data.links %}
+            <tr>
+              <td></td>
+              <td>{{ client.ID }}</td>
+              <td>{{ client.name }}</td>
+              <td>{{ client.description }}</td>
+              <td>{{ client.distribution }}</td>
+              <td>{{ client.version }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Add a system to the group
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+      <table id="systems-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Distribution</th>
+            <th>Release</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in result.data.clients %}
+            <tr>
+              <td></td>
+              <td>{{ client.ID }}</td>
+              <td>{{ client.name }}</td>
+              <td>{{ client.description }}</td>
+              <td>{{ client.distribution }}</td>
+              <td>{{ client.version }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+      </table>
+
+  </div>
+</div>
+</div>
+
 {% endif %}
 
+{% endblock %}
+
+{% block pagejs %}
+<script>
+  $(document).ready( function () {
+    var table = $('#systems-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Add',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('linkgroup', group_id=result.data.ID, clients_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+
+    table.column( 1 ).visible( false );
+
+    var table2 = $('#systemsin-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Remove',
+          action: function () {
+            var rows = $.map(table2.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('unlinkgroup', group_id=result.data.ID, clients_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+
+    table2.column( 1 ).visible( false );
+  });
+</script>
 {% endblock %}

@@ -146,6 +146,7 @@ def editrepository(repo_id):
         data['repository']['type'] = request.form['type']
         data['repository']['repository'] = request.form['distribution']
         data['repository']['release'] = request.form['release']
+        data['repository']['path'] = request.form['path']
         data['repository']['components'] = request.form['components']
         data['repository']['architectures'] = request.form['architectures']
         data['repository']['name'] = request.form['name']
@@ -540,22 +541,31 @@ def deletegroup(group_id):
     result['message'] = result2['message']
     return render_template('groups.html', result=result, connected='1')
 
-@app.route('/group/<string:group_id>/link/', methods=['POST'])
-def linkgroup(group_id):
+@app.route('/group/<string:group_id>/link/<string:clients_id>', methods=['GET'])
+def linkgroup(group_id, clients_id):
     if not checksession():
         return redirect(url_for('home'))
-    if request.method == 'POST':
-        if request.form['client']:
-            result2 = callapi("post", "/group/" + group_id + "/link/" + request.form['client'])
-            return seegroup(group_id, result2['status'], result2['message'])    
-    return seegroup(group_id, "1", "Unknown error")
+    data = {}
+    clients = []
+    for client in clients_id.split(','):
+        if client != "":
+            clients.append(client)
+    data['data'] = clients
+    result = callapi("post", "/group/" + group_id + "/link/", data)
+    return seegroup(group_id, result['status'], result['message'])    
 
-@app.route('/group/<string:group_id>/unlink/<string:client_id>', methods=['GET'])
-def unlinkgroup(group_id, client_id):
+@app.route('/group/<string:group_id>/unlink/<string:clients_id>', methods=['GET'])
+def unlinkgroup(group_id, clients_id):
     if not checksession():
         return redirect(url_for('home'))
-    result2 = callapi("delete", "/group/" + group_id + "/unlink/" + client_id)    
-    return seegroup(group_id, result2['status'], result2['message'])
+    data = {}
+    clients = []
+    for client in clients_id.split(','):
+        if client != "":
+            clients.append(client)
+    data['data'] = clients
+    result = callapi("delete", "/group/" + group_id + "/unlink/", data)
+    return seegroup(group_id, result['status'], result['message']) 
 
 
 @app.route('/group/<string:group_id>/check/', methods=['GET'])
@@ -660,11 +670,18 @@ def seetask(task_id):
         result['data']['logs'] = "Unable to read log file for the task " + task_id
 
     return render_template('task.html', result=result, connected='1')
-@app.route('/task/<string:task_id>/delete/', methods=['GET'])
-def deletetask(task_id):
+
+@app.route('/tasks/<string:tasks_id>', methods=['GET'])
+def deletetasks(tasks_id):
     if not checksession():
         return redirect(url_for('home'))
-    result2 = callapi("delete", "/task/" + task_id)
+    data = {}
+    tasks = []
+    for task in tasks_id.split(','):
+        if task != "":
+            tasks.append(task)
+    data['data'] = tasks
+    result2 = callapi("delete", "/tasks/", data )
     result = callapi("get", "/tasks")
     result['message'] = result2['message']
     return render_template('tasks.html', result=result, connected='1')

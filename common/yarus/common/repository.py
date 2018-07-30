@@ -52,7 +52,7 @@ class Repository(YarusObject):
 			raise(MissingValueException("The release is missing."))
 	def setPath(self, path):
 		if path:
-			if re.match("^[a-zA-z0-9\-\_\.]*$", path):
+			if re.match("^[a-zA-z0-9\-\_\.\/]*$", path):
 				self.path = path
 				return True
 			else:

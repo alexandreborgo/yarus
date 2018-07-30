@@ -114,6 +114,24 @@ def checkingSignatureFromSig(path, signature):
 
 	return False
 
+def getSigFile(file):
+	sha256_hash = hashlib.sha256()
+
+	# open the local file
+	try:
+		f = open(file, 'rb')
+	except Exception as error:
+		return False
+
+	# read data and calculate hash
+	while True:
+		data = f.read(65536)
+		if not data:
+			break
+		sha256_hash.update(data)
+
+	return sha256_hash.hexdigest()
+
 """
 	check for a valid text (valid means it contains only a-z A-Z 0-9 - _ .)
 	this function is used to check distribution, components, architectures of a repository

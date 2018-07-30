@@ -144,7 +144,6 @@ def create_repository():
             new_repo.setType(data['repository']['type'])
             new_repo.setRelease(data['repository']['release'])
             if new_repo.type == 'APT':
-                print(data['repository'])
                 new_repo.setPath(data['repository']['path'])
             new_repo.setRepository(data['repository']['repository'])
             new_repo.setComponents(data['repository']['components'])
@@ -701,46 +700,91 @@ def group_clients(group_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
-@app.route('/api/group/<string:group_id>/link/<string:client_id>', methods=['POST'])
-def group_link(group_id, client_id):
+
+#
+# this function link group with clients
+#
+@app.route('/api/group/<string:group_id>/link/', methods=['POST'])
+def group_link(group_id):
     try:
         app_engine.database.connect()
         user = getuser()
         if type(user) != User:
             return user
-        # check if group and channel exists
+
+        # check if group exists
         group = getgroup(app_engine, group_id)
         if not group:
-            return jsonify({"status": 103, "message": "No group found."})
-        client = getclient(app_engine, client_id)
-        if not client:
-            return jsonify({"status": 103, "message": "No client found."})
-        # check if they are already binded
-        if getgrouped(app_engine, group_id, client_id):
-            return jsonify({"status": 102, "message": "The client " + client.name + " is already in the group " + group.name})
-        # create the bind
-        new_grouped = Grouped(client.ID, group.ID)
-        # push the bind to the database
-        new_grouped.insert(app_engine.database)
-        return jsonify({"status": 0, "message": "The client " + client.name + " was successfully added to the group " + group.name + "."})
+            return jsonify({"status": 103, "message": "No group with ID:" + group_id})
+        
+        #extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+
+        message = ""
+        for client_id in data['data']:
+            client = getclient(app_engine, client_id)
+            if not client:
+                message += "The client with ID: " + client_id + " doesn't exist."
+                continue
+            # check if they are already binded
+            if getgrouped(app_engine, group_id, client_id):
+                message += "The client " + client.name + " is already in the group " + group.name + "."
+                continue
+            # create the bind
+            new_grouped = Grouped(client.ID, group.ID)
+            # push the bind to the database
+            new_grouped.insert(app_engine.database)
+            message += "The client " + client.name + " has been added to the group " + group.name + "."
+            continue
+        return jsonify({"status": 0, "message": message})
+        
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
-@app.route('/api/group/<string:group_id>/unlink/<string:client_id>', methods=['DELETE'])
-def group_unlink(group_id, client_id):
+
+#
+# this function unlink group with clients
+#
+@app.route('/api/group/<string:group_id>/unlink/', methods=['DELETE'])
+def group_unlink(group_id):
     try:
         app_engine.database.connect()
         user = getuser()
         if type(user) != User:
             return user
-        # check if the grouped exists
-        grouped = getgrouped(app_engine, group_id, client_id)
-        if not grouped:
-            return jsonify({"status": 103, "message": "The link doesn't exist in the database."})
-        # delete the grouped
-        grouped.delete_grouped(app_engine.database)
-        return jsonify({"status": 0, "message": "The link was successfully deleted."})
+
+        # check if group exists
+        group = getgroup(app_engine, group_id)
+        if not group:
+            return jsonify({"status": 103, "message": "No group with ID:" + group_id})
+        
+        #extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+
+        message = ""
+        for client_id in data['data']:
+            client = getclient(app_engine, client_id)
+            if not client:
+                message += "The client with ID: " + client_id + " doesn't exist."
+                continue
+            
+            # check if the grouped exists
+            grouped = getgrouped(app_engine, group_id, client_id)
+            if not grouped:
+                message += "The client " + client.name + " isn't in the group " + group.name + "."
+                continue
+            
+            # delete the grouped
+            grouped.delete_grouped(app_engine.database)
+            message += "The client " + client.name + " has been removed from the group " + group.name + "."
+            continue
+        return jsonify({"status": 0, "message": message})
+
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
@@ -928,6 +972,7 @@ def list_task():
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
 @app.route('/api/task/<string:task_id>', methods=['GET'])
 def see_task(task_id):
     try:
@@ -983,24 +1028,46 @@ def create_task():
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
-@app.route('/api/task/<string:task_id>', methods=['DELETE'])
-def delete_task(task_id):
+
+#
+# The below function deleted tasks from the database
+# 
+@app.route('/api/tasks/', methods=['DELETE'])
+def delete_tasks():
     try:
         app_engine.database.connect()
         user = getuser()
         if type(user) != User:
             return user
-        # check if the task exists
-        task = gettask(app_engine, task_id)
-        if not task:
-            return jsonify({"status": 103, "message": "The task doesn't exist in the database."})
-        # delete the task
-        task.delete(app_engine.database)
-        return jsonify({"status": 0, "message": "The task was successfully deleted."})
+        # get the list and return it
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        
+        try:
+            for task_id in data['data']:
+                task = gettask(app_engine, task_id)
+                if not task:
+                    continue
+                # delete the task
+                task.delete(app_engine.database)
+                continue
+            return jsonify({"status": 0, "message": "The tasks where successfully deleted from the database."})
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=6821)

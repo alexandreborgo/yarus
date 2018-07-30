@@ -33,7 +33,8 @@ class Mysql:
 		try:
 			self.cursor.close()
 			self.connection.close()
-		except Exception:
+		except Exception as error:
+			print(error)
 			raise(DatabaseError("Unable to close the connection to the database correctly."))
 
 	def execute(self, request):

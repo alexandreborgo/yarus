@@ -109,9 +109,9 @@ def sync_repo(app, repo_id):
 		pool = root_local + "/pool"
 
 		# url of the distribution folder
-		dist_remote = root_remote + "dists/" + repo.release
+		dist_remote = root_remote + "dists/" + repo.path
 		# distribution path of the local mirror
-		dist_local = root_local + "/dists/" + repo.release
+		dist_local = root_local + "/dists/" + repo.path
 
 		# architectures path of the local mirror
 		arch_local = []
@@ -134,11 +134,20 @@ def sync_repo(app, repo_id):
 		app.log.logtask("Syncing: metadata files.")
 		app.log.logtask("")
 
+		local_release_sig = getSigFile(dist_local + "/Release")
+
 		release = getFile_rsync(dist_remote, dist_local, "Release")
 		releasegpg = getFile_rsync(dist_remote, dist_local, "Release.gpg")
 
 		if release and releasegpg:
 			app.log.logtask("Release and Release.gpg found.")
+			
+			# check if the file is new
+			new_release_sig = getSigFile(release)
+			if local_release_sig == new_release_sig:
+				app.log.logtask("The repository " + repo.name + " is already up to date.")
+				return True
+
 		else:
 			inrelease = getFile_rsync(dist_remote, dist_local, "InRelease")
 
@@ -458,7 +467,7 @@ def config_client(app, client_id):
 			for comp in repo.components.split(","):
 				components += comp + " "
 
-			config_file.write("deb http://155.6.102.161/repos/" + repo.repository + " " + repo.release + " " + components + "\n")
+			config_file.write("deb http://155.6.102.161/repos/" + repo.repository + " " + repo.path + " " + components + "\n")
 
 		config_file.close()
 
