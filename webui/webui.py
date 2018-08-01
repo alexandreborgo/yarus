@@ -10,6 +10,7 @@ app.secret_key = "=kdRfVYg!Xgst-vV?bys6&Z@28s7FJXy4hwFtNHfnb#myFxwf+BgHYzwt+uaaM
 
 user = None
 
+# call the API
 def callapi(method, path, more_data=None):
     # prepare data
     data = {}
@@ -39,6 +40,7 @@ def callapi(method, path, more_data=None):
     # extract content
     return json.loads(response.content)
 
+# check if the session token is still valid
 def checksession():
     if 'token' in session:
         result = callapi("get", "/login/check/" + session['token'])
@@ -46,6 +48,7 @@ def checksession():
             return True
     return False
 
+# login page and dashboard if connected
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
@@ -71,6 +74,7 @@ def home():
     else:
         return render_template('home.html', connected='1')
 
+# logout page
 @app.route('/logout', methods=['GET'])
 def logout():
     if not checksession():
@@ -78,24 +82,21 @@ def logout():
     del session['token']
     return redirect(url_for('home'))
 
+# error 404 page
 @app.errorhandler(404)
 def page_not_found(error):
     if not checksession():
         return redirect(url_for('home'))
     return render_template('404.html', connected='1'), 404
 
-@app.before_request
-def before_request():
-    pass
-
+# fonction that is executed after the view is called
 @app.after_request
 def after_request(response):
+    # change the Content-Security-Policy header to allow the web browser to get Bootstrap Datatable and other useful tools for the interface (CSS ans JS files)
     response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://debug.datatables.net/ https://api.datatables.net/ https://ajax.googleapis.com/ https://stackpath.bootstrapcdn.com/ https://cdnjs.cloudflare.com/ http://cdnjs.cloudflare.com/ https://use.fontawesome.com/ https://cdn.datatables.net/ http://cdn.datatables.net/"
     return response
 
-"""
-    The following functions deal with repositories.
-"""
+# list repositories
 @app.route('/repositories', methods=['GET'])
 def repositories():
     if not checksession():
@@ -111,12 +112,16 @@ def repositories():
             new_data.append(repository)
         result['data'] = new_data
     return render_template('repositories.html', result=result, connected='1')
+
+# see one repository
 @app.route('/repository/<string:repo_id>/see/', methods=['GET'])
 def seerepository(repo_id):
     if not checksession():
         return redirect(url_for('home'))
     result = callapi("get", "/repository/" + repo_id)
     return render_template('repository.html', result=result, connected='1')
+
+# add one repository
 @app.route('/repository/add/', methods=['GET', 'POST'])
 def addrepository():
     if not checksession():
@@ -138,6 +143,8 @@ def addrepository():
         return render_template('addrepository.html', result=result, connected='1', data=data)
 
     return render_template('addrepository.html', connected='1')
+
+# edit one repository
 @app.route('/repository/<string:repo_id>/edit/', methods=['GET', 'POST'])
 def editrepository(repo_id):
     if not checksession():
@@ -162,6 +169,8 @@ def editrepository(repo_id):
     data = {}
     data['repository'] = result['data']
     return render_template('addrepository.html', data=data, connected='1')
+
+# delete one repository
 @app.route('/repository/<string:repo_id>/delete/', methods=['GET'])
 def deleterepository(repo_id):
     if not checksession():
@@ -170,6 +179,8 @@ def deleterepository(repo_id):
     result = callapi("get", "/repositories")
     result['message'] = result2['message']
     return render_template('repositories.html', result=result, connected='1')
+
+# create a task sync_repo to sync the repository
 @app.route('/repository/<string:repo_id>/sync/', methods=['GET'])
 def syncrepository(repo_id):
     if not checksession():
@@ -184,9 +195,7 @@ def syncrepository(repo_id):
     result['message'] = result2['message']
     return render_template('repository.html', result=result, connected='1')
 
-"""
-    The following functions deal with channels.
-"""
+# list channels
 @app.route('/channels', methods=['GET'])
 def channels():
     if not checksession():
@@ -202,6 +211,8 @@ def channels():
             new_data.append(channel)
         result['data'] = new_data
     return render_template('channels.html', result=result, connected='1')
+
+# see one channel
 @app.route('/channel/<string:channel_id>/see/', methods=['GET'])
 def seechannel(channel_id):
     if not checksession():
@@ -213,6 +224,53 @@ def seechannel(channel_id):
     result2 = callapi("get", "/repositories")
     result['data']['repositories'] = result2['data']
     return render_template('channel.html', result=result, connected='1')
+
+# create a channel
+@app.route('/channel/add/', methods=['GET', 'POST'])
+def addchannel():
+    if not checksession():
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        data = {}
+        data['channel'] = {}
+        data['channel']['name'] = request.form['name']
+        data['channel']['description'] = request.form['description']
+        result = callapi("post", "/channel", data)
+        return render_template('addchannel.html', result=result, connected='1', data=data)
+
+    return render_template('addchannel.html', connected='1')
+
+# edit one channel
+@app.route('/channel/<string:channel_id>/edit/', methods=['GET', 'POST'])
+def editchannel(channel_id):
+    if not checksession():
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        data = {}
+        data['channel'] = {}
+        data['channel']['name'] = request.form['name']
+        data['channel']['description'] = request.form['description']
+        result = callapi("put", "/channel/" + channel_id, data)
+        return render_template('addchannel.html', result=result, connected='1', data=data)
+
+    result = callapi("get", "/channel/" + channel_id)
+    data = {}
+    data['channel'] = result['data']
+    return render_template('addchannel.html', data=data, connected='1')
+
+# delete one channel
+@app.route('/channel/<string:channel_id>/delete/', methods=['GET'])
+def deletechannel(channel_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    result2 = callapi("delete", "/channel/" + channel_id)
+    result = callapi("get", "/channels")
+    result['message'] = result2['message']
+    return render_template('channels.html', result=result, connected='1')
+
+# add a repository to a given channel
 @app.route('/channel/<string:channel_id>/link/', methods=['POST'])
 def linkchannel(channel_id):
     if not checksession():
@@ -231,6 +289,8 @@ def linkchannel(channel_id):
     result2 = callapi("get", "/repositories")
     result['data']['repositories'] = result2['data']
     return render_template('channel.html', result=result, connected='1')
+
+# remove a repository from a channel
 @app.route('/channel/<string:channel_id>/unlink/<string:repo_id>', methods=['GET'])
 def unlinkchannel(channel_id, repo_id):
     if not checksession():
@@ -247,45 +307,8 @@ def unlinkchannel(channel_id, repo_id):
     result2 = callapi("get", "/repositories")
     result['data']['repositories'] = result2['data']
     return render_template('channel.html', result=result, connected='1')
-@app.route('/channel/add/', methods=['GET', 'POST'])
-def addchannel():
-    if not checksession():
-        return redirect(url_for('home'))
 
-    if request.method == 'POST':
-        data = {}
-        data['channel'] = {}
-        data['channel']['name'] = request.form['name']
-        data['channel']['description'] = request.form['description']
-        result = callapi("post", "/channel", data)
-        return render_template('addchannel.html', result=result, connected='1', data=data)
-
-    return render_template('addchannel.html', connected='1')
-@app.route('/channel/<string:channel_id>/edit/', methods=['GET', 'POST'])
-def editchannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['channel'] = {}
-        data['channel']['name'] = request.form['name']
-        data['channel']['description'] = request.form['description']
-        result = callapi("put", "/channel/" + channel_id, data)
-        return render_template('addchannel.html', result=result, connected='1', data=data)
-
-    result = callapi("get", "/channel/" + channel_id)
-    data = {}
-    data['channel'] = result['data']
-    return render_template('addchannel.html', data=data, connected='1')
-@app.route('/channel/<string:channel_id>/delete/', methods=['GET'])
-def deletechannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    result2 = callapi("delete", "/channel/" + channel_id)
-    result = callapi("get", "/channels")
-    result['message'] = result2['message']
-    return render_template('channels.html', result=result, connected='1')
+# create a task sync_channel to sync all the repositories inside the channel
 @app.route('/channel/<string:channel_id>/sync/', methods=['GET'])
 def syncchannel(channel_id):
     if not checksession():
@@ -300,9 +323,7 @@ def syncchannel(channel_id):
     result['message'] = result2['message']
     return render_template('channel.html', result=result, connected='1')
 
-"""
-The following functions deal with clients.
-"""
+# list clients
 @app.route('/clients', methods=['GET'])
 def clients():
     if not checksession():
@@ -310,6 +331,7 @@ def clients():
     result = callapi("get", "/clients")
     return render_template('clients.html', result=result, connected='1')
 
+# see one client
 @app.route('/client/<string:client_id>/see/', methods=['GET'])
 def seeclient(client_id, status=0, message=""):
     if not checksession():
@@ -334,32 +356,7 @@ def seeclient(client_id, status=0, message=""):
 
     return render_template('client.html', result=result, connected='1')
 
-@app.route('/client/<string:client_id>/link/<string:rc_id>', methods=['GET'])
-def linkclient(client_id, rc_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    rcs = []
-    for rc in rc_id.split(','):
-        if rc != "":
-            rcs.append(rc)
-    data['data'] = rcs
-    result = callapi("post", "/client/" + client_id + "/link/", data)
-    return seeclient(client_id, result['status'], result['message'])
-
-@app.route('/client/<string:client_id>/unlink/<string:rc_id>', methods=['GET'])
-def unlinkclient(client_id, rc_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    rcs = []
-    for rc in rc_id.split(','):
-        if rc != "":
-            rcs.append(rc)
-    data['data'] = rcs
-    result = callapi("delete", "/client/" + client_id + "/unlink/", data)
-    return seeclient(client_id, result['status'], result['message'])
-
+# add a client
 @app.route('/client/add/', methods=['GET', 'POST'])
 def addclient():
     if not checksession():
@@ -379,6 +376,7 @@ def addclient():
 
     return render_template('addclient.html', connected='1')
 
+# edit one client
 @app.route('/client/<string:client_id>/edit/', methods=['GET', 'POST'])
 def editclient(client_id):
     if not checksession():
@@ -401,6 +399,7 @@ def editclient(client_id):
     data['client'] = result['data']
     return render_template('addclient.html', data=data, connected='1')
 
+# remove one client
 @app.route('/client/<string:client_id>/delete/', methods=['GET'])
 def deleteclient(client_id):
     if not checksession():
@@ -410,6 +409,35 @@ def deleteclient(client_id):
     result['message'] = result2['message']
     return render_template('clients.html', result=result, connected='1')
 
+# link a client to a repository/channel
+@app.route('/client/<string:client_id>/link/<string:rc_id>', methods=['GET'])
+def linkclient(client_id, rc_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    rcs = []
+    for rc in rc_id.split(','):
+        if rc != "":
+            rcs.append(rc)
+    data['data'] = rcs
+    result = callapi("post", "/client/" + client_id + "/link/", data)
+    return seeclient(client_id, result['status'], result['message'])
+
+# unlink a client to a repository/channel
+@app.route('/client/<string:client_id>/unlink/<string:rc_id>', methods=['GET'])
+def unlinkclient(client_id, rc_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    rcs = []
+    for rc in rc_id.split(','):
+        if rc != "":
+            rcs.append(rc)
+    data['data'] = rcs
+    result = callapi("delete", "/client/" + client_id + "/unlink/", data)
+    return seeclient(client_id, result['status'], result['message'])
+
+# create a task chek_client 
 @app.route('/client/<string:client_id>/check/', methods=['GET'])
 def checkclient(client_id):
     if not checksession():
@@ -422,6 +450,7 @@ def checkclient(client_id):
     result2 = callapi("post", "/task", data)
     return seeclient(client_id, result2['status'], result2['message'])
 
+# create a task config_client
 @app.route('/client/<string:client_id>/config/', methods=['GET'])
 def configclient(client_id):
     if not checksession():
@@ -434,6 +463,7 @@ def configclient(client_id):
     result2 = callapi("post", "/task", data)
     return seeclient(client_id, result2['status'], result2['message'])
 
+# create a task update_all_client
 @app.route('/client/<string:client_id>/updateall/', methods=['GET'])
 def allupdateclient(client_id):
     if not checksession():
@@ -446,6 +476,7 @@ def allupdateclient(client_id):
     result2 = callapi("post", "/task", data)
     return seeclient(client_id, result2['status'], result2['message'])
 
+# create a task update_approved_client
 @app.route('/client/<string:client_id>/updateapproved/', methods=['GET'])
 def approvedupdateclient(client_id):
     if not checksession():
@@ -458,6 +489,7 @@ def approvedupdateclient(client_id):
     result2 = callapi("post", "/task", data)
     return seeclient(client_id, result2['status'], result2['message'])
 
+# create a task upgradable_client
 @app.route('/client/<string:client_id>/upgradable/', methods=['GET'])
 def upgradableclient(client_id):
     if not checksession():
@@ -470,6 +502,7 @@ def upgradableclient(client_id):
     result = callapi("post", "/task", data)
     return seeclient(client_id, result['status'], result['message'])
 
+# set package as approved for the given list
 @app.route('/client/<string:client_id>/approve/<string:packages_id>', methods=['GET'])
 def approveupgradables(client_id, packages_id):
     if not checksession():
@@ -485,6 +518,7 @@ def approveupgradables(client_id, packages_id):
 
     return seeclient(client_id, result['status'], result['message'])
 
+# set package as disapproved for the given list
 @app.route('/client/<string:client_id>/disapprove/<string:packages_id>', methods=['GET'])
 def disapproveupgradables(client_id, packages_id):
     if not checksession():
@@ -500,9 +534,7 @@ def disapproveupgradables(client_id, packages_id):
 
     return seeclient(client_id, result['status'], result['message'])
 
-"""
-The following functions deal with groups.
-"""
+# list groups
 @app.route('/groups', methods=['GET'])
 def groups():
     if not checksession():
@@ -510,6 +542,7 @@ def groups():
     result = callapi("get", "/groups")
     return render_template('groups.html', result=result, connected='1')
 
+# see one group
 @app.route('/group/<string:group_id>/see/', methods=['GET'])
 def seegroup(group_id, status=0, message=""):
     if not checksession():
@@ -527,6 +560,7 @@ def seegroup(group_id, status=0, message=""):
 
     return render_template('group.html', result=result, connected='1')
 
+# create a group
 @app.route('/group/add/', methods=['GET', 'POST'])
 def addgroup():
     if not checksession():
@@ -542,6 +576,7 @@ def addgroup():
 
     return render_template('addgroup.html', connected='1')
 
+# edit a group
 @app.route('/group/<string:group_id>/edit/', methods=['GET', 'POST'])
 def editgroup(group_id):
     if not checksession():
@@ -560,6 +595,7 @@ def editgroup(group_id):
     data['group'] = result['data']
     return render_template('addgroup.html', data=data, connected='1')
 
+# delete a group
 @app.route('/group/<string:group_id>/delete/', methods=['GET'])
 def deletegroup(group_id):
     if not checksession():
@@ -569,6 +605,7 @@ def deletegroup(group_id):
     result['message'] = result2['message']
     return render_template('groups.html', result=result, connected='1')
 
+# add a client to a group
 @app.route('/group/<string:group_id>/link/<string:clients_id>', methods=['GET'])
 def linkgroup(group_id, clients_id):
     if not checksession():
@@ -582,6 +619,7 @@ def linkgroup(group_id, clients_id):
     result = callapi("post", "/group/" + group_id + "/link/", data)
     return seegroup(group_id, result['status'], result['message'])    
 
+# remove a client from a group
 @app.route('/group/<string:group_id>/unlink/<string:clients_id>', methods=['GET'])
 def unlinkgroup(group_id, clients_id):
     if not checksession():
@@ -595,7 +633,7 @@ def unlinkgroup(group_id, clients_id):
     result = callapi("delete", "/group/" + group_id + "/unlink/", data)
     return seegroup(group_id, result['status'], result['message']) 
 
-
+# create a task check_group
 @app.route('/group/<string:group_id>/check/', methods=['GET'])
 def checkgroup(group_id):
     if not checksession():
@@ -608,6 +646,7 @@ def checkgroup(group_id):
     result2 = callapi("post", "/task", data)
     return seegroup(group_id, result2['status'], result2['message'])
 
+# create a task config_group
 @app.route('/group/<string:group_id>/config/', methods=['GET'])
 def configgroup(group_id):
     if not checksession():
@@ -620,6 +659,7 @@ def configgroup(group_id):
     result2 = callapi("post", "/task", data)
     return seegroup(group_id, result2['status'], result2['message'])
 
+# create a task update_all_group
 @app.route('/group/<string:group_id>/updateall/', methods=['GET'])
 def allupdategroup(group_id):
     if not checksession():
@@ -632,6 +672,7 @@ def allupdategroup(group_id):
     result2 = callapi("post", "/task", data)
     return seegroup(group_id, result2['status'], result2['message'])
 
+# create a task upgrade_approved_group
 @app.route('/group/<string:group_id>/updateapproved/', methods=['GET'])
 def approvedupdategroup(group_id):
     if not checksession():
@@ -644,6 +685,7 @@ def approvedupdategroup(group_id):
     result2 = callapi("post", "/task", data)
     return seegroup(group_id, result2['status'], result2['message'])
 
+# create a task upgradable_group
 @app.route('/group/<string:group_id>/upgradable/', methods=['GET'])
 def upgradablegroup(group_id):
     if not checksession():
@@ -656,10 +698,7 @@ def upgradablegroup(group_id):
     result = callapi("post", "/task", data)
     return seegroup(group_id, result['status'], result['message'])
 
-
-"""
-The following functions deal with tasks.
-"""
+# list tasks
 @app.route('/tasks', methods=['GET'])
 def tasks():
     if not checksession():
@@ -682,6 +721,7 @@ def tasks():
         result['data'] = new_data
     return render_template('tasks.html', result=result, connected='1')
 
+# see one task
 @app.route('/task/<string:task_id>/see/', methods=['GET'])
 def seetask(task_id):
     if not checksession():
@@ -700,6 +740,7 @@ def seetask(task_id):
 
     return render_template('task.html', result=result, connected='1')
 
+# delete tasks
 @app.route('/tasks/<string:tasks_id>', methods=['GET'])
 def deletetasks(tasks_id):
     if not checksession():
@@ -714,7 +755,6 @@ def deletetasks(tasks_id):
     result = callapi("get", "/tasks")
     result['message'] = result2['message']
     return render_template('tasks.html', result=result, connected='1')
-
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=8000)
