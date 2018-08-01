@@ -87,6 +87,25 @@ def login():
     finally:
         app_engine.database.close()
 
+# check login
+@app.route('/api/login/check/<string:token>', methods=['GET'])
+def checklogin(token):
+    try:
+        app_engine.database.connect()
+        tmp_user = User()
+        tmp_user.setToken(token)
+        # checkout user
+        user = connectuser(app_engine, tmp_user)
+        if not user:
+            return jsonify({"status": 1, "message": "Token expired."})
+        else:
+            return jsonify({"status": 0, "message": "Token is valid."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+
 """
     The following functions deal with repositories.
 """
@@ -422,8 +441,10 @@ def channel_delete_repository(channel_id, repo_id):
         app_engine.database.close()
 
 """
-The following functions deal with clients.
+    CLIENTS
 """
+
+# list all clients in the database
 @app.route('/api/clients', methods=['GET'])
 def list_client():
     try:
@@ -433,11 +454,16 @@ def list_client():
             return user
         # get the list and return it
         data = app_engine.database.get_all_object('yarus_client')
-        return jsonify({"status": 0, "message": "", 'data': data})
+        if len(data) > 0:
+            return jsonify({"status": 0, "message": "", 'data': data})
+        else:
+            return jsonify({"status": -1, "message": "No system found.", 'data': data})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
+# return information about the given client
 @app.route('/api/client/<string:client_id>', methods=['GET'])
 def see_client(client_id):
     try:
@@ -455,6 +481,8 @@ def see_client(client_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
+# create a new client
 @app.route('/api/client', methods=['POST'])
 def create_client():
     try:
@@ -499,6 +527,8 @@ def create_client():
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
+# update the information of the given client
 @app.route('/api/client/<string:client_id>', methods=['PUT'])
 def update_client(client_id):
     try:
@@ -538,6 +568,8 @@ def update_client(client_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
+# remove the given client from the database
 @app.route('/api/client/<string:client_id>', methods=['DELETE'])
 def delete_client(client_id):
     try:
@@ -557,6 +589,277 @@ def delete_client(client_id):
     finally:
         app_engine.database.close()
 
+# return the list of linked channels and repositories to the given client
+@app.route('/api/client/<string:client_id>/rc', methods=['GET'])
+def client_rc(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        # get the list and return it
+        data = getbinds(app_engine, client_id)
+        print(data)
+        return jsonify({"status": 0, "message": "", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# return the list of task in the database about the given client
+@app.route('/api/client/<string:client_id>/tasks', methods=['GET'])
+def client_tasks(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+       
+        # check if client exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+       
+        # get the list and return it
+        data = getclienttasks(app_engine, client.ID)
+        if len(data) > 0:
+            return jsonify({"status": 0, "message": "", 'data': data})
+        else:
+            return jsonify({"status": -1, "message": "No tasks found linked to the client " + client.name + ".", 'data': data})
+
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# link a channel/repository to a client
+@app.route('/api/client/<string:client_id>/link/', methods=['POST'])
+def client_add(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+
+        # check if client exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+        
+        #extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+
+        message = ""
+        for rc in data['data']:
+            otype, ID = rc.split(':')
+
+            if otype == 'r':
+
+                repo = getrepo(app_engine, ID)
+                if not repo:
+                    message += "No repository found. "
+                    continue
+
+                # check if they are already binded
+                if getbind(app_engine, client_id, repo.ID, ""):
+                    message += "The repository " + repo.name + " is already linked to the client " + client.name + ". "
+                    continue
+
+                # create the bind
+                new_bind = Bind(client.ID, repo_id=repo.ID)
+                # push the bind to the database
+                new_bind.insert(app_engine.database)
+                message += "The repository " + repo.name + " has been binded to the client " + client.name + ". "
+                continue
+
+            elif otype == 'c':
+
+                chan = getchannel(app_engine, ID)
+                if not chan:
+                    message += "No channel found. "
+                    continue
+
+                # check if they are already binded
+                if getbind(app_engine, client_id, "", chan.ID):
+                    message += "The channel " + chan.name + " is already linked to the client " + client.name + ". "
+                    continue
+
+                # create the bind
+                new_bind = Bind(client.ID, channel_id=chan.ID)
+                # push the bind to the database
+                new_bind.insert(app_engine.database)
+                message += "The channel " + chan.name + " has been binded to the client " + client.name + ". "
+                continue
+
+        return jsonify({"status": 0, "message": message})
+
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# unlink a channel/repository to a client
+@app.route('/api/client/<string:client_id>/unlink/', methods=['DELETE'])
+def client_remove(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+
+        # check if client exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+        
+        #extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+
+        message = ""
+        for rc in data['data']:
+            otype, ID = rc.split(':')
+
+            if otype == 'r':
+
+                repo = getrepo(app_engine, ID)
+                if not repo:
+                    message += "No repository found. "
+                    continue
+
+                # check if they are already binded
+                bind = getbind(app_engine, client_id, repo.ID, "")
+                if not bind:
+                    message += "The repository " + repo.name + " isn't linked to the client " + client.name + ". "
+                    continue
+
+                bind.delete_bind(app_engine.database)
+                message += "The repository " + repo.name + " has been removed from the client " + client.name + ". "
+                continue
+
+            elif otype == 'c':
+
+                chan = getchannel(app_engine, ID)
+                if not chan:
+                    message += "No channel found. "
+                    continue
+
+                # check if they are already binded
+                bind = getbind(app_engine, client_id, "", chan.ID)
+                if not bind:
+                    message += "The channel " + chan.name + " isn't linked to the client " + client.name + ". "
+                    continue
+
+                bind.delete_bind(app_engine.database)
+                message += "The channel " + chan.name + " has been removed from the client " + client.name + ". "
+                continue
+
+        return jsonify({"status": 0, "message": message})
+
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# return the list of upgradables packages for the given client
+@app.route('/api/client/<string:client_id>/upgradable/', methods=['GET'])
+def seeupgradable(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        
+        # check if client exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+        
+        # get the list and return it
+        data = getupgradables(app_engine, client_id)
+        return jsonify({"status": 0, "message": "", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# approve packages to upgrade for the given client
+@app.route('/api/client/<string:client_id>/approve', methods=['PUT'])
+def approveupgradable(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        
+        # check if client exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+
+        #extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        
+        message = ""
+        for package_id in data['data']:
+            upgradable = getupgradable(app_engine, client_id, package_id)
+            if not upgradable:
+                message += "The package " + upgradable.name + " doesn't exist in the list of upgradable packages of " + client.name + ". "
+                continue            
+            upgradable.approved = 1
+            upgradable.update(app_engine.database)
+            message += "The package " + upgradable.name + " is approved for update."
+            continue
+        
+        return jsonify({"status": 0, "message": message})
+
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# disapprove packages to upgrade for the given client
+@app.route('/api/client/<string:client_id>/disapprove', methods=['PUT'])
+def disapproveupgradable(client_id):
+    try:
+        app_engine.database.connect()
+        user = getuser()
+        if type(user) != User:
+            return user
+        
+        # check if client exists
+        client = getclient(app_engine, client_id)
+        if not client:
+            return jsonify({"status": 103, "message": "No client found."})
+
+        #extract data
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        
+        message = ""
+        for package_id in data['data']:
+            upgradable = getupgradable(app_engine, client_id, package_id)
+            if not upgradable:
+                message += "The package " + upgradable.name + " doesn't exist in the list of upgradable packages of " + client.name + ". "
+                continue            
+            upgradable.approved = 0
+            upgradable.update(app_engine.database)
+            message += "The package " + upgradable.name + " is approved for update."
+            continue
+        
+        return jsonify({"status": 0, "message": message})
+
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
 
 """
 The following functions deal with group of clients.
@@ -570,7 +873,10 @@ def list_groups():
             return user
         # get the list and return it
         data = app_engine.database.get_all_object('yarus_group')
-        return jsonify({"status": 0, "message": "", 'data': data})
+        if len(data) > 0:
+            return jsonify({"status": 0, "message": "", 'data': data})
+        else:
+            return jsonify({"status": -1, "message": "No group found.", 'data': data})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
@@ -745,9 +1051,7 @@ def group_link(group_id):
     finally:
         app_engine.database.close()
 
-#
-# this function unlink group with clients
-#
+
 @app.route('/api/group/<string:group_id>/unlink/', methods=['DELETE'])
 def group_unlink(group_id):
     try:
@@ -791,167 +1095,6 @@ def group_unlink(group_id):
         app_engine.database.close()
 
 """
-    The following functions deal with links between client and channels/repositories.
-"""
-@app.route('/api/client/<string:client_id>/rc', methods=['GET'])
-def client_rc(client_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        # get the list and return it
-        data = getbinds(app_engine, client_id)
-        return jsonify({"status": 0, "message": "", 'data': data})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-@app.route('/api/client/<string:client_id>/repository/<string:repo_id>', methods=['POST'])
-def client_add_repository(client_id, repo_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        # check if repository and channel exists
-        client = getclient(app_engine, client_id)
-        if not client:
-            return jsonify({"status": 103, "message": "No client found."})
-        repo = getrepo(app_engine, repo_id)
-        if not repo:
-            return jsonify({"status": 103, "message": "No repository found."})
-        # check if client can handle repository type
-        if client.type != repo.type:
-            return jsonify({"status": 102, "message": "The repository " + repo.name + " (" + repo.type + ") isn't compatible with the client " + client.name + " (" + client.type + ")"})
-        # check if they are already binded
-        if getbind(app_engine, client_id, repo_id, ""):
-            return jsonify({"status": 102, "message": "Repository " + repo.name + " is linked to the client " + client.name})
-        # create the bind
-        new_bind = Bind(client.ID, repo_id=repo.ID)
-        # push the bind to the database
-        new_bind.insert(app_engine.database)
-        return jsonify({"status": 0, "message": "The repository " + repo.name + " was successfully linked to the client " + client.name + "."})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-@app.route('/api/client/<string:client_id>/channel/<string:channel_id>', methods=['POST'])
-def client_add_channel(client_id, channel_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        # check if repository and channel exists
-        client = getclient(app_engine, client_id)
-        if not client:
-            return jsonify({"status": 103, "message": "No client found."})
-        channel = getchannel(app_engine, channel_id)
-        if not channel:
-            return jsonify({"status": 103, "message": "No repository found."})
-        # check if they are already binded
-        if getbind(app_engine, client_id, "", channel_id):
-            return jsonify({"status": 102, "message": "Channel " + channel.name + " is linked to the client " + client.name})
-        # create the bind
-        new_bind = Bind(client.ID, channel_id=channel.ID)
-        # push the bind to the database
-        new_bind.insert(app_engine.database)
-        return jsonify({"status": 0, "message": "The channel " + channel.name + " was successfully linked to the client " + client.name + "."})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-@app.route('/api/client/<string:client_id>/repository/<string:repo_id>', methods=['DELETE'])
-def client_delete_repository(client_id, repo_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        # check if the channel exists
-        bind = getbind(app_engine, client_id, repo_id, "")
-        if not bind:
-            return jsonify({"status": 103, "message": "The bind doesn't exist in the database."})
-        # delete the channel
-        bind.delete_bind(app_engine.database)
-        return jsonify({"status": 0, "message": "The bind was successfully deleted."})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-@app.route('/api/client/<string:client_id>/channel/<string:channel_id>', methods=['DELETE'])
-def client_delete_channel(client_id, channel_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        # check if the channel exists
-        bind = getbind(app_engine, client_id, "", channel_id)
-        if not bind:
-            return jsonify({"status": 103, "message": "The bind doesn't exist in the database."})
-        # delete the channel
-        bind.delete_bind(app_engine.database)
-        return jsonify({"status": 0, "message": "The bind was successfully deleted."})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-
-"""
-    The following functions deal with upgradable packages.
-"""
-@app.route('/api/client/<string:client_id>/upgradable/', methods=['GET'])
-def seeupgradable(client_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        # get the list and return it
-        data = getupgradables(app_engine, client_id)
-        return jsonify({"status": 0, "message": "", 'data': data})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-@app.route('/api/client/<string:client_id>/upgradable/<string:package_id>/approve', methods=['PUT'])
-def approveupgradable(client_id, package_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        upgradable = getupgradable(app_engine, client_id, package_id)
-        if not upgradable:
-            return jsonify({"status": 103, "message": "No upgradable found."})
-        upgradable.approved = 1
-        upgradable.update(app_engine.database)
-        return jsonify({"status": 0, "message": "Package " + upgradable.name + " approved for update."})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-@app.route('/api/client/<string:client_id>/upgradable/<string:package_id>/disapprove', methods=['PUT'])
-def disapproveupgradable(client_id, package_id):
-    try:
-        app_engine.database.connect()
-        user = getuser()
-        if type(user) != User:
-            return user
-        upgradable = getupgradable(app_engine, client_id, package_id)
-        if not upgradable:
-            return jsonify({"status": 103, "message": "No upgradable found."})
-        upgradable.approved = 0
-        upgradable.update(app_engine.database)
-        return jsonify({"status": 0, "message": "Package " + upgradable.name + " disapproved for update."})
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
-    finally:
-        app_engine.database.close()
-
-"""
 The following functions deal with groups.
 """
 
@@ -967,7 +1110,10 @@ def list_task():
             return user
         # get the list and return it
         data = app_engine.database.get_all_object('yarus_task')
-        return jsonify({"status": 0, "message": "", 'data': data})
+        if len(data) > 0:
+            return jsonify({"status": 0, "message": "", 'data': data})
+        else:
+            return jsonify({"status": -1, "message": "No tasks found.", 'data': data})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:

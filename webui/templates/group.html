@@ -47,29 +47,40 @@
     <div class="panel-body">
       <div class="row" style="padding:15px;">      
         
-          <button href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+          <a href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               Check
-          </button>
+          </a>
       
       
-          <button href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+          <a href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               Configure
-          </button>
+          </a>
       
-          <button href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+          <a href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               List upgradable packages
-          </button>
+          </a>
       
-          <button href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+          <a href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
             Update approved
-          </button>
+          </a>
       
-          <button href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xl">
+          <a href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
             Update all
-          </button>
+          </a>
       </div>
     </div>
-  </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+      Tasks
+    </div>
+    <div class="panel-body">
+      <div class="row" style="padding:15px;">      
+        
+      </div>
+    </div>
+</div>
 
 <div class="panel panel-default">
   <div class="panel-heading">

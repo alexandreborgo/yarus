@@ -9,44 +9,41 @@
   <div class="panel-heading">
     List of systems
     <div class="pull-right">
-        <div class="btn-group">
-            <a href="{{ url_for('addclient') }}" type="button" class="btn btn-default btn-xs">
-                Add a system
-            </a>
-        </div>
+      <div class="btn-group">
+          <a href="{{ url_for('addclient') }}" type="button" class="btn btn-default btn-xs">
+              Add a system
+          </a>
+      </div>
     </div>
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
-
-{% if result.data %}
-  <table id="clients-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Distribution</th>
-        <th>Release</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for client in result.data %}
-        <tr>
-          <td>{{ client.name }}</td>
-          <td>{{ client.description }}</td>
-          <td>{{ client.distribution }}</td>
-          <td>{{ client.version }}</td>
-          <td>
-            <a href="{{ url_for('seeclient', client_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
-            <a href="{{ url_for('editclient', client_id=client.ID) }}"><span class="fas fa-edit actions"></span></a>
-            <a href="{{ url_for('deleteclient', client_id=client.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-  </table>
-{% endif %}
+      <table id="clients-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Distribution</th>
+            <th>Release</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in result.data %}
+            <tr>
+              <td>{{ client.name }}</td>
+              <td>{{ client.description }}</td>
+              <td>{{ client.distribution }}</td>
+              <td>{{ client.version }}</td>
+              <td>
+                <a href="{{ url_for('seeclient', client_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
+                <a href="{{ url_for('editclient', client_id=client.ID) }}"><span class="fas fa-edit actions"></span></a>
+                <a href="{{ url_for('deleteclient', client_id=client.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+      </table>
       </div>
   </div>
 </div>

@@ -144,10 +144,10 @@ def getbinds(app, client_id):
 		linked = []
 		if bindedc:
 			for item in bindedc:
-				linked.append({'ID': item['ID'], 'name': item['name'], 'type': 'c'})
+				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'c'})
 		if bindedr:
 			for item in bindedr:
-				linked.append({'ID': item['ID'], 'name': item['name'], 'type': 'r'})
+				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'r'})
 		return linked
 	except MissingValueException as error:
 		app.log.debug(str(error))
@@ -209,6 +209,16 @@ def getapprovedupgradables(app, client_id):
 def gettask(app, task_id):
 	try:
 		return Task().load(app.database, task_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getclienttasks(app, client_id):
+	try:
+		return app.database.get_client_tasks(client_id)
 	except MissingValueException as error:
 		app.log.debug(str(error))
 		return None

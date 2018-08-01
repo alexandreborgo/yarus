@@ -109,7 +109,7 @@ class Mysql:
 		request = "SELECT * FROM yarus_link WHERE repo_id='" + repo_id + "' AND channel_id='" + channel_id + "'"
 		return self.get_one(request)
 	def get_links(self, channel_id):
-		request = "SELECT yarus_repository.ID, yarus_repository.name FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
+		request = "SELECT yarus_repository.ID, yarus_repository.name, yarus_repository.description FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
 		return self.get_all(request)
 	def delete_link(self, channel_id, repo_id):
 		request = "DELETE FROM yarus_link WHERE repo_id='" + repo_id + "' AND channel_id='" + channel_id + "'"
@@ -119,10 +119,10 @@ class Mysql:
 		request = "SELECT * FROM yarus_client WHERE IP='" + IP + "'"
 		return self.get_one(request)
 	def get_binded_repository(self, client_id):
-		request = "SELECT yarus_repository.ID, yarus_repository.name FROM yarus_bind INNER JOIN yarus_repository ON yarus_bind.repo_id=yarus_repository.ID WHERE yarus_bind.client_id='" + client_id + "' "
+		request = "SELECT yarus_repository.ID, yarus_repository.name, yarus_repository.description FROM yarus_bind INNER JOIN yarus_repository ON yarus_bind.repo_id=yarus_repository.ID WHERE yarus_bind.client_id='" + client_id + "' "
 		return self.get_all(request)
 	def get_binded_channel(self, client_id):
-		request = "SELECT yarus_channel.ID, yarus_channel.name FROM yarus_bind INNER JOIN yarus_channel ON yarus_bind.channel_id=yarus_channel.ID WHERE yarus_bind.client_id='" + client_id + "' "
+		request = "SELECT yarus_channel.ID, yarus_channel.name, yarus_channel.description FROM yarus_bind INNER JOIN yarus_channel ON yarus_bind.channel_id=yarus_channel.ID WHERE yarus_bind.client_id='" + client_id + "' "
 		return self.get_all(request)
 	def get_bind(self, client_id, repo_id, channel_id):
 		request = "SELECT * FROM yarus_bind WHERE client_id='" + client_id + "' AND repo_id='" + str(repo_id) + "' AND channel_id='" + str(channel_id) + "'"
@@ -145,6 +145,9 @@ class Mysql:
 		return self.get_all(request)
 	def get_approved_upgradables(self, client_id):
 		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
+		return self.get_all(request)
+	def get_client_tasks(self, client_id):
+		request = "SELECT * FROM yarus_task WHERE object_id='" + client_id + "'"
 		return self.get_all(request)
 
 	def get_pending_task(self):
