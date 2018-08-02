@@ -162,4 +162,8 @@ class Mysql:
 		return self.get_all(request)
 	def delete_grouped(self, client_id, group_id):
 		request = "DELETE FROM yarus_grouped WHERE client_id='" + client_id + "' AND group_id='" + group_id + "'"
-		return self.execute(request)
+		return self.execute(request)	
+
+	def get_scheduled_tasks(self):
+		request = "SELECT * FROM yarus_scheduled"
+		return self.get_all(request)

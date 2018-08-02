@@ -23,6 +23,8 @@
 <table id="repositories-table">
     <thead>
       <tr>
+        <th></th>
+        <th>ID</th>
         <th>Name</th>
         <th>Type</th>
         <th>Distribution</th>
@@ -36,6 +38,8 @@
     <tbody>
       {% for repository in result.data %}
         <tr>
+          <td></td>
+          <td>{{ repository.ID }}</td>
           <td>{{ repository.name }}</td>
           <td>{{ repository.type }}</td>
           <td>{{ repository.repository }}</td>
@@ -45,8 +49,6 @@
           <td>{{ repository.last_sync }}</td>
           <td>
             <a href="{{ url_for('seerepository', repo_id=repository.ID) }}"><span class="fas fa-eye actions"></span></a>
-            <a href="{{ url_for('editrepository', repo_id=repository.ID) }}"><span class="fas fa-edit actions"></span></a>
-            <a href="{{ url_for('deleterepository', repo_id=repository.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
           </td>
         </tr>
       {% endfor %}
@@ -66,7 +68,39 @@
 {% block pagejs %}
 <script>
   $(document).ready( function () {
-    $('#repositories-table').DataTable();
+    var table = $('#repositories-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('deleterepositories', repos_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+
+    table.column( 1 ).visible( false );
   } );
 </script>
 {% endblock %}

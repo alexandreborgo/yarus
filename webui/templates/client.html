@@ -70,10 +70,11 @@
 
 <div class="panel panel-default">
     <div class="panel-heading">
-      Actions
+      Actions / Tasks / Scheduled tasks
     </div>
     <div class="panel-body">
       <div class="row" style="padding:15px;">      
+          Action:
           <a href="{{ url_for('editclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               Edit
           </a>
@@ -82,6 +83,29 @@
           </a>
           <br />
           <br />
+          Task: 
+          <a href="{{ url_for('checkclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              Check
+          </a>
+      
+          <a href="{{ url_for('configclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              Configure
+          </a>
+      
+          <a href="{{ url_for('upgradableclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+              List upgradable packages
+          </a>
+      
+          <a href="{{ url_for('approvedupdateclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Update approved
+          </a>
+      
+          <a href="{{ url_for('allupdateclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Update all
+          </a>
+          <br />
+          <br />
+          Schedule task: 
           <a href="{{ url_for('checkclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               Check
           </a>
@@ -265,7 +289,9 @@
             {% endfor %}
           </tbody>
         </table>
-      {% endif %}
+        {% else %}
+        No package to update. Start the task "List upgradable packages" to find package that need an update.
+        {% endif %}
     </div>
   </div>
 </div>

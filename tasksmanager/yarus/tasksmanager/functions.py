@@ -28,28 +28,18 @@ def parseReleaseLine(line, comps, archs):
 				return line
 	return None
 
-# check if the host can reach the given url
-def checkConnection(url):
-	try:
-		proxies = {
-              "http"  : "proxy.reseau.ratp:80"
-            }
-		if requests.get(url).status_code == 200:
-			return True
-		return False
-	except Exception as exception:
-		print(exception)
-		return False
-
 # download file using rsync into /tmp/yarus and return the file path
-def getFile_rsync(remote, local, file):
+def getFile_rsync(app, remote, local, file):
 	try:
 		remote = remote.replace('http', 'rsync')
 		rsync_cmd = "rsync -azq --no-o --copy-links " + remote + "/" + file + " " + local
-		result = subprocess.call(rsync_cmd, shell=True, env={'RSYNC_PROXY': 'proxy.reseau.ratp:80'}) #
+		if app.config.px_host != "":
+			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
+		else:
+			env = None
+		result = subprocess.call(rsync_cmd, shell=True, env=env)
 		# check rsync result
 		if result == 20:
-			print("TOTO")
 			sys.exit(0)
 		elif result != 0:
 			return False
@@ -59,11 +49,15 @@ def getFile_rsync(remote, local, file):
 		print(exception)
 		return None
 
-def getDir_rsync(url, local):
+def getDir_rsync(app, url, local):
 	try:
 		new_url = url.replace('http', 'rsync')
 		rsync_cmd = "rsync -azv --no-o --copy-links " + new_url + " " + local
-		result = subprocess.call(rsync_cmd, shell=True, env={'RSYNC_PROXY': 'proxy.reseau.ratp:80'})
+		if app.config.px_host != "":
+			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
+		else:
+			env = None
+		result = subprocess.call(rsync_cmd, shell=True, env=env)
 
 		# check rsync result
 		if result != 0:
@@ -132,16 +126,8 @@ def getSigFile(file):
 
 	return sha256_hash.hexdigest()
 
-"""
-	check for a valid text (valid means it contains only a-z A-Z 0-9 - _ .)
-	this function is used to check distribution, components, architectures of a repository
-	input:	text to check
-	output:
-		 	True if the text is valid
-		 	False if the text is wrong
-"""
 
-def tryDownloadFile(remote_file_dir, local_file_dir, file, signature):
+def tryDownloadFile(app, remote_file_dir, local_file_dir, file, signature):
 	# downloading the file
 	print("Downloading: " + file)
 
@@ -153,7 +139,7 @@ def tryDownloadFile(remote_file_dir, local_file_dir, file, signature):
 			print("Trying downloading again (" + str(try_dl) + ")...")
 
 		# downloading
-		path = getFile_rsync(remote_file_dir, local_file_dir, file)
+		path = getFile_rsync(app, remote_file_dir, local_file_dir, file)
 
 		if not path:
 			print("The file: " + file + " couldn't be downloaded.")
@@ -169,7 +155,7 @@ def tryDownloadFile(remote_file_dir, local_file_dir, file, signature):
 		else:
 			return True
 
-def tryDownloadPkg(root_remote, root_local, pkg_url, pkg_name, signature):
+def tryDownloadPkg(app, root_remote, root_local, pkg_url, pkg_name, signature):
 	print("Downloading package: " + pkg_name)
 
 	# we'll try 3 times to get the file with the valid signature
@@ -191,7 +177,7 @@ def tryDownloadPkg(root_remote, root_local, pkg_url, pkg_name, signature):
 		if not os.path.isdir(local_pkg_dir):
 			os.makedirs(local_pkg_dir)
 
-		path = getFile_rsync(remote_pkg_dir, local_pkg_dir, pkg_name)
+		path = getFile_rsync(app, remote_pkg_dir, local_pkg_dir, pkg_name)
 
 		if not path:
 			print("The package: " + pkg_name + " couldn't be downloaded.")

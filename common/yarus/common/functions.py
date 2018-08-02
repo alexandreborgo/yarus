@@ -13,6 +13,7 @@ from yarus.common.task import Task
 from yarus.common.group import Group
 from yarus.common.upgradable import Upgradable
 from yarus.common.grouped import Grouped
+from yarus.common.scheduled import Scheduled
 from yarus.common.exceptions import *
 
 def getnewid():
@@ -209,6 +210,26 @@ def getapprovedupgradables(app, client_id):
 def gettask(app, task_id):
 	try:
 		return Task().load(app.database, task_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getscheduled(app, scheduledtask_id):
+	try:
+		return Scheduled().load(app.database, scheduledtask_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+def getuser(app, user_id):
+	try:
+		return User().load(app.database, user_id)
 	except MissingValueException as error:
 		app.log.debug(str(error))
 		return None

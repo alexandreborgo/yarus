@@ -5,21 +5,15 @@
 
 {% block content %}
 
+{% if result.data %}
+
 <div class="panel panel-default">
   <div class="panel-heading">
     Repository's information
-    <div class="pull-right">
-        <div class="btn-group">
-            <a href="{{ url_for('syncrepository', repo_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-                Sync
-            </a>
-        </div>
-    </div>
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
 
-{% if result.data %}
 
   <table class="table">
       <tr>
@@ -35,7 +29,7 @@
         <td>{{ result.data.description }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">URL</td>
+        <td style="font-weight: bold;">Remote root URL of the repository</td>
         <td>{{ result.data.URL }}</td>
       </tr>
       <tr>
@@ -46,6 +40,12 @@
         <td style="font-weight: bold;">Release</td>
         <td>{{ result.data.release }}</td>
       </tr>
+      {% if result.data.path %}
+      <tr>
+        <td style="font-weight: bold;">Path</td>
+        <td>{{ result.data.path }}</td>
+      </tr>
+      {% endif %}
       <tr>
         <td style="font-weight: bold;">Components</td>
         <td>{{ result.data.components }}</td>
@@ -71,10 +71,40 @@
         <td>{{ result.data.manager_id }}</td>
       </tr>
   </table>
-{% endif %}
 
-      </div>
-  </div>
 </div>
+</div>
+</div>
+
+<div class="panel panel-default">
+      <div class="panel-heading">
+          Actions / Tasks / Scheduled tasks
+      </div>
+      <div class="panel-body">
+        <div class="row" style="padding:15px;">      
+            Action:
+            <a href="{{ url_for('editrepository', repo_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+                Edit
+            </a>
+            <a href="{{ url_for('deleterepositories', repos_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+                Delete
+            </a>
+            <br />
+            <br />
+            Task: 
+            <a href="{{ url_for('syncrepository', repo_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+                Sync
+            </a>
+            <br />
+            <br />
+            Schedule a task: 
+            <a href="{{ url_for('addscheduledtask', object_type='repo', object_id=result.data.ID, action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+                Sync
+            </a>
+        </div>
+      </div>
+</div>
+
+{% endif %}
 
 {% endblock %}

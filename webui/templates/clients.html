@@ -21,6 +21,8 @@
       <table id="clients-table">
         <thead>
           <tr>
+            <th></th>
+            <th>ID</th>
             <th>Name</th>
             <th>Description</th>
             <th>Distribution</th>
@@ -31,14 +33,14 @@
         <tbody>
           {% for client in result.data %}
             <tr>
+              <td></td>
+              <td>{{ client.ID }}</td>
               <td>{{ client.name }}</td>
               <td>{{ client.description }}</td>
               <td>{{ client.distribution }}</td>
               <td>{{ client.version }}</td>
               <td>
                 <a href="{{ url_for('seeclient', client_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
-                <a href="{{ url_for('editclient', client_id=client.ID) }}"><span class="fas fa-edit actions"></span></a>
-                <a href="{{ url_for('deleteclient', client_id=client.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
               </td>
             </tr>
             {% endfor %}
@@ -54,7 +56,39 @@
 {% block pagejs %}
 <script>
   $(document).ready( function () {
-    $('#clients-table').DataTable();
+    var table = $('#clients-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('deleteclients', clients_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+
+    table.column( 1 ).visible( false );
   } );
 </script>
 {% endblock %}

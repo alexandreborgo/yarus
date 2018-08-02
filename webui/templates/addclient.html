@@ -6,6 +6,12 @@
 
 {% block content %}
 
+{% if data %}
+{% if data.client.ID %}
+<a href="{{ url_for('seeclient', client_id=data.client.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
+{% endif %}
+{% endif %}
+
 <div class="panel panel-default">
   <div class="panel-heading">
       {% if data %}
@@ -18,11 +24,6 @@
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
-{% if data %}
-{% if data.client.ID %}
-<a href="{{ url_for('seeclient', client_id=data.client.ID) }}">Go back to the system view</a>.<br/><br />
-{% endif %}
-{% endif %}
 <form method="post" action="#">
   <div class="form-group">
     <label for="name">Name</label>

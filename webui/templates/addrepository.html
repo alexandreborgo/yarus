@@ -6,6 +6,14 @@
 
 {% block content %}
 
+{% if data %}
+{% if data.repository.ID %}
+<a href="{{ url_for('seerepository', repo_id=data.repository.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repository view</a>.<br/><br />
+{% endif %}
+{% else %}
+<a href="{{ url_for('repositories') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repositories list</a>.<br/><br />
+{% endif %}
+
 <div class="panel panel-default">
   <div class="panel-heading">
     Add a repository
@@ -15,7 +23,7 @@
       <form method="post" action="#">
         <div class="form-group">
             <label for="type">Repository type</label>
-            <select class="form-control" value="{% if data %}{{ data.repository.type }}{% endif %}" id="type" name="type">
+            <select class="form-control" id="type" name="type">
               <option>YUM</option>
               <option {% if data %}{% if data.repository.type == 'APT' %} selected {% endif %}{% endif %}>APT</option>
             </select>

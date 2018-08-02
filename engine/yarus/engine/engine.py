@@ -1,9 +1,11 @@
 
 from flask import Flask, json, jsonify, request
 from yarus.engine.appengine import AppEngine
+from yarus.engine.crontab import Crontab
 from yarus.common.exceptions import *
 from yarus.common.functions import *
 from yarus.common.user import User
+import requests
 
 app = Flask("Yarus Engine")
 app_engine = AppEngine(debug=True)
@@ -21,7 +23,7 @@ def extract_data():
     return data
 
 # get information about the user who's doing the request
-def getuser():
+def getconnecteduser():
     try:
         data = extract_data()
 
@@ -74,7 +76,7 @@ def getuser():
 def login():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # user is valid so generate a new token for the session
@@ -113,7 +115,7 @@ def checklogin(token):
 def list_repository():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -123,11 +125,12 @@ def list_repository():
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
 @app.route('/api/repository/<string:repo_id>', methods=['GET'])
 def see_repository(repo_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the repository and return the data
@@ -140,11 +143,12 @@ def see_repository(repo_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
 @app.route('/api/repository', methods=['POST'])
 def create_repository():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -178,9 +182,28 @@ def create_repository():
         except InvalidValueException as error:
             app_engine.log.debug(str(error))
             return jsonify({"status": 101, "message": str(error)})
+        
         # check if the repository already exist in the database
         if getrepobyname(app_engine, new_repo.name):
             return jsonify({"status": 102, "message": "Repository with the name " + new_repo.name + " already exists in the database."})
+        
+        # check if we can reach the remote url
+        try:
+            if app_engine.config.px_host != "":            
+                proxies = {
+                    "http"  : app_engine.config.px_host + ":" + str(app_engine.config.px_port)
+                }
+                print(app_engine.config.px_host + ":" + str(app_engine.config.px_port))
+            else:
+                proxies = None
+
+            if requests.get(new_repo.URL, proxies=proxies).status_code != 200:
+                return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_repo.URL + "."})
+                
+        except Exception as exception:
+            print(exception)
+            return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_repo.URL + "."})
+
         # push the new repository to the database
         new_repo.insert(app_engine.database)
         return jsonify({"status": 0, "message": "The repository " + new_repo.name + " was successfully created."})
@@ -188,11 +211,12 @@ def create_repository():
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
 @app.route('/api/repository/<string:repo_id>', methods=['PUT'])
 def update_repository(repo_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the repository exists
@@ -231,20 +255,58 @@ def update_repository(repo_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
-@app.route('/api/repository/<string:repo_id>', methods=['DELETE'])
-def delete_repository(repo_id):
+
+# delete one or more repository
+@app.route('/api/repositories', methods=['DELETE'])
+def delete_repositories():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
-        # check if the repository exists
-        repo = getrepo(app_engine, repo_id)
-        if not repo:
-            return jsonify({"status": 103, "message": "The repository doesn't exist in the database."})
-        # delete the repository
-        repo.delete(app_engine.database)
-        return jsonify({"status": 0, "message": "The repository was successfully deleted."})
+        # get the list of repositories to delete
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        
+        try:
+            for repo_id in data['data']:
+                repo = getrepo(app_engine, repo_id)
+                if not repo:
+                    continue
+                # delete the repo
+                repo.delete(app_engine.database)
+                continue
+            return jsonify({"status": 0, "message": "The repositories were successfully deleted from the database."})
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# get information about user (note: all information except password are returned)
+@app.route('/api/user/<string:user_id>', methods=['GET'])
+def see_user(user_id):
+    try:
+        app_engine.database.connect()
+        user = getconnecteduser()
+        if type(user) != User:
+            return user
+        # get the repository and return the data
+        user2 = getuser(app_engine, user_id)
+        if not user2:
+            return jsonify({"status": 103, "message": "No user found."})
+        user2.password = ""
+        data = user2.todata()
+        return jsonify({"status": 0, "message": "", 'data': data})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
@@ -257,7 +319,7 @@ def delete_repository(repo_id):
 def list_channel():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -271,7 +333,7 @@ def list_channel():
 def see_channel(channel_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the channel and return the data
@@ -288,7 +350,7 @@ def see_channel(channel_id):
 def create_channel():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -328,7 +390,7 @@ def create_channel():
 def update_channel(channel_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the repository exists
@@ -363,7 +425,7 @@ def update_channel(channel_id):
 def delete_channel(channel_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the channel exists
@@ -385,7 +447,7 @@ def delete_channel(channel_id):
 def channel_repositories(channel_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -399,7 +461,7 @@ def channel_repositories(channel_id):
 def channel_add_repository(channel_id, repo_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if repository and channel exists
@@ -425,7 +487,7 @@ def channel_add_repository(channel_id, repo_id):
 def channel_delete_repository(channel_id, repo_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the channel exists
@@ -449,7 +511,7 @@ def channel_delete_repository(channel_id, repo_id):
 def list_client():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -468,7 +530,7 @@ def list_client():
 def see_client(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the channel and return the data
@@ -487,7 +549,7 @@ def see_client(client_id):
 def create_client():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -533,7 +595,7 @@ def create_client():
 def update_client(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the repository exists
@@ -569,21 +631,38 @@ def update_client(client_id):
     finally:
         app_engine.database.close()
 
-# remove the given client from the database
-@app.route('/api/client/<string:client_id>', methods=['DELETE'])
-def delete_client(client_id):
+# remove the given clients from the database
+@app.route('/api/clients/', methods=['DELETE'])
+def delete_clients():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
-        # check if the channel exists
-        client = getclient(app_engine, client_id)
-        if not client:
-            return jsonify({"status": 103, "message": "The client doesn't exist in the database."})
-        # delete the channel
-        client.delete(app_engine.database)
-        return jsonify({"status": 0, "message": "The client was successfully deleted."})
+        # get the list and return it
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        
+        try:
+            for client_id in data['data']:
+                client = getclient(app_engine, client_id)
+                if not client:
+                    continue
+                # delete the client
+                client.delete(app_engine.database)
+                continue
+            return jsonify({"status": 0, "message": "The client where successfully deleted from the database."})
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
@@ -594,7 +673,7 @@ def delete_client(client_id):
 def client_rc(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -611,7 +690,7 @@ def client_rc(client_id):
 def client_tasks(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
        
@@ -637,7 +716,7 @@ def client_tasks(client_id):
 def client_add(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -705,7 +784,7 @@ def client_add(client_id):
 def client_remove(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -769,7 +848,7 @@ def client_remove(client_id):
 def seeupgradable(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         
@@ -791,7 +870,7 @@ def seeupgradable(client_id):
 def approveupgradable(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         
@@ -828,7 +907,7 @@ def approveupgradable(client_id):
 def disapproveupgradable(client_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         
@@ -868,7 +947,7 @@ The following functions deal with group of clients.
 def list_groups():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -885,7 +964,7 @@ def list_groups():
 def see_group(group_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the group and return the data
@@ -902,7 +981,7 @@ def see_group(group_id):
 def create_group():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -942,7 +1021,7 @@ def create_group():
 def update_group(group_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the repository exists
@@ -977,7 +1056,7 @@ def update_group(group_id):
 def delete_group(group_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # check if the group exists
@@ -996,7 +1075,7 @@ def delete_group(group_id):
 def group_clients(group_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -1014,7 +1093,7 @@ def group_clients(group_id):
 def group_link(group_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -1056,7 +1135,7 @@ def group_link(group_id):
 def group_unlink(group_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -1098,14 +1177,12 @@ def group_unlink(group_id):
 The following functions deal with groups.
 """
 
-"""
-The following functions deal with tasks.
-"""
+# list tasks
 @app.route('/api/tasks', methods=['GET'])
 def list_task():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -1119,11 +1196,12 @@ def list_task():
     finally:
         app_engine.database.close()
 
+# see a task
 @app.route('/api/task/<string:task_id>', methods=['GET'])
 def see_task(task_id):
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the repository and return the data
@@ -1136,11 +1214,13 @@ def see_task(task_id):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
+
+# create a task
 @app.route('/api/task', methods=['POST'])
 def create_task():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
 
@@ -1175,14 +1255,12 @@ def create_task():
     finally:
         app_engine.database.close()
 
-#
-# The below function deleted tasks from the database
-# 
+# delete tasks
 @app.route('/api/tasks/', methods=['DELETE'])
 def delete_tasks():
     try:
         app_engine.database.connect()
-        user = getuser()
+        user = getconnecteduser()
         if type(user) != User:
             return user
         # get the list and return it
@@ -1214,6 +1292,123 @@ def delete_tasks():
     finally:
         app_engine.database.close()
 
+# list scheduled tasks
+@app.route('/api/scheduled', methods=['GET'])
+def list_scheduled():
+    try:
+        app_engine.database.connect()
+        user = getconnecteduser()
+        if type(user) != User:
+            return user
+        # get the list and return it
+        data = app_engine.database.get_all_object('yarus_scheduled')
+        if len(data) > 0:
+            return jsonify({"status": 0, "message": "", 'data': data})
+        else:
+            return jsonify({"status": -1, "message": "No scheduled tasks found.", 'data': data})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# create a scheduled task
+@app.route('/api/scheduledtask', methods=['POST'])
+def create_scheduled():
+    try:
+        app_engine.database.connect()
+        user = getconnecteduser()
+        if type(user) != User:
+            return user
+
+        # create a new scheduled task
+        schedule = Scheduled()
+        # extract information from received data about the new scheduled task
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        # validate new data
+        try:
+            schedule.setID(getnewid())
+            schedule.setCreationDate()
+            schedule.last_date = 0
+            schedule.setName(data['scheduledtask']['name'])            
+            schedule.setDescription(data['scheduledtask']['description'])            
+            schedule.setHour(data['scheduledtask']['hour'])            
+            schedule.setMinute(data['scheduledtask']['minute'])            
+            schedule.setDayofmonth(data['scheduledtask']['day_of_month'])            
+            schedule.setMonth(data['scheduledtask']['month'])            
+            schedule.setAction(data['scheduledtask']['task_action'])
+            schedule.setObjectID(data['scheduledtask']['object_id'])
+            schedule.setDayofweek(data['scheduledtask']['day_of_week'])
+            schedule.setDayofplace(data['scheduledtask']['day_place'])
+            schedule.setManagerID(user.ID)
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+        # push the new repository to the database
+        schedule.insert(app_engine.database)
+
+        crontab = Crontab()
+        if not crontab.generate_cron_file(app_engine.database):
+            return jsonify({"status": 1, "message": "The scheduled task " + schedule.name + " has been added but YARUS can't add the cronjob to the cron file."})
+        if not crontab.set_cron_file():
+            return jsonify({"status": 1, "message": "The scheduled task " + schedule.name + " has been added but YARUS can't add the cronjob to the cron file."})
+
+        return jsonify({"status": 0, "message": "The scheduled task " + schedule.name + " has been added."})
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
+
+# delete scheduled tasks
+@app.route('/api/scheduledtasks/', methods=['DELETE'])
+def delete_scheduled():
+    try:
+        app_engine.database.connect()
+        user = getconnecteduser()
+        if type(user) != User:
+            return user
+        # get the list and return it
+        data = extract_data()
+        if not data:
+            return jsonify({"status": 101, "message": "The content must be JSON format."})
+        
+        try:
+            for scheduledtask_id in data['data']:
+                scheduledtask = getscheduled(app_engine, scheduledtask_id)
+                if not scheduledtask:
+                    continue
+                # delete the task
+                scheduledtask.delete(app_engine.database)
+                continue
+
+            crontab = Crontab()
+            if not crontab.generate_cron_file(app_engine.database):
+                return jsonify({"status": 1, "message": "The scheduled task " + scheduledtask.name + " has been removed but YARUS can't generate the new cron file."})
+            if not crontab.set_cron_file():
+                return jsonify({"status": 1, "message": "The scheduled task " + scheduledtask.name + " has been removed but YARUS can't remove the cronjob from the cron file."})
+
+            return jsonify({"status": 0, "message": "The tasks where successfully deleted from the database."})
+        except MissingValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 100, "message": str(error)})
+        except KeyError as error:
+            app_engine.log.debug("Missing key: " + str(error))
+            return jsonify({"status": 100, "message": "Missing key: " + str(error)})
+        except InvalidValueException as error:
+            app_engine.log.debug(str(error))
+            return jsonify({"status": 101, "message": str(error)})
+
+    except DatabaseError:
+        return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
+    finally:
+        app_engine.database.close()
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=6821)

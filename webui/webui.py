@@ -98,7 +98,7 @@ def after_request(response):
 
 # list repositories
 @app.route('/repositories', methods=['GET'])
-def repositories():
+def repositories(status=0, message=""):
     if not checksession():
         return redirect(url_for('home'))
     result = callapi("get", "/repositories")
@@ -111,14 +111,34 @@ def repositories():
                 repository['last_sync'] = "Never synced"
             new_data.append(repository)
         result['data'] = new_data
+
+    if message != "":
+        result['message'] = message
+        result['status'] = status
     return render_template('repositories.html', result=result, connected='1')
 
 # see one repository
 @app.route('/repository/<string:repo_id>/see/', methods=['GET'])
-def seerepository(repo_id):
+def seerepository(repo_id, status=0, message=""):
     if not checksession():
         return redirect(url_for('home'))
     result = callapi("get", "/repository/" + repo_id)
+    if result['status'] == 0:
+        if 'creation_date' in result['data']:
+            result['data']['creation_date'] = str(datetime.datetime.fromtimestamp(int(result['data']['creation_date'])))
+            if result['data']['last_sync'] != "0":
+                result['data']['last_sync'] = str(datetime.datetime.fromtimestamp(int(result['data']['last_sync'])))
+            else:
+                result['data']['last_sync'] = "Never synced"
+        if 'manager_id' in result['data']:
+            result2 = callapi("get", "/user/" + result['data']['manager_id'])
+            if 'data' in result2:
+                result['data']['manager_id'] = result2['data']['name']
+
+        if message != "":
+            result['message'] = message
+            result['status'] = status
+
     return render_template('repository.html', result=result, connected='1')
 
 # add one repository
@@ -166,19 +186,29 @@ def editrepository(repo_id):
         return render_template('addrepository.html', result=result, connected='1', data=data)
 
     result = callapi("get", "/repository/" + repo_id)
-    data = {}
-    data['repository'] = result['data']
-    return render_template('addrepository.html', data=data, connected='1')
-
-# delete one repository
-@app.route('/repository/<string:repo_id>/delete/', methods=['GET'])
-def deleterepository(repo_id):
+    
+    if 'data' in result:
+        data = {}
+        data['repository'] = result['data']
+        return render_template('addrepository.html', data=data, connected='1')
+    else:
+        return redirect(url_for('repositories'))
+    
+# delete one or more repository
+@app.route('/repository/<string:repos_id>', methods=['GET'])
+def deleterepositories(repos_id):
     if not checksession():
         return redirect(url_for('home'))
-    result2 = callapi("delete", "/repository/" + repo_id)
+    data = {}
+    repos = []
+    for repo in repos_id.split(','):
+        if repo != "":
+            repos.append(repo)
+    data['data'] = repos
+    result2 = callapi("delete", "/repositories", data )
     result = callapi("get", "/repositories")
     result['message'] = result2['message']
-    return render_template('repositories.html', result=result, connected='1')
+    return repositories(result['status'], result['message'])
 
 # create a task sync_repo to sync the repository
 @app.route('/repository/<string:repo_id>/sync/', methods=['GET'])
@@ -193,7 +223,7 @@ def syncrepository(repo_id):
     result2 = callapi("post", "/task", data)
     result = callapi("get", "/repository/" + repo_id)
     result['message'] = result2['message']
-    return render_template('repository.html', result=result, connected='1')
+    return seerepository(repo_id, result['status'], result['message'])
 
 # list channels
 @app.route('/channels', methods=['GET'])
@@ -338,7 +368,7 @@ def seeclient(client_id, status=0, message=""):
         return redirect(url_for('home'))
 
     result = callapi("get", "/client/" + client_id)
-    print(result['status'])
+    
     if result['status'] == 0:
         result2 = callapi("get", "/client/" + client_id + "/rc")
         result['data']['linked'] = result2['data']
@@ -399,12 +429,18 @@ def editclient(client_id):
     data['client'] = result['data']
     return render_template('addclient.html', data=data, connected='1')
 
-# remove one client
-@app.route('/client/<string:client_id>/delete/', methods=['GET'])
-def deleteclient(client_id):
+# remove clients
+@app.route('/clients/<string:clients_id>', methods=['GET'])
+def deleteclients(clients_id):
     if not checksession():
         return redirect(url_for('home'))
-    result2 = callapi("delete", "/client/" + client_id)
+    data = {}
+    clients = []
+    for client in clients_id.split(','):
+        if client != "":
+            clients.append(client)
+    data['data'] = clients
+    result2 = callapi("delete", "/clients/", data )
     result = callapi("get", "/clients")
     result['message'] = result2['message']
     return render_template('clients.html', result=result, connected='1')
@@ -755,6 +791,56 @@ def deletetasks(tasks_id):
     result = callapi("get", "/tasks")
     result['message'] = result2['message']
     return render_template('tasks.html', result=result, connected='1')
+
+# list scheduled tasks
+@app.route('/scheduler', methods=['GET'])
+def scheduler():
+    if not checksession():
+        return redirect(url_for('home'))
+
+    result = callapi("get", "/scheduled")
+    return render_template('scheduler.html', result=result, connected='1')
+
+# create a scheduled task
+@app.route('/scheduler/add/<string:object_type>/<string:object_id>/<string:action>', methods=['GET', 'POST'])
+def addscheduledtask(object_type, object_id, action):
+    if not checksession():
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        data = {}
+        data['scheduledtask'] = {}
+        data['scheduledtask']['name'] = request.form['name']
+        data['scheduledtask']['description'] = request.form['description']
+        data['scheduledtask']['task_action'] = request.form['task_action']
+        data['scheduledtask']['object_id'] = request.form['object_id']
+        data['scheduledtask']['hour'] = request.form['hour']
+        data['scheduledtask']['minute'] = request.form['minute']
+        data['scheduledtask']['day_of_month'] = request.form['day_of_month']
+        data['scheduledtask']['month'] = request.form['month']
+        data['scheduledtask']['day_of_week'] = request.form['day_of_week']
+        data['scheduledtask']['day_place'] = request.form['day_place']
+        result = callapi("post", "/scheduledtask", data)
+        return render_template('addscheduledtask.html', result=result, connected='1', object_type=object_type, object_id=object_id, task_action=action, data=data)
+
+    return render_template('addscheduledtask.html', connected='1', object_type=object_type, object_id=object_id, task_action=action)
+
+# delete scheduled tasks
+@app.route('/scheduler/<string:scheduledtasks_id>', methods=['GET'])
+def deletescheduledtasks(scheduledtasks_id):
+    if not checksession():
+        return redirect(url_for('home'))
+    data = {}
+    tasks = []
+    for task in scheduledtasks_id.split(','):
+        if task != "":
+            tasks.append(task)
+    data['data'] = tasks
+    result2 = callapi("delete", "/scheduledtasks/", data)
+    result = callapi("get", "/scheduled")
+    result['message'] = result2['message']
+    return render_template('scheduler.html', result=result, connected='1')
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=8000)

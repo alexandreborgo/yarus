@@ -136,8 +136,8 @@ def sync_repo(app, repo_id):
 
 		local_release_sig = getSigFile(dist_local + "/Release")
 
-		release = getFile_rsync(dist_remote, dist_local, "Release")
-		releasegpg = getFile_rsync(dist_remote, dist_local, "Release.gpg")
+		release = getFile_rsync(app, dist_remote, dist_local, "Release")
+		releasegpg = getFile_rsync(app, dist_remote, dist_local, "Release.gpg")
 
 		if release and releasegpg:
 			app.log.logtask("Release and Release.gpg found.")
@@ -149,7 +149,7 @@ def sync_repo(app, repo_id):
 				return True
 
 		else:
-			inrelease = getFile_rsync(dist_remote, dist_local, "InRelease")
+			inrelease = getFile_rsync(app, dist_remote, dist_local, "InRelease")
 
 			if inrelease:
 				app.log.logtask("InRelease find")
@@ -223,7 +223,7 @@ def sync_repo(app, repo_id):
 			if checkingSignature(local_file_dir + "/" + file, item[0]):
 				continue
 
-			if not tryDownloadFile(remote_file_dir, local_file_dir, file, item[0]):
+			if not tryDownloadFile(app, remote_file_dir, local_file_dir, file, item[0]):
 				app.log.logtask("Couldn't download the metafile: " + file)
 
 		# ------------------------------------------------------------------------------------------------------------------------------
@@ -286,7 +286,7 @@ def sync_repo(app, repo_id):
 						line = packages.readline()
 						continue
 					else:
-						if not tryDownloadPkg(root_remote, root_local, pkg_url, pkg_name, signature):
+						if not tryDownloadPkg(app, root_remote, root_local, pkg_url, pkg_name, signature):
 							app.log.logtask("Couldn't download the package: " + pkg_name)
 						line = packages.readline()
 
@@ -319,7 +319,7 @@ def sync_repo(app, repo_id):
 				app.log.logtask("Syncing: " + comp + "/" + arch)
 
 				# starting sync
-				result = getDir_rsync(url, path)
+				result = getDir_rsync(app, url, path)
 
 				if result != 0:
 					app.log.logtask("Error while trying to sync the repository, RSYNC failled to download the whole repository or a part.")
