@@ -5,9 +5,10 @@ database:
   database: yarus
 
 proxy:
-  host: 127.0.0.1
-  username: userproxy
-  password: userproxypass
+  host: proxy.reseau.ratp
+  port: 80
+  username: 
+  password: 
 
 engine:
   address: 155.6.102.161

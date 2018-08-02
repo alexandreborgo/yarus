@@ -7,17 +7,6 @@ from yarus.common.exceptions import InvalidValueException
 
 class Config:
 
-	db_host = ''
-	db_user = ''
-	db_password = ''
-	db_database = ''
-
-	lg_filter = ''
-	lg_file = ''
-
-	sv_address = ''
-	sv_port = ''
-
 	app = None
 
 	# export config value from /etc/yarus/config.yml
@@ -84,6 +73,35 @@ class Config:
 				# local repository information: folder
 				self.rp_folder = "/var/www/html/repos"
 
+				# proxy
+				if 'proxy' in config:
+					
+					if 'host' in config['proxy']:
+						self.px_host = config['proxy']['host']
+					else:
+						raise(MissingValueException("Missing proxy's host information."))
+
+					if 'port' in config['proxy']:
+						self.px_port = config['proxy']['port']
+					else:
+						raise(MissingValueException("Missing proxy's port information."))
+
+					if 'username' in config['proxy']:
+						self.px_username = config['proxy']['username']
+					else:
+						raise(MissingValueException("Missing proxy's username information."))
+
+					if 'password' in config['proxy']:
+						self.px_password = config['proxy']['password']
+					else:
+						raise(MissingValueException("Missing proxy's user password information."))
+
+				else:
+					self.px_host = ""
+					self.px_port = ""
+					self.px_username = ""
+					self.px_password = ""
+
 			# config for all system
 
 			# engine system related information: address, port
@@ -98,7 +116,7 @@ class Config:
 				raise(MissingValueException("Missing engine's information"))
 
 		except MissingValueException as error:
-			raise(MissingValueException("Missing information in the configuration file."))
+			print(error)
 			return False
 
 		return True
