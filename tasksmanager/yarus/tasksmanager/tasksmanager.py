@@ -43,17 +43,17 @@ class YarusTasksManager():
 		self.alterTaskStatus(task, 'running')
 
 		if task.action in TASK_ACTIONS:
-			try:
-				action = getattr(actions, task.action)
-				result = action(self.app, task.object_id)
-			except Exception as error:
+			"""try:"""
+			action = getattr(actions, task.action)
+			result = action(self.app, task.object_id)
+			"""except Exception as error:
 				self.alterTaskStatus(task, 'failed')
 				self.app.log.logtask("The following error occured during the task :")
 				self.app.log.logtask(error)
 				task.setEndTime()
 				task.update(self.app.database)
 				self.app.log.logtask("Executed in " + str(task.end_time - task.start_time) + " seconds.")
-				return False
+				return False"""
 
 			if result:
 				self.alterTaskStatus(task, 'completed')

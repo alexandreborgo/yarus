@@ -189,7 +189,7 @@ def create_repository():
         
         # check if we can reach the remote url
         try:
-            if app_engine.config.px_host != "":            
+            if app_engine.config.px_host != "":
                 proxies = {
                     "http"  : app_engine.config.px_host + ":" + str(app_engine.config.px_port)
                 }
@@ -584,7 +584,19 @@ def create_client():
             return jsonify({"status": 102, "message": "Client with the IP " + client.IP + " already exists in the database."})
         # push the new repository to the database
         client.insert(app_engine.database)
-        return jsonify({"status": 0, "message": "The client " + client.name + " was successfully created."})
+
+        repositories = getcorrespondingrepositories(app_engine, client.distribution, client.version)
+        if not repositories:            
+            return jsonify({"status": 0, "message": "The client " + client.name + " was successfully created but no corresponding repositories were found in the database."})
+
+        for repository in repositories:
+            # create the bind
+            new_bind = Bind(client.ID, repo_id=repository['ID'])
+            # push the bind to the database
+            new_bind.insert(app_engine.database)
+
+        return jsonify({"status": 0, "message": "The client " + client.name + " was successfully created. And was linked to corresponding repositories."})
+        
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:

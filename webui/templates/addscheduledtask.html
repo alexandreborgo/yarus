@@ -8,6 +8,10 @@
 {% if object_type %}
 {% if object_type == 'repo' %}
 <a href="{{ url_for('seerepository', repo_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repository view</a>.<br/><br />
+{% elif object_type == 'client' %}
+<a href="{{ url_for('seeclient', client_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the client view</a>.<br/><br />
+{% elif object_type == 'group' %}
+<a href="{{ url_for('seegroup', group_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the group view</a>.<br/><br />
 {% endif %}
 {% endif %}
 <div class="panel panel-default">

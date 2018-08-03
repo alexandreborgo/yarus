@@ -246,3 +246,14 @@ def getclienttasks(app, client_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+
+def getcorrespondingrepositories(app, distribution, release):
+	try:
+		return app.database.get_corresponding_repositories(distribution, release)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+

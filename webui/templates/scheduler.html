@@ -19,7 +19,7 @@
         <td>Name</td>
         <td>Description</td>
         <td>Action</td>
-        <td>Object ID</td>
+        <td>Object</td>
         <td>Creation date</td>
         <td>Actions</td>
       </tr>
@@ -35,7 +35,7 @@
           <td>{{ scheduledtask.object_id }}</td>
           <td>{{ scheduledtask.creation_date }}</td>
           <td>
-            <a href="{{ url_for('seetask', task_id=scheduledtask.ID) }}"><span class="fas fa-eye actions"></span></a>
+            <a href=""><span class="fas fa-eye actions"></span></a>
           </td>
         </tr>
       {% endfor %}

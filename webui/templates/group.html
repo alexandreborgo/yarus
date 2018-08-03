@@ -41,34 +41,57 @@
 </div>
 
 <div class="panel panel-default">
-    <div class="panel-heading">
-      Actions
+  <div class="panel-heading">
+    Actions / Tasks / Scheduled tasks
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">      
+        Action:
+        <a href="{{ url_for('editgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Edit
+        </a>
+        <br />
+        <br />
+        Task: 
+        <a href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          Check
+        </a>
+    
+        <a href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          Configure
+        </a>
+    
+        <a href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            List upgradable packages
+        </a>
+    
+        <a href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          Update approved
+        </a>
+    
+        <a href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          Update all
+        </a>
+        <br />
+        <br />
+        Schedule task:
+        <a href="{{ url_for('addscheduledtask', object_type='group', object_id=result.data.ID, action='check_group') }}" type="button" class="btn btn-default btn-xs">
+          Check
+        </a>
+        <a href="{{ url_for('addscheduledtask', object_type='group', object_id=result.data.ID, action='config_group') }}" type="button" class="btn btn-default btn-xs">
+          Configure
+        </a>
+        <a href="{{ url_for('addscheduledtask', object_type='group', object_id=result.data.ID, action='upgradable_group') }}" type="button" class="btn btn-default btn-xs">
+          List upgradable packages
+        </a>
+        <a href="{{ url_for('addscheduledtask', object_type='group', object_id=result.data.ID, action='approved_update_group') }}" type="button" class="btn btn-default btn-xs">
+          Update approved
+        </a>
+        <a href="{{ url_for('addscheduledtask', object_type='group', object_id=result.data.ID, action='all_update_group') }}" type="button" class="btn btn-default btn-xs">
+          Update all
+        </a>
     </div>
-    <div class="panel-body">
-      <div class="row" style="padding:15px;">      
-        
-          <a href="{{ url_for('checkgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-              Check
-          </a>
-      
-      
-          <a href="{{ url_for('configgroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-              Configure
-          </a>
-      
-          <a href="{{ url_for('upgradablegroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-              List upgradable packages
-          </a>
-      
-          <a href="{{ url_for('approvedupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-            Update approved
-          </a>
-      
-          <a href="{{ url_for('allupdategroup', group_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
-            Update all
-          </a>
-      </div>
-    </div>
+  </div>
 </div>
 
 <div class="panel panel-default">

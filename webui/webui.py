@@ -752,7 +752,25 @@ def tasks():
             if task['end_time'] != 0:
                 task['end_time'] = str(datetime.datetime.fromtimestamp(task['end_time']))
             else:
-                task['end_time'] = "Not finished"
+                task['end_time'] = "Not finished"           
+        
+            if task['action'] == 'sync_repo':
+                result_tmp = callapi("get", "/repository/" + task['object_id'])
+                task['object_id'] = "Repository: " + result_tmp['data']['name']
+                task['action'] = "Sync repository"        
+            elif task['action'] == 'check_client':
+                result_tmp = callapi("get", "/client/" + task['object_id'])
+                task['object_id'] = "Client: " + result_tmp['data']['name']
+                task['action'] = "Check client"        
+            elif task['action'] == 'config_client':
+                result_tmp = callapi("get", "/client/" + task['object_id'])
+                task['object_id'] = "Client: " + result_tmp['data']['name']
+                task['action'] = "Configure client"        
+            elif task['action'] == 'upgradable_client':
+                result_tmp = callapi("get", "/client/" + task['object_id'])
+                task['object_id'] = "Client: " + result_tmp['data']['name']
+                task['action'] = "List upgradable packages"
+
             new_data.append(task)
         result['data'] = new_data
     return render_template('tasks.html', result=result, connected='1')
@@ -799,6 +817,19 @@ def scheduler():
         return redirect(url_for('home'))
 
     result = callapi("get", "/scheduled")
+
+    if 'data' in result:
+        new_data = []
+        for scheduledtask in result['data']:            
+            scheduledtask['creation_date'] = str(datetime.datetime.fromtimestamp(int(scheduledtask['creation_date'])))
+            if scheduledtask['task_action'] == 'sync_repo':
+                result_tmp = callapi("get", "/repository/" + scheduledtask['object_id'])
+                scheduledtask['object_id'] = "Repository: " + result_tmp['data']['name']
+                scheduledtask['task_action'] = "Sync repository"
+
+            new_data.append(scheduledtask)
+        result['data'] = new_data
+
     return render_template('scheduler.html', result=result, connected='1')
 
 # create a scheduled task

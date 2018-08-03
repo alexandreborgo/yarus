@@ -167,3 +167,7 @@ class Mysql:
 	def get_scheduled_tasks(self):
 		request = "SELECT * FROM yarus_scheduled"
 		return self.get_all(request)
+
+	def get_corresponding_repositories(self, distribution, release):
+		request = "SELECT * FROM yarus_repository WHERE repository='" + distribution + "' AND `release`='" + release + "'"
+		return self.get_all(request)

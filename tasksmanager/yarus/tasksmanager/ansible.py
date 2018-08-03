@@ -103,6 +103,7 @@ class Ansible:
 			playbook.write("    yum:\n")
 		elif client.type == 'APT':
 			playbook.write("    apt:\n")
+			
 		playbook.write("     name: \"{{ item }}\"\n")
 		playbook.write("     state: latest\n")
 		playbook.write("    with_items:  \n")

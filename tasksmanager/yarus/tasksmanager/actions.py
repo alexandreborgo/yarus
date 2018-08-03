@@ -517,7 +517,12 @@ def upgradable_client(app, client_id):
 		return False
 
 	response = json.loads(response)
+	print(response)
 	lines = getAnsibleOutput(response, client.IP, 'upgradable')
+
+	if not lines:
+		app.log.logtask("Error parsing Ansible response.")
+		return False
 
 	if len(lines) <= 0:
 		app.log.logtask("No packages need to be updated.")
