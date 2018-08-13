@@ -4,6 +4,17 @@
 {% block pagetitle %}<i class="fas fa-cubes"></i> Group{% endblock %}
 
 {% block content %}
+
+{% if data %}
+{% if data.group.ID %}
+<a href="{{ url_for('see_object', object_name='group', object_id=data.group.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the group view</a>.<br/><br />
+{% else %}
+<a href="{{ url_for('list_object', object_name='group') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the groups list</a>.<br/><br />
+{% endif %}
+{% else %}
+<a href="{{ url_for('list_object', object_name='group') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the groups list</a>.<br/><br />
+{% endif %}
+
 <div class="panel panel-default">
   <div class="panel-heading">
     Add a group

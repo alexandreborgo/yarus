@@ -20,7 +20,7 @@ class Mysql:
 			if not self.connection.is_connected():
 				raise(DatabaseError("Unable to connect to the MySQL database."))
 
-			self.cursor = self.connection.cursor(dictionary=True)
+			self.cursor = self.connection.cursor(buffered=True, dictionary=True)
 
 			if not self.cursor:
 				raise(DatabaseError("Can't initiate cursor."))
@@ -34,13 +34,13 @@ class Mysql:
 			self.cursor.close()
 			self.connection.close()
 		except Exception as error:
-			print(error)
 			raise(DatabaseError("Unable to close the connection to the database correctly."))
 
 	def execute(self, request):
 		try:
 			self.cursor.execute(request)
 			self.connection.commit()
+
 			return True
 		except Error as error:
 			self.app.log.error(str(error))
@@ -90,6 +90,15 @@ class Mysql:
 		for k, v in values.items():
 			request = "DELETE FROM " + object_table + " WHERE " + k + "='" + v + "'"
 			self.execute(request)
+	
+	def get_object_tasks(self, object_id):
+		request = "SELECT * FROM yarus_task WHERE object_id='" + object_id + "'"
+		return self.get_all(request)
+	
+	def get_object_scheduled(self, object_id):
+		request = "SELECT * FROM yarus_scheduled WHERE object_id='" + object_id + "'"
+		return self.get_all(request)
+
 
 	def get_user_t(self, token):
 		request = "SELECT ID,token_expire FROM yarus_user WHERE token='" + token + "'"
@@ -109,7 +118,7 @@ class Mysql:
 		request = "SELECT * FROM yarus_link WHERE repo_id='" + repo_id + "' AND channel_id='" + channel_id + "'"
 		return self.get_one(request)
 	def get_links(self, channel_id):
-		request = "SELECT yarus_repository.ID, yarus_repository.name, yarus_repository.description FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
+		request = "SELECT * FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
 		return self.get_all(request)
 	def delete_link(self, channel_id, repo_id):
 		request = "DELETE FROM yarus_link WHERE repo_id='" + repo_id + "' AND channel_id='" + channel_id + "'"
@@ -145,9 +154,6 @@ class Mysql:
 		return self.get_all(request)
 	def get_approved_upgradables(self, client_id):
 		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
-		return self.get_all(request)
-	def get_client_tasks(self, client_id):
-		request = "SELECT * FROM yarus_task WHERE object_id='" + client_id + "'"
 		return self.get_all(request)
 
 	def get_pending_task(self):

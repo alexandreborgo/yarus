@@ -8,10 +8,12 @@
 
 {% if data %}
 {% if data.repository.ID %}
-<a href="{{ url_for('seerepository', repo_id=data.repository.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repository view</a>.<br/><br />
+<a href="{{ url_for('see_object', object_name='repository', object_id=data.repository.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repository view</a>.<br/><br />
+{% else %}
+<a href="{{ url_for('list_object', object_name='repository') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repositories list</a>.<br/><br />
 {% endif %}
 {% else %}
-<a href="{{ url_for('repositories') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repositories list</a>.<br/><br />
+<a href="{{ url_for('list_object', object_name='repository') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repositories list</a>.<br/><br />
 {% endif %}
 
 <div class="panel panel-default">
@@ -55,7 +57,7 @@
               </div>
               <div class="form-group">
                 <label for="distribution">Distribution</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.repository }}{% endif %}" id="distribution" name="distribution" placeholder="exemple: ubuntu">
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.distribution }}{% endif %}" id="distribution" name="distribution" placeholder="exemple: ubuntu">
                 <div class="invalid-feedback">
                     Must not be empty.
                 </div>
@@ -98,13 +100,15 @@
 {% endblock %}
 
 {% block pagejs %}
-<script>    
+<script>
   {% if data %}
     {% if data.repository.type == 'APT' %} 
       $('#path').show(); 
     {% else %}
       $('#path').hide();
     {% endif %}
+  {% else %}
+    $('#path').hide();
   {% endif %}      
     
     $('#type').on('change', function() {

@@ -32,7 +32,6 @@ def callapi(method, path, more_data=None):
         try:
             response = call(server + path, data=data)
         except requests.exceptions.ConnectionError as error:
-            print(error)
             return {"status": 1,  "message": "Error connecting YARUS Engine, is it running?"}
     else:
         return False
@@ -63,7 +62,6 @@ def home():
                 if 'data' in result:
                     if 'token' in result['data']:
                         session['token'] = result['data']['token']
-                        print(session['token'])
             else:
                 return render_template('login.html', invalid='1')
         else:
@@ -89,755 +87,42 @@ def page_not_found(error):
         return redirect(url_for('home'))
     return render_template('404.html', connected='1'), 404
 
-# fonction that is executed after the view is called
+@app.before_request
+def before_request():
+    if request.endpoint != 'home':
+        if not checksession():
+            return redirect(url_for('home'))
+
+
 @app.after_request
 def after_request(response):
     # change the Content-Security-Policy header to allow the web browser to get Bootstrap Datatable and other useful tools for the interface (CSS ans JS files)
     response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https://debug.datatables.net/ https://api.datatables.net/ https://ajax.googleapis.com/ https://stackpath.bootstrapcdn.com/ https://cdnjs.cloudflare.com/ http://cdnjs.cloudflare.com/ https://use.fontawesome.com/ https://cdn.datatables.net/ http://cdn.datatables.net/"
     return response
 
-# list repositories
-@app.route('/repositories', methods=['GET'])
-def repositories(status=0, message=""):
-    if not checksession():
-        return redirect(url_for('home'))
-    result = callapi("get", "/repositories")
-    if 'data' in result:
-        new_data = []
-        for repository in result['data']:
-            if repository['last_sync'] != 0:
-                repository['last_sync'] = str(datetime.datetime.fromtimestamp(repository['last_sync']))
-            else:
-                repository['last_sync'] = "Never synced"
-            new_data.append(repository)
-        result['data'] = new_data
-
-    if message != "":
-        result['message'] = message
-        result['status'] = status
-    return render_template('repositories.html', result=result, connected='1')
-
-# see one repository
-@app.route('/repository/<string:repo_id>/see/', methods=['GET'])
-def seerepository(repo_id, status=0, message=""):
-    if not checksession():
-        return redirect(url_for('home'))
-    result = callapi("get", "/repository/" + repo_id)
-    if result['status'] == 0:
-        if 'creation_date' in result['data']:
-            result['data']['creation_date'] = str(datetime.datetime.fromtimestamp(int(result['data']['creation_date'])))
-            if result['data']['last_sync'] != "0":
-                result['data']['last_sync'] = str(datetime.datetime.fromtimestamp(int(result['data']['last_sync'])))
-            else:
-                result['data']['last_sync'] = "Never synced"
-        if 'manager_id' in result['data']:
-            result2 = callapi("get", "/user/" + result['data']['manager_id'])
-            if 'data' in result2:
-                result['data']['manager_id'] = result2['data']['name']
-
-        if message != "":
-            result['message'] = message
-            result['status'] = status
-
-    return render_template('repository.html', result=result, connected='1')
-
-# add one repository
-@app.route('/repository/add/', methods=['GET', 'POST'])
-def addrepository():
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['repository'] = {}
-        data['repository']['URL'] = request.form['URL']
-        data['repository']['type'] = request.form['type']
-        data['repository']['repository'] = request.form['distribution']
-        data['repository']['release'] = request.form['release']
-        data['repository']['path'] = request.form['path']
-        data['repository']['components'] = request.form['components']
-        data['repository']['architectures'] = request.form['architectures']
-        data['repository']['name'] = request.form['name']
-        data['repository']['description'] = request.form['description']
-        result = callapi("post", "/repository", data)
-        return render_template('addrepository.html', result=result, connected='1', data=data)
-
-    return render_template('addrepository.html', connected='1')
-
-# edit one repository
-@app.route('/repository/<string:repo_id>/edit/', methods=['GET', 'POST'])
-def editrepository(repo_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['repository'] = {}
-        data['repository']['URL'] = request.form['URL']
-        data['repository']['type'] = request.form['type']
-        data['repository']['repository'] = request.form['distribution']
-        data['repository']['release'] = request.form['release']
-        data['repository']['path'] = request.form['path']
-        data['repository']['components'] = request.form['components']
-        data['repository']['architectures'] = request.form['architectures']
-        data['repository']['name'] = request.form['name']
-        data['repository']['description'] = request.form['description']
-        result = callapi("put", "/repository/" + repo_id, data)
-        return render_template('addrepository.html', result=result, connected='1', data=data)
-
-    result = callapi("get", "/repository/" + repo_id)
+# add a task
+@app.route("/<string:object_name>/<string:object_id>/task/<string:task_action>", methods=['GET'])
+def add_task(object_name, object_id, task_action):
+    data = {}
+    new_task = {}
+    new_task['action'] = task_action
+    new_task['object_id'] = object_id
+    data['task'] = new_task
+    result = callapi("post", "/create/task", data)
     
-    if 'data' in result:
-        data = {}
-        data['repository'] = result['data']
-        return render_template('addrepository.html', data=data, connected='1')
-    else:
-        return redirect(url_for('repositories'))
+    if object_name == 'repository':
+        return see_object('repository', object_id, result['status'], result['message'])
+    elif object_name == 'channel':
+        return see_object('channel', object_id, result['status'], result['message'])
+    elif object_name == 'client':
+        return see_object('client', object_id, result['status'], result['message'])
+    elif object_name == 'group':
+        return see_object('group', object_id, result['status'], result['message'])
+
+# add a scheduled task
+@app.route("/<string:object_name>/<string:object_id>/scheduled/<string:task_action>/", methods=['GET', 'POST'])
+def add_scheduled(object_name, object_id, task_action):
     
-# delete one or more repository
-@app.route('/repository/<string:repos_id>', methods=['GET'])
-def deleterepositories(repos_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    repos = []
-    for repo in repos_id.split(','):
-        if repo != "":
-            repos.append(repo)
-    data['data'] = repos
-    result2 = callapi("delete", "/repositories", data )
-    result = callapi("get", "/repositories")
-    result['message'] = result2['message']
-    return repositories(result['status'], result['message'])
-
-# create a task sync_repo to sync the repository
-@app.route('/repository/<string:repo_id>/sync/', methods=['GET'])
-def syncrepository(repo_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'sync_repo'
-    new_task['object_id'] = repo_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    result = callapi("get", "/repository/" + repo_id)
-    result['message'] = result2['message']
-    return seerepository(repo_id, result['status'], result['message'])
-
-# list channels
-@app.route('/channels', methods=['GET'])
-def channels():
-    if not checksession():
-        return redirect(url_for('home'))
-    result = callapi("get", "/channels")
-    if 'data' in result:
-        new_data = []
-        for channel in result['data']:
-            if channel['last_sync'] != 0:
-                pass #channel['last_sync'] = str(datetime.datetime.fromtimestamp(channel['last_sync']))
-            else:
-                channel['last_sync'] = "Never synced"
-            new_data.append(channel)
-        result['data'] = new_data
-    return render_template('channels.html', result=result, connected='1')
-
-# see one channel
-@app.route('/channel/<string:channel_id>/see/', methods=['GET'])
-def seechannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/channel/" + channel_id)
-    result2 = callapi("get", "/channel/" + channel_id + "/repositories")
-    result['data']['links'] = result2['data']
-    result2 = callapi("get", "/repositories")
-    result['data']['repositories'] = result2['data']
-    return render_template('channel.html', result=result, connected='1')
-
-# create a channel
-@app.route('/channel/add/', methods=['GET', 'POST'])
-def addchannel():
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['channel'] = {}
-        data['channel']['name'] = request.form['name']
-        data['channel']['description'] = request.form['description']
-        result = callapi("post", "/channel", data)
-        return render_template('addchannel.html', result=result, connected='1', data=data)
-
-    return render_template('addchannel.html', connected='1')
-
-# edit one channel
-@app.route('/channel/<string:channel_id>/edit/', methods=['GET', 'POST'])
-def editchannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['channel'] = {}
-        data['channel']['name'] = request.form['name']
-        data['channel']['description'] = request.form['description']
-        result = callapi("put", "/channel/" + channel_id, data)
-        return render_template('addchannel.html', result=result, connected='1', data=data)
-
-    result = callapi("get", "/channel/" + channel_id)
-    data = {}
-    data['channel'] = result['data']
-    return render_template('addchannel.html', data=data, connected='1')
-
-# delete one channel
-@app.route('/channel/<string:channel_id>/delete/', methods=['GET'])
-def deletechannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    result2 = callapi("delete", "/channel/" + channel_id)
-    result = callapi("get", "/channels")
-    result['message'] = result2['message']
-    return render_template('channels.html', result=result, connected='1')
-
-# add a repository to a given channel
-@app.route('/channel/<string:channel_id>/link/', methods=['POST'])
-def linkchannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/channel/" + channel_id)
-
-    if request.method == 'POST':
-        if request.form['repository']:
-            result2 = callapi("post", "/channel/" + channel_id + "/repository/" + request.form['repository'])
-            result['message'] = result2['message']
-            result['status'] = result2['status']
-
-    result2 = callapi("get", "/channel/" + channel_id + "/repositories")
-    result['data']['links'] = result2['data']
-    result2 = callapi("get", "/repositories")
-    result['data']['repositories'] = result2['data']
-    return render_template('channel.html', result=result, connected='1')
-
-# remove a repository from a channel
-@app.route('/channel/<string:channel_id>/unlink/<string:repo_id>', methods=['GET'])
-def unlinkchannel(channel_id, repo_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/channel/" + channel_id)
-
-    result2 = callapi("delete", "/channel/" + channel_id + "/repository/" + repo_id)
-    result['message'] = result2['message']
-    result['status'] = result2['status']
-
-    result2 = callapi("get", "/channel/" + channel_id + "/repositories")
-    result['data']['links'] = result2['data']
-    result2 = callapi("get", "/repositories")
-    result['data']['repositories'] = result2['data']
-    return render_template('channel.html', result=result, connected='1')
-
-# create a task sync_channel to sync all the repositories inside the channel
-@app.route('/channel/<string:channel_id>/sync/', methods=['GET'])
-def syncchannel(channel_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'sync_channel'
-    new_task['object_id'] = channel_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    result = callapi("get", "/channel/" + channel_id)
-    result['message'] = result2['message']
-    return render_template('channel.html', result=result, connected='1')
-
-# list clients
-@app.route('/clients', methods=['GET'])
-def clients():
-    if not checksession():
-        return redirect(url_for('home'))
-    result = callapi("get", "/clients")
-    return render_template('clients.html', result=result, connected='1')
-
-# see one client
-@app.route('/client/<string:client_id>/see/', methods=['GET'])
-def seeclient(client_id, status=0, message=""):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/client/" + client_id)
-    
-    if result['status'] == 0:
-        result2 = callapi("get", "/client/" + client_id + "/rc")
-        result['data']['linked'] = result2['data']
-        result2 = callapi("get", "/channels")
-        result['data']['channels'] = result2['data']
-        result2 = callapi("get", "/repositories")
-        result['data']['repositories'] = result2['data']
-        result2 = callapi("get", "/client/" + client_id + "/upgradable/")
-        result['data']['upgradables'] = result2['data']
-        result2 = callapi("get", "/client/" + client_id + "/tasks")
-        result['data']['tasks'] = result2['data']
-        if message != "":
-            result['message'] = message
-            result['status'] = status
-
-    return render_template('client.html', result=result, connected='1')
-
-# add a client
-@app.route('/client/add/', methods=['GET', 'POST'])
-def addclient():
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['client'] = {}
-        data['client']['name'] = request.form['name']
-        data['client']['description'] = request.form['description']
-        data['client']['IP'] = request.form['IP']
-        data['client']['version'] = request.form['version']
-        data['client']['type'] = request.form['type']
-        data['client']['distribution'] = request.form['distribution']
-        result = callapi("post", "/client", data)
-        return render_template('addclient.html', result=result, connected='1', data=data)
-
-    return render_template('addclient.html', connected='1')
-
-# edit one client
-@app.route('/client/<string:client_id>/edit/', methods=['GET', 'POST'])
-def editclient(client_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['client'] = {}
-        data['client']['name'] = request.form['name']
-        data['client']['description'] = request.form['description']
-        data['client']['IP'] = request.form['IP']
-        data['client']['version'] = request.form['version']
-        data['client']['type'] = request.form['type']
-        data['client']['distribution'] = request.form['distribution']
-        result = callapi("put", "/client/" + client_id, data)
-        return render_template('addclient.html', result=result, connected='1', data=data)
-
-    result = callapi("get", "/client/" + client_id)
-    data = {}
-    data['client'] = result['data']
-    return render_template('addclient.html', data=data, connected='1')
-
-# remove clients
-@app.route('/clients/<string:clients_id>', methods=['GET'])
-def deleteclients(clients_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    clients = []
-    for client in clients_id.split(','):
-        if client != "":
-            clients.append(client)
-    data['data'] = clients
-    result2 = callapi("delete", "/clients/", data )
-    result = callapi("get", "/clients")
-    result['message'] = result2['message']
-    return render_template('clients.html', result=result, connected='1')
-
-# link a client to a repository/channel
-@app.route('/client/<string:client_id>/link/<string:rc_id>', methods=['GET'])
-def linkclient(client_id, rc_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    rcs = []
-    for rc in rc_id.split(','):
-        if rc != "":
-            rcs.append(rc)
-    data['data'] = rcs
-    result = callapi("post", "/client/" + client_id + "/link/", data)
-    return seeclient(client_id, result['status'], result['message'])
-
-# unlink a client to a repository/channel
-@app.route('/client/<string:client_id>/unlink/<string:rc_id>', methods=['GET'])
-def unlinkclient(client_id, rc_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    rcs = []
-    for rc in rc_id.split(','):
-        if rc != "":
-            rcs.append(rc)
-    data['data'] = rcs
-    result = callapi("delete", "/client/" + client_id + "/unlink/", data)
-    return seeclient(client_id, result['status'], result['message'])
-
-# create a task chek_client 
-@app.route('/client/<string:client_id>/check/', methods=['GET'])
-def checkclient(client_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'check_client'
-    new_task['object_id'] = client_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seeclient(client_id, result2['status'], result2['message'])
-
-# create a task config_client
-@app.route('/client/<string:client_id>/config/', methods=['GET'])
-def configclient(client_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'config_client'
-    new_task['object_id'] = client_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seeclient(client_id, result2['status'], result2['message'])
-
-# create a task update_all_client
-@app.route('/client/<string:client_id>/updateall/', methods=['GET'])
-def allupdateclient(client_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'all_update_client'
-    new_task['object_id'] = client_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seeclient(client_id, result2['status'], result2['message'])
-
-# create a task update_approved_client
-@app.route('/client/<string:client_id>/updateapproved/', methods=['GET'])
-def approvedupdateclient(client_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'approved_update_client'
-    new_task['object_id'] = client_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seeclient(client_id, result2['status'], result2['message'])
-
-# create a task upgradable_client
-@app.route('/client/<string:client_id>/upgradable/', methods=['GET'])
-def upgradableclient(client_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'upgradable_client'
-    new_task['object_id'] = client_id
-    data['task'] = new_task
-    result = callapi("post", "/task", data)
-    return seeclient(client_id, result['status'], result['message'])
-
-# set package as approved for the given list
-@app.route('/client/<string:client_id>/approve/<string:packages_id>', methods=['GET'])
-def approveupgradables(client_id, packages_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    data = {}
-    packages = []
-    for package in packages_id.split(','):
-        if package != "":
-            packages.append(package)
-    data['data'] = packages
-    result = callapi("put", "/client/" + client_id + "/approve", data)
-
-    return seeclient(client_id, result['status'], result['message'])
-
-# set package as disapproved for the given list
-@app.route('/client/<string:client_id>/disapprove/<string:packages_id>', methods=['GET'])
-def disapproveupgradables(client_id, packages_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    
-    data = {}
-    packages = []
-    for package in packages_id.split(','):
-        if package != "":
-            packages.append(package)
-    data['data'] = packages
-    result = callapi("put", "/client/" + client_id + "/disapprove", data)
-
-    return seeclient(client_id, result['status'], result['message'])
-
-# list groups
-@app.route('/groups', methods=['GET'])
-def groups():
-    if not checksession():
-        return redirect(url_for('home'))
-    result = callapi("get", "/groups")
-    return render_template('groups.html', result=result, connected='1')
-
-# see one group
-@app.route('/group/<string:group_id>/see/', methods=['GET'])
-def seegroup(group_id, status=0, message=""):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/group/" + group_id)
-    result2 = callapi("get", "/group/" + group_id + "/clients")
-    result['data']['links'] = result2['data']
-    result2 = callapi("get", "/clients")
-    result['data']['clients'] = result2['data']
-
-    if message != "":
-            result['message'] = message
-            result['status'] = status
-
-    return render_template('group.html', result=result, connected='1')
-
-# create a group
-@app.route('/group/add/', methods=['GET', 'POST'])
-def addgroup():
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['group'] = {}
-        data['group']['name'] = request.form['name']
-        data['group']['description'] = request.form['description']
-        result = callapi("post", "/group", data)
-        return render_template('addgroup.html', result=result, connected='1', data=data)
-
-    return render_template('addgroup.html', connected='1')
-
-# edit a group
-@app.route('/group/<string:group_id>/edit/', methods=['GET', 'POST'])
-def editgroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        data = {}
-        data['group'] = {}
-        data['group']['name'] = request.form['name']
-        data['group']['description'] = request.form['description']
-        result = callapi("put", "/group/" + group_id, data)
-        return render_template('addgroup.html', result=result, connected='1', data=data)
-
-    result = callapi("get", "/group/" + group_id)
-    data = {}
-    data['group'] = result['data']
-    return render_template('addgroup.html', data=data, connected='1')
-
-# delete a group
-@app.route('/group/<string:group_id>/delete/', methods=['GET'])
-def deletegroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    result2 = callapi("delete", "/group/" + group_id)
-    result = callapi("get", "/groups")
-    result['message'] = result2['message']
-    return render_template('groups.html', result=result, connected='1')
-
-# add a client to a group
-@app.route('/group/<string:group_id>/link/<string:clients_id>', methods=['GET'])
-def linkgroup(group_id, clients_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    clients = []
-    for client in clients_id.split(','):
-        if client != "":
-            clients.append(client)
-    data['data'] = clients
-    result = callapi("post", "/group/" + group_id + "/link/", data)
-    return seegroup(group_id, result['status'], result['message'])    
-
-# remove a client from a group
-@app.route('/group/<string:group_id>/unlink/<string:clients_id>', methods=['GET'])
-def unlinkgroup(group_id, clients_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    clients = []
-    for client in clients_id.split(','):
-        if client != "":
-            clients.append(client)
-    data['data'] = clients
-    result = callapi("delete", "/group/" + group_id + "/unlink/", data)
-    return seegroup(group_id, result['status'], result['message']) 
-
-# create a task check_group
-@app.route('/group/<string:group_id>/check/', methods=['GET'])
-def checkgroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'check_group'
-    new_task['object_id'] = group_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seegroup(group_id, result2['status'], result2['message'])
-
-# create a task config_group
-@app.route('/group/<string:group_id>/config/', methods=['GET'])
-def configgroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'config_group'
-    new_task['object_id'] = group_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seegroup(group_id, result2['status'], result2['message'])
-
-# create a task update_all_group
-@app.route('/group/<string:group_id>/updateall/', methods=['GET'])
-def allupdategroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'all_update_group'
-    new_task['object_id'] = group_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seegroup(group_id, result2['status'], result2['message'])
-
-# create a task upgrade_approved_group
-@app.route('/group/<string:group_id>/updateapproved/', methods=['GET'])
-def approvedupdategroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'approved_update_group'
-    new_task['object_id'] = group_id
-    data['task'] = new_task
-    result2 = callapi("post", "/task", data)
-    return seegroup(group_id, result2['status'], result2['message'])
-
-# create a task upgradable_group
-@app.route('/group/<string:group_id>/upgradable/', methods=['GET'])
-def upgradablegroup(group_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    new_task = {}
-    new_task['action'] = 'upgradable_group'
-    new_task['object_id'] = group_id
-    data['task'] = new_task
-    result = callapi("post", "/task", data)
-    return seegroup(group_id, result['status'], result['message'])
-
-# list tasks
-@app.route('/tasks', methods=['GET'])
-def tasks():
-    if not checksession():
-        return redirect(url_for('home'))
-    result = callapi("get", "/tasks")
-    if 'data' in result:
-        new_data = []
-        for task in result['data']:
-            if task['creation_date'] != 0:
-                task['creation_date'] = str(datetime.datetime.fromtimestamp(task['creation_date']))
-            if task['start_time'] != 0:
-                task['start_time'] = str(datetime.datetime.fromtimestamp(task['start_time']))
-            else:
-                task['start_time'] = "Not started"            
-            if task['end_time'] != 0:
-                task['end_time'] = str(datetime.datetime.fromtimestamp(task['end_time']))
-            else:
-                task['end_time'] = "Not finished"           
-        
-            if task['action'] == 'sync_repo':
-                result_tmp = callapi("get", "/repository/" + task['object_id'])
-                task['object_id'] = "Repository: " + result_tmp['data']['name']
-                task['action'] = "Sync repository"        
-            elif task['action'] == 'check_client':
-                result_tmp = callapi("get", "/client/" + task['object_id'])
-                task['object_id'] = "Client: " + result_tmp['data']['name']
-                task['action'] = "Check client"        
-            elif task['action'] == 'config_client':
-                result_tmp = callapi("get", "/client/" + task['object_id'])
-                task['object_id'] = "Client: " + result_tmp['data']['name']
-                task['action'] = "Configure client"        
-            elif task['action'] == 'upgradable_client':
-                result_tmp = callapi("get", "/client/" + task['object_id'])
-                task['object_id'] = "Client: " + result_tmp['data']['name']
-                task['action'] = "List upgradable packages"
-
-            new_data.append(task)
-        result['data'] = new_data
-    return render_template('tasks.html', result=result, connected='1')
-
-# see one task
-@app.route('/task/<string:task_id>/see/', methods=['GET'])
-def seetask(task_id):
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/task/" + task_id)
-    try:
-        logsfile = '/var/log/yarus/tasks/' + task_id + '.log'
-        if os.path.isfile(logsfile):
-            logs = open(logsfile, 'r')
-            result['data']['logs'] = logs.read()
-            logs.close()
-    except Exception as error:
-        print(error)
-        result['data']['logs'] = "Unable to read log file for the task " + task_id
-
-    return render_template('task.html', result=result, connected='1')
-
-# delete tasks
-@app.route('/tasks/<string:tasks_id>', methods=['GET'])
-def deletetasks(tasks_id):
-    if not checksession():
-        return redirect(url_for('home'))
-    data = {}
-    tasks = []
-    for task in tasks_id.split(','):
-        if task != "":
-            tasks.append(task)
-    data['data'] = tasks
-    result2 = callapi("delete", "/tasks/", data )
-    result = callapi("get", "/tasks")
-    result['message'] = result2['message']
-    return render_template('tasks.html', result=result, connected='1')
-
-# list scheduled tasks
-@app.route('/scheduler', methods=['GET'])
-def scheduler():
-    if not checksession():
-        return redirect(url_for('home'))
-
-    result = callapi("get", "/scheduled")
-
-    if 'data' in result:
-        new_data = []
-        for scheduledtask in result['data']:            
-            scheduledtask['creation_date'] = str(datetime.datetime.fromtimestamp(int(scheduledtask['creation_date'])))
-            if scheduledtask['task_action'] == 'sync_repo':
-                result_tmp = callapi("get", "/repository/" + scheduledtask['object_id'])
-                scheduledtask['object_id'] = "Repository: " + result_tmp['data']['name']
-                scheduledtask['task_action'] = "Sync repository"
-
-            new_data.append(scheduledtask)
-        result['data'] = new_data
-
-    return render_template('scheduler.html', result=result, connected='1')
-
-# create a scheduled task
-@app.route('/scheduler/add/<string:object_type>/<string:object_id>/<string:action>', methods=['GET', 'POST'])
-def addscheduledtask(object_type, object_id, action):
-    if not checksession():
-        return redirect(url_for('home'))
-
     if request.method == 'POST':
         data = {}
         data['scheduledtask'] = {}
@@ -851,27 +136,987 @@ def addscheduledtask(object_type, object_id, action):
         data['scheduledtask']['month'] = request.form['month']
         data['scheduledtask']['day_of_week'] = request.form['day_of_week']
         data['scheduledtask']['day_place'] = request.form['day_place']
-        result = callapi("post", "/scheduledtask", data)
-        return render_template('addscheduledtask.html', result=result, connected='1', object_type=object_type, object_id=object_id, task_action=action, data=data)
+        result = callapi("post", "/create/scheduled", data)
+        return render_template('addscheduled.html', result=result, connected='1', object_name=object_name, object_id=object_id, task_action=task_action, data=data)
 
-    return render_template('addscheduledtask.html', connected='1', object_type=object_type, object_id=object_id, task_action=action)
+    return render_template('addscheduled.html', connected='1', object_name=object_name, object_id=object_id, task_action=task_action)
 
-# delete scheduled tasks
-@app.route('/scheduler/<string:scheduledtasks_id>', methods=['GET'])
-def deletescheduledtasks(scheduledtasks_id):
-    if not checksession():
-        return redirect(url_for('home'))
+# list object
+@app.route('/list/<string:object_name>', methods=['GET'])
+def list_object(object_name, status=0, message=""):
+
+    result = callapi("get", "/list/" + object_name)
+
+    # clea4n up information
+    if result['status'] == 0:
+        if 'data' in result:
+            new_data = []
+            for item in result['data']:
+            
+                if 'creation_date' in item:
+                    item['creation_date'] = str(datetime.datetime.fromtimestamp(int(item['creation_date'])))
+                
+                if 'last_sync' in item:
+                    if item['last_sync'] != "0":
+                        item['last_sync'] = str(datetime.datetime.fromtimestamp(int(item['last_sync'])))
+                    else:
+                        item['last_sync'] = "Never synced"
+
+                if 'last_check' in item:
+                    if item['last_check'] != "0":
+                        item['last_check'] = str(datetime.datetime.fromtimestamp(int(item['last_check'])))
+                    else:
+                        item['last_check'] = "Never checked"
+
+                if 'start_time' in item:
+                    if item['start_time'] != 0:
+                        item['start_time'] = str(datetime.datetime.fromtimestamp(item['start_time']))
+                    else:
+                        item['start_time'] = "Not started"
+
+                if 'end_time' in item:                                  
+                    if item['end_time'] != 0:
+                        item['end_time'] = str(datetime.datetime.fromtimestamp(item['end_time']))
+                    else:
+                        item['end_time'] = "Not finished"
+                
+                if 'manager_id' in item:
+                    result2 = callapi("get", "/see/user/" + str(item['manager_id']))
+                    if 'data' in result2:
+                        item['manager_id'] = result2['data']['name']
+
+                if 'action' in item:
+                    if item['action'] == 'sync_repo':
+                        result_tmp = callapi("get", "/see/repository/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'repository'
+                        else:
+                            item['object_name'] = "Repository: unknown"
+                        item['action'] = "Sync repository"
+
+                    elif item['action'] == 'sync_channel':
+                        result_tmp = callapi("get", "/see/channel/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'channel'
+                        else:
+                            item['object_name'] = "Channel: unknown"
+                        item['action'] = "Sync channel"
+                    
+                    elif item['action'] == 'check_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['action'] = "Check client"
+                    
+                    elif item['action'] == 'config_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['action'] = "Configure client"
+                    
+                    elif item['action'] == 'upgradable_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['action'] = "List upgradable packages"
+
+                    elif item['action'] == 'config_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['action'] = "Configure group"
+                    
+                    elif item['action'] == 'check_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['action'] = "Check group"
+                    
+                    elif item['action'] == 'upgradable_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['action'] = "List upgradable packages"
+                    
+                    elif item['action'] == 'approved_update_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['action'] = "Update approved packages"
+                    
+                    elif item['action'] == 'approved_update_client' :
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['action'] = "Update approved packages"
+                    
+                    elif item['action'] == 'all_update_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['action'] = "Update all packages"
+                    
+                    elif item['action'] == 'all_update_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['action'] = "Update all packages"
+
+                if 'task_action' in item:
+                    if item['task_action'] == 'sync_repo':
+                        result_tmp = callapi("get", "/see/repository/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'repository'
+                        else:
+                            item['object_name'] = "Repository: unknown"
+                        item['task_action'] = "Sync repository"
+
+                    elif item['task_action'] == 'sync_channel':
+                        result_tmp = callapi("get", "/see/channel/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'channel'
+                        else:
+                            item['object_name'] = "Channel: unknown"
+                        item['task_action'] = "Sync channel"
+                    
+                    elif item['task_action'] == 'check_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['task_action'] = "Check client"
+                    
+                    elif item['task_action'] == 'config_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['task_action'] = "Configure client"
+                    
+                    elif item['task_action'] == 'upgradable_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'v'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['task_action'] = "List upgradable packages"
+
+                    elif item['task_action'] == 'config_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'v'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['task_action'] = "Configure group"
+                    
+                    elif item['task_action'] == 'check_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['task_action'] = "Check group"
+                    
+                    elif item['task_action'] == 'upgradable_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['task_action'] = "List upgradable packages"
+                    
+                    elif item['task_action'] == 'approved_update_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['task_action'] = "Update approved packages"
+                    
+                    elif item['task_action'] == 'approved_update_client' :
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['task_action'] = "Update approved packages"
+                    
+                    elif item['task_action'] == 'all_update_group':
+                        result_tmp = callapi("get", "/see/group/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'group'
+                        else:
+                            item['object_name'] = "Group: unknown"
+                        item['task_action'] = "Update all packages"
+                    
+                    elif item['task_action'] == 'all_update_client':
+                        result_tmp = callapi("get", "/see/client/" + item['object_id'])
+                        if result_tmp['status'] == 0:
+                            item['object_name'] = result_tmp['data']['name']
+                            item['object_type'] = 'client'
+                        else:
+                            item['object_name'] = "Client: unknown"
+                        item['task_action'] = "Update all packages"
+
+                new_data.append(item)
+            result['data'] = new_data
+
+    # add arguement message/status
+    if message != "":
+        result['message'] = message
+        result['status'] = status
+
+    if object_name == 'repository':        
+        return render_template('repositories.html', result=result, connected='1')
+
+    elif object_name == 'channel':
+        return render_template('channels.html', result=result, connected='1')
+    
+    elif object_name == 'client':
+        return render_template('clients.html', result=result, connected='1')
+
+    elif object_name == 'group':
+        return render_template('groups.html', result=result, connected='1')
+
+    elif object_name == 'task':
+        return render_template('tasks.html', result=result, connected='1')
+
+    elif object_name == 'scheduled':
+        return render_template('scheduler.html', result=result, connected='1')
+
+# see an object
+@app.route('/see/<string:object_name>/<string:object_id>', methods=['GET'])
+def see_object(object_name, object_id, status=0, message=""):
+
+    result = callapi("get", "/see/" + object_name + "/" + object_id)
+
+    # clea4n up information
+    if result['status'] == 0:
+        if 'creation_date' in result['data']:
+            result['data']['creation_date'] = str(datetime.datetime.fromtimestamp(int(result['data']['creation_date'])))
+        
+        if 'last_sync' in result['data']:
+            if result['data']['last_sync'] != "0":
+                result['data']['last_sync'] = str(datetime.datetime.fromtimestamp(int(result['data']['last_sync'])))
+            else:
+                result['data']['last_sync'] = "Never synced"
+
+        if 'last_check' in result['data']:
+            if result['data']['last_check'] != "0":
+                result['data']['last_check'] = str(datetime.datetime.fromtimestamp(int(result['data']['last_check'])))
+            else:
+                result['data']['last_check'] = "Never checked"
+        
+        if 'manager_id' in result['data']:
+            result2 = callapi("get", "/see/user/" + result['data']['manager_id'])
+            if 'data' in result2:
+                result['data']['manager_id'] = result2['data']['name']
+
+        if 'start_time' in result['data']:
+            if result['data']['start_time'] != "0":
+                result['data']['start_time'] = str(datetime.datetime.fromtimestamp(int(result['data']['start_time'])))
+            else:
+                result['data']['start_time'] = "Not started"
+
+        if 'end_time' in result['data']:                                  
+            if result['data']['end_time'] != "0":
+                result['data']['end_time'] = str(datetime.datetime.fromtimestamp(int(result['data']['end_time'])))
+            else:
+                result['data']['end_time'] = "Not finished"
+        
+        if 'action' in result['data']:
+            if result['data']['action'] == 'sync_repo':
+                result_tmp = callapi("get", "/see/repository/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'repository'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Repository: unknown"
+                result['data']['action'] = "Sync repository"
+
+            elif result['data']['action'] == 'sync_channel':
+                result_tmp = callapi("get", "/see/channel/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'channel'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Channel: unknown"
+                result['data']['action'] = "Sync channel"
+
+            elif result['data']['action'] == 'check_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['action'] = "Check client"
+
+            elif result['data']['action'] == 'config_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['action'] = "Configure client"
+
+            elif result['data']['action'] == 'upgradable_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['action'] = "List upgradable packages"
+
+            elif result['data']['action'] == 'config_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['action'] = "Configure group"
+
+            elif result['data']['action'] == 'check_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['action'] = "Check group"
+
+            elif result['data']['action'] == 'upgradable_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['action'] = "List upgradable packages"
+
+            elif result['data']['action'] == 'approved_update_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['action'] = "Update approved packages"
+
+            elif result['data']['action'] == 'approved_update_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['action'] = "Update approved packages"
+
+            elif result['data']['action'] == 'all_update_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['action'] = "Update all packages"
+
+            elif result['data']['action'] == 'all_update_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['action'] = "Update all packages"
+
+        if 'task_action' in result['data']:
+            if result['data']['task_action'] == 'sync_repo':
+                result_tmp = callapi("get", "/see/repository/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'repository'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Repository: unknown"
+                result['data']['task_action'] = "Sync repository"
+
+            elif result['data']['task_action'] == 'sync_channel':
+                result_tmp = callapi("get", "/see/channel/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'channel'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Channel: unknown"
+                result['data']['task_action'] = "Sync channel"
+
+            elif result['data']['task_action'] == 'check_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['task_action'] = "Check client"
+
+            elif result['data']['task_action'] == 'config_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['task_action'] = "Configure client"
+
+            elif result['data']['task_action'] == 'upgradable_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['task_action'] = "List upgradable packages"
+
+            elif result['data']['task_action'] == 'config_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['task_action'] = "Configure group"
+
+            elif result['data']['task_action'] == 'check_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['task_action'] = "Check group"
+
+            elif result['data']['task_action'] == 'upgradable_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['task_action'] = "List upgradable packages"
+
+            elif result['data']['task_action'] == 'approved_update_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['task_action'] = "Update approved packages"
+
+            elif result['data']['task_action'] == 'approved_update_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['task_action'] = "Update approved packages"
+
+            elif result['data']['task_action'] == 'all_update_group':
+                result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'group'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Group: unknown"
+                result['data']['task_action'] = "Update all packages"
+
+            elif result['data']['task_action'] == 'all_update_client':
+                result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
+                if result_tmp['status'] == 0:
+                    result['data']['object_type'] = 'client'
+                    result['data']['object_name'] = result_tmp['data']['name']
+                else:
+                    result['data']['object_name'] = "Client: unknown"
+                result['data']['task_action'] = "Update all packages"
+
+    # get tasks and scheduled tasks
+    if object_name == 'repository' or object_name == 'channel' or object_name == 'client' or object_name == 'group':
+        if result['status'] == 0:
+            result_tasks = callapi("get", "/" + object_name + "/" + object_id + "/list/tasks")
+            new_data = []
+            for task in result_tasks['data']:
+                if task['creation_date'] != 0:
+                    task['creation_date'] = str(datetime.datetime.fromtimestamp(task['creation_date']))
+                
+                if task['start_time'] != 0:
+                    task['start_time'] = str(datetime.datetime.fromtimestamp(task['start_time']))
+                else:
+                    task['start_time'] = "Not started"            
+                
+                if task['end_time'] != 0:
+                    task['end_time'] = str(datetime.datetime.fromtimestamp(task['end_time']))
+                else:
+                    task['end_time'] = "Not finished"           
+            
+                if 'action' in task:
+                    if task['action'] == 'sync_repo':
+                        task['action'] = "Sync repository"
+
+                    elif task['action'] == 'sync_channel':
+                        task['action'] = "Sync channel"
+
+                    elif task['action'] == 'check_client':
+                        task['action'] = "Check client"
+
+                    elif task['action'] == 'config_client':
+                        task['action'] = "Configure client"
+
+                    elif task['action'] == 'upgradable_client':
+                        task['action'] = "List upgradable packages"
+
+                    elif task['action'] == 'config_group':
+                        task['action'] = "Configure group"
+
+                    elif task['action'] == 'check_group':
+                        task['action'] = "Check group"
+
+                    elif task['action'] == 'upgradable_group':
+                        task['action'] = "List upgradable packages"
+
+                    elif task['action'] == 'approved_update_group':
+                        task['action'] = "Update approved packages"
+
+                    elif task['action'] == 'approved_update_client':
+                        task['action'] = "Update approved packages"
+
+                    elif task['action'] == 'all_update_group':
+                        task['action'] = "Update all packages"
+
+                    elif task['action'] == 'all_update_client':
+                        task['action'] = "Update all packages"
+
+                new_data.append(task)
+
+            result['data']['tasks'] = new_data
+
+            result_scheduled = callapi("get", "/" + object_name + "/" + object_id + "/list/scheduled")
+            new_data = []
+            for scheduled in result_scheduled['data']:               
+
+                if 'task_action' in scheduled:
+                    if scheduled['task_action'] == 'sync_repo':
+                        scheduled['task_action'] = "Sync repository"
+
+                    elif scheduled['task_action'] == 'sync_channel':
+                        scheduled['task_action'] = "Sync channel"
+                    
+                    elif scheduled['task_action'] == 'check_client':
+                        scheduled['task_action'] = "Check client"
+                    
+                    elif scheduled['task_action'] == 'config_client':
+                        scheduled['task_action'] = "Configure client"
+                    
+                    elif scheduled['task_action'] == 'upgradable_client':
+                        scheduled['task_action'] = "List upgradable packages"
+
+                    elif scheduled['task_action'] == 'config_group':
+                        scheduled['task_action'] = "Configure group"
+                    
+                    elif scheduled['task_action'] == 'check_group':
+                        scheduled['task_action'] = "Check group"
+                    
+                    elif scheduled['task_action'] == 'upgradable_group':
+                        scheduled['task_action'] = "List upgradable packages"
+                    
+                    elif scheduled['task_action'] == 'approved_update_group':
+                        scheduled['task_action'] = "Update approved packages"
+                    
+                    elif scheduled['task_action'] == 'approved_update_client' :
+                        scheduled['task_action'] = "Update approved packages"
+                    
+                    elif scheduled['task_action'] == 'all_update_group':
+                        scheduled['task_action'] = "Update all packages"
+                    
+                    elif scheduled['task_action'] == 'all_update_client':
+                        scheduled['task_action'] = "Update all packages"
+
+                new_data.append(scheduled)
+
+            result['data']['scheduled'] = new_data
+    
+    # add arguement message/status
+    if message != "":
+        result['message'] = message
+        result['status'] = status
+
+    if object_name == 'repository':
+        return render_template('repository.html', result=result, connected='1')
+
+    elif object_name == 'channel':
+
+        if result['status'] == 0:
+        
+            result2 = callapi("get", "/channel/" + object_id + "/list/repositories")
+            result['data']['links'] = result2['data']
+
+            result2 = callapi("get", "/list/repository")
+            result['data']['repositories'] = result2['data']
+
+        return render_template('channel.html', result=result, connected='1')
+
+    elif object_name == 'client':
+        
+        if result['status'] == 0:
+            # list linked channels/repositories
+            result2 = callapi("get", "/client/" + object_id + "/list/rc")
+            result['data']['linked'] = result2['data']
+
+            # list channels and repositories
+            result2 = callapi("get", "/list/channel")
+            result['data']['channels'] = result2['data']
+            result2 = callapi("get", "/list/repository")
+            result['data']['repositories'] = result2['data']
+
+            # list packages
+            result2 = callapi("get", "/client/" + object_id + "/list/upgradables")
+            result['data']['upgradables'] = result2['data']
+
+        return render_template('client.html', result=result, connected='1')
+
+    elif object_name == 'group':
+        # list clients in the group
+        result2 = callapi("get", "/group/" + object_id + "/list/clients")
+        result['data']['links'] = result2['data']
+
+        # list all clients
+        result2 = callapi("get", "/list/client")
+        result['data']['clients'] = result2['data']
+
+        return render_template('group.html', result=result, connected='1')
+
+    elif object_name == 'task':
+        try:
+            logsfile = '/var/log/yarus/tasks/' + object_id + '.log'
+            if os.path.isfile(logsfile):
+                logs = open(logsfile, 'r')
+                result['data']['logs'] = logs.read()
+                logs.close()
+        except Exception as error:
+            result['data']['logs'] = "Unable to read log file for the task " + object_id                
+
+        return render_template('task.html', result=result, connected='1')
+
+    elif object_name == 'scheduled':
+        return render_template('scheduled.html', result=result, connected='1')
+
+# add an object
+@app.route('/add/<string:object_name>', methods=['GET', 'POST'])
+def add_object(object_name):
+    
+    if object_name == 'repository':
+        if request.method == 'POST':
+            data = {}
+            data['repository'] = {}
+            data['repository']['URL'] = request.form['URL']
+            data['repository']['type'] = request.form['type']
+            data['repository']['distribution'] = request.form['distribution']
+            data['repository']['release'] = request.form['release']
+            data['repository']['path'] = request.form['path']
+            data['repository']['components'] = request.form['components']
+            data['repository']['architectures'] = request.form['architectures']
+            data['repository']['name'] = request.form['name']
+            data['repository']['description'] = request.form['description']
+            result = callapi("post", "/create/repository", data)
+            return render_template('addrepository.html', result=result, connected='1', data=data)
+
+        return render_template('addrepository.html', connected='1')
+
+    elif object_name == 'channel':
+        if request.method == 'POST':
+            data = {}
+            data['channel'] = {}
+            data['channel']['name'] = request.form['name']
+            data['channel']['description'] = request.form['description']
+            result = callapi("post", "/create/channel", data)
+            return render_template('addchannel.html', result=result, connected='1', data=data)
+
+        return render_template('addchannel.html', connected='1')
+
+    elif object_name == 'client':
+        if request.method == 'POST':
+            data = {}
+            data['client'] = {}
+            data['client']['name'] = request.form['name']
+            data['client']['description'] = request.form['description']
+            data['client']['IP'] = request.form['IP']
+            data['client']['version'] = request.form['version']
+            data['client']['type'] = request.form['type']
+            data['client']['distribution'] = request.form['distribution']
+            result = callapi("post", "/create/client", data)
+            return render_template('addclient.html', result=result, connected='1', data=data)
+
+        return render_template('addclient.html', connected='1')
+
+    elif object_name == 'group':
+        if request.method == 'POST':
+            data = {}
+            data['group'] = {}
+            data['group']['name'] = request.form['name']
+            data['group']['description'] = request.form['description']
+            result = callapi("post", "/create/group", data)
+            return render_template('addgroup.html', result=result, connected='1', data=data)
+
+        return render_template('addgroup.html', connected='1')
+
+# edit an object
+@app.route('/edit/<string:object_name>/<string:object_id>', methods=['GET', 'POST'])
+def edit_object(object_name, object_id):
+    
+    if object_name == 'repository':
+        if request.method == 'POST':
+            data = {}
+            data['repository'] = {}
+            data['repository']['URL'] = request.form['URL']
+            data['repository']['type'] = request.form['type']
+            data['repository']['distribution'] = request.form['distribution']
+            data['repository']['release'] = request.form['release']
+            data['repository']['path'] = request.form['path']
+            data['repository']['components'] = request.form['components']
+            data['repository']['architectures'] = request.form['architectures']
+            data['repository']['name'] = request.form['name']
+            data['repository']['description'] = request.form['description']
+            result = callapi("put", "/update/repository/" + object_id, data)
+            return render_template('addrepository.html', result=result, connected='1', data=data)
+
+        result = callapi("get", "/see/" + object_name + "/" + object_id)
+        
+        if 'data' in result:
+            data = {}
+            data['repository'] = result['data']
+            return render_template('addrepository.html', data=data, connected='1')
+        else:
+            return redirect(url_for('list_object', object_name='repository'))
+
+    elif object_name == 'channel':
+        if request.method == 'POST':
+            data = {}
+            data['channel'] = {}
+            data['channel']['name'] = request.form['name']
+            data['channel']['description'] = request.form['description']
+            result = callapi("put", "/update/channel/" + object_id, data)
+            return render_template('addchannel.html', result=result, connected='1', data=data)
+        
+        result = callapi("get", "/see/channel/" + object_id)
+        data = {}
+        data['channel'] = result['data']
+        return render_template('addchannel.html', data=data, connected='1')
+
+    elif object_name == 'client':
+        if request.method == 'POST':
+            data = {}
+            data['client'] = {}
+            data['client']['name'] = request.form['name']
+            data['client']['description'] = request.form['description']
+            data['client']['IP'] = request.form['IP']
+            data['client']['version'] = request.form['version']
+            data['client']['type'] = request.form['type']
+            data['client']['distribution'] = request.form['distribution']
+            result = callapi("put", "/update/client/" + object_id, data)
+            return render_template('addclient.html', result=result, connected='1', data=data)
+
+        result = callapi("get", "/see/client/" + object_id)
+        data = {}
+        data['client'] = result['data']
+        return render_template('addclient.html', data=data, connected='1')
+
+    elif object_name == 'group':
+        if request.method == 'POST':
+            data = {}
+            data['group'] = {}
+            data['group']['name'] = request.form['name']
+            data['group']['description'] = request.form['description']
+            result = callapi("put", "/update/group/" + object_id, data)
+            return render_template('addgroup.html', result=result, connected='1', data=data)
+        
+        result = callapi("get", "/see/group/" + object_id)
+        data = {}
+        data['group'] = result['data']
+        return render_template('addgroup.html', data=data, connected='1')
+
+    elif object_name == 'scheduled':
+        if request.method == 'POST':
+            data = {}
+            data['scheduledtask'] = {}
+            data['scheduledtask']['name'] = request.form['name']
+            data['scheduledtask']['description'] = request.form['description']
+            data['scheduledtask']['hour'] = request.form['hour']
+            data['scheduledtask']['minute'] = request.form['minute']
+            data['scheduledtask']['day_of_month'] = request.form['day_of_month']
+            data['scheduledtask']['month'] = request.form['month']
+            data['scheduledtask']['day_of_week'] = request.form['day_of_week']
+            data['scheduledtask']['day_place'] = request.form['day_place']
+            result = callapi("put", "/update/scheduled/" + object_id, data)
+            return render_template('addscheduled.html', result=result, connected='1', data=data, object_name=object_name, object_id=object_id)
+        
+        result = callapi("get", "/see/scheduled/" + object_id)
+        data = {}
+        data['scheduledtask'] = result['data']
+        return render_template('addscheduled.html', data=data, connected='1', object_name=object_name, object_id=object_id)
+
+# delete an object
+@app.route('/delete/<string:return_object>/<string:return_id>/<string:object_name>/<string:objects_id>', methods=['GET'])
+def delete_object(object_name, objects_id, return_object, return_id):
     data = {}
-    tasks = []
-    for task in scheduledtasks_id.split(','):
-        if task != "":
-            tasks.append(task)
-    data['data'] = tasks
-    result2 = callapi("delete", "/scheduledtasks/", data)
-    result = callapi("get", "/scheduled")
-    result['message'] = result2['message']
-    return render_template('scheduler.html', result=result, connected='1')
+    objects = []
+    for obj in objects_id.split(','):
+        if obj != "":
+            objects.append(obj)
+    data['data'] = objects
+    result = callapi("delete", "/delete/" + object_name, data)
 
+    if return_id != 'none':
+        return see_object(return_object, return_id, result['status'], result['message'])
+
+    return list_object(return_object, result['status'], result['message'])
+
+# link an object with an other
+@app.route('/link/<string:object_name>/<string:object_id>/<string:lk_obj_id>', methods=['GET'])
+def link(object_name, object_id, lk_obj_id):
+    
+    if object_name == 'client':
+        data = {}
+        rcs = []
+        for rc in lk_obj_id.split(','):
+            if rc != "":
+                rcs.append(rc)
+        data['data'] = rcs
+        result = callapi("post", "/link/client/" + object_id, data)
+        return see_object(object_name, object_id, result['status'], result['message'])
+        
+    elif object_name == 'group':
+        data = {}
+        clients = []
+        for client in lk_obj_id.split(','):
+            if client != "":
+                clients.append(client)
+        data['data'] = clients
+        result = callapi("post", "/link/group/" + object_id, data)
+        return see_object(object_name, object_id, result['status'], result['message']) 
+
+    elif object_name == 'channel':
+        data = {}
+        repositories = []
+        for repo in lk_obj_id.split(','):
+            if repo != "":
+                repositories.append(repo)
+        data['data'] = repositories
+        result = callapi("post", "/link/channel/" + object_id, data)
+        return see_object(object_name, object_id, result['status'], result['message'])
+
+# unlink an object with an other
+@app.route('/unlink/<string:object_name>/<string:object_id>/<string:lk_obj_id>', methods=['GET'])
+def unlink(object_name, object_id, lk_obj_id):
+    data = {}
+    obj_ids = []
+    for obj_id in lk_obj_id.split(','):
+        if obj_id != "":
+            obj_ids.append(obj_id)
+    data['data'] = obj_ids
+    result = callapi("delete", "/unlink/" + object_name + "/" + object_id, data)
+    return see_object(object_name, object_id, result['status'], result['message'])
+
+          
+
+
+
+
+# not up to date code
+
+# set package as approved for the given list
+@app.route('/client/<string:client_id>/approve/<string:packages_id>', methods=['GET'])
+def approveupgradables(client_id, packages_id):
+    data = {}
+    packages = []
+    for package in packages_id.split(','):
+        if package != "":
+            packages.append(package)
+    data['data'] = packages
+    result = callapi("put", "/client/" + client_id + "/approve", data)
+
+    return seeclient(client_id, result['status'], result['message'])
+
+# set package as disapproved for the given list
+@app.route('/client/<string:client_id>/disapprove/<string:packages_id>', methods=['GET'])
+def disapproveupgradables(client_id, packages_id):
+    data = {}
+    packages = []
+    for package in packages_id.split(','):
+        if package != "":
+            packages.append(package)
+    data['data'] = packages
+    result = callapi("put", "/client/" + client_id + "/disapprove", data)
+
+    return seeclient(client_id, result['status'], result['message'])
+
+# remove a client from a group
+@app.route('/group/<string:group_id>/unlink/<string:clients_id>', methods=['GET'])
+def unlinkgroup(group_id, clients_id):
+    data = {}
+    clients = []
+    for client in clients_id.split(','):
+        if client != "":
+            clients.append(client)
+    data['data'] = clients
+    result = callapi("delete", "/unlink/group/" + group_id, data)
+    return seegroup(group_id, result['status'], result['message']) 
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=8000)

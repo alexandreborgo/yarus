@@ -10,7 +10,7 @@
     List of channels
     <div class="pull-right">
         <div class="btn-group">
-            <a href="{{ url_for('addchannel') }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('add_object', object_name='channel') }}" type="button" class="btn btn-default btn-xs">
                 Add a channel
             </a>
         </div>
@@ -18,44 +18,74 @@
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
-
-{% if result.data %}
-<table id="channel-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Last sync</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for channel in result.data %}
-        <tr>
-          <td>{{ channel.name }}</td>
-          <td>{{ channel.description }}</td>
-          <td>{{ channel.last_sync }}</td>
-          <td>
-            <a href="{{ url_for('seechannel', channel_id=channel.ID) }}"><span class="fas fa-eye actions"></span></a>
-            <a href="{{ url_for('editchannel', channel_id=channel.ID) }}"><span class="fas fa-edit actions"></span></a>
-            <a href="{{ url_for('deletechannel', channel_id=channel.ID) }}"><span class="fas fa-trash-alt actions"></span></a>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endif %}
+      <table id="channels-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Last sync</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for channel in result.data %}
+              <tr>
+                <td></td>
+                <td>{{ channel.ID }}</td>
+                <td>{{ channel.name }}</td>
+                <td>{{ channel.description }}</td>
+                <td>{{ channel.last_sync }}</td>
+                <td>
+                  <a href="{{ url_for('see_object', object_name='channel', object_id=channel.ID) }}"><span class="fas fa-eye actions"></span></a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <!-- /.row (nested) -->
   </div>
-  <!-- /.panel-body -->
 </div>
 {% endblock %}
 
 {% block pagejs %}
 <script>
   $(document).ready( function () {
-    $('#channel-table').DataTable();
+    var table = $('#channels-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        'selectNone',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('delete_object', object_name='channel', return_object='channel', return_id='none', objects_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+
+    table.column( 1 ).visible( false );
   } );
 </script>
 {% endblock %}

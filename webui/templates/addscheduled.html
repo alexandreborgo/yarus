@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Scheduled task{% endblock %}
+{% block pagetitle %}<i class="fas fa-clock"></i> Scheduled task{% endblock %}
+
+
+{% block content %}
+{% if object_name %}
+{% if object_name == 'repository' %}
+<a href="{{ url_for('see_object', object_name='repository', object_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repository view</a>.<br/><br />
+{% elif object_name == 'channel' %}
+<a href="{{ url_for('see_object', object_name='channel', object_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the channel view</a>.<br/><br />
+{% elif object_name == 'client' %}
+<a href="{{ url_for('see_object', object_name='client', object_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the client view</a>.<br/><br />
+{% elif object_name == 'group' %}
+<a href="{{ url_for('see_object', object_name='group', object_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the group view</a>.<br/><br />
+{% elif object_name == 'scheduled' %}
+<a href="{{ url_for('see_object', object_name='scheduled', object_id=object_id) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the scheduled task view</a>.<br/><br />
+{% endif %}
+{% endif %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+      {% if data %}
+      {% if data.scheduledtask.ID %}
+        Edit a scheduled task
+      {% endif %}
+      {% else %}
+        Add a scheduled task
+      {% endif %}
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+<form method="post" action="#">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.scheduledtask.name }}{% endif %}" id="name" name="name" placeholder="Scheduled task name">
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" placeholder="Scheduled task description">{% if data %}{{ data.scheduledtask.description }}{% endif %}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="task_action">Action</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.scheduledtask.task_action }}{% else %}{{ task_action }}{% endif %}" id="task_action" name="task_action" READONLY>
+  </div>
+  <div class="form-group">
+    <label for="object_id">Object ID</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.scheduledtask.object_id }}{% else %}{{ object_id }}{% endif %}" id="object_id" name="object_id" READONLY>
+  </div>
+  <div class="row">
+    <div class="col-md-2">      
+        <label for="minute">Minute</label>
+        <select class="form-control" id="minute" name="minute" multiple>
+            <option {% if data %}{% if data.scheduledtask.minute == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '0' %}selected{% endif %}{% endif %}>0</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '1' %}selected{% endif %}{% endif %}>1</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '2' %}selected{% endif %}{% endif %}>2</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '3' %}selected{% endif %}{% endif %}>3</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '4' %}selected{% endif %}{% endif %}>4</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '5' %}selected{% endif %}{% endif %}>5</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '6' %}selected{% endif %}{% endif %}>6</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '7' %}selected{% endif %}{% endif %}>7</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '8' %}selected{% endif %}{% endif %}>8</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '9' %}selected{% endif %}{% endif %}>9</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '10' %}selected{% endif %}{% endif %}>10</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '11' %}selected{% endif %}{% endif %}>11</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '12' %}selected{% endif %}{% endif %}>12</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '13' %}selected{% endif %}{% endif %}>13</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '14' %}selected{% endif %}{% endif %}>14</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '15' %}selected{% endif %}{% endif %}>15</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '16' %}selected{% endif %}{% endif %}>16</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '17' %}selected{% endif %}{% endif %}>17</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '18' %}selected{% endif %}{% endif %}>18</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '19' %}selected{% endif %}{% endif %}>19</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '20' %}selected{% endif %}{% endif %}>20</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '21' %}selected{% endif %}{% endif %}>21</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '22' %}selected{% endif %}{% endif %}>22</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '23' %}selected{% endif %}{% endif %}>23</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '24' %}selected{% endif %}{% endif %}>24</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '25' %}selected{% endif %}{% endif %}>25</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '26' %}selected{% endif %}{% endif %}>26</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '27' %}selected{% endif %}{% endif %}>27</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '28' %}selected{% endif %}{% endif %}>28</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '29' %}selected{% endif %}{% endif %}>29</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '30' %}selected{% endif %}{% endif %}>30</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '31' %}selected{% endif %}{% endif %}>31</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '32' %}selected{% endif %}{% endif %}>32</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '33' %}selected{% endif %}{% endif %}>33</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '34' %}selected{% endif %}{% endif %}>34</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '35' %}selected{% endif %}{% endif %}>35</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '36' %}selected{% endif %}{% endif %}>36</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '37' %}selected{% endif %}{% endif %}>37</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '38' %}selected{% endif %}{% endif %}>38</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '39' %}selected{% endif %}{% endif %}>39</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '40' %}selected{% endif %}{% endif %}>40</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '41' %}selected{% endif %}{% endif %}>41</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '42' %}selected{% endif %}{% endif %}>42</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '43' %}selected{% endif %}{% endif %}>43</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '44' %}selected{% endif %}{% endif %}>44</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '45' %}selected{% endif %}{% endif %}>45</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '46' %}selected{% endif %}{% endif %}>46</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '47' %}selected{% endif %}{% endif %}>47</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '48' %}selected{% endif %}{% endif %}>48</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '49' %}selected{% endif %}{% endif %}>49</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '50' %}selected{% endif %}{% endif %}>50</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '51' %}selected{% endif %}{% endif %}>51</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '52' %}selected{% endif %}{% endif %}>52</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '53' %}selected{% endif %}{% endif %}>53</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '54' %}selected{% endif %}{% endif %}>54</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '55' %}selected{% endif %}{% endif %}>55</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '56' %}selected{% endif %}{% endif %}>56</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '57' %}selected{% endif %}{% endif %}>57</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '58' %}selected{% endif %}{% endif %}>58</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '59' %}selected{% endif %}{% endif %}>59</option>
+        </select>      
+    </div>
+    <div class="col-md-2">      
+          <label for="hour">Hour</label>
+          <select class="form-control" id="hour" name="hour" multiple>
+            <option {% if data %}{% if data.scheduledtask.hour == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '0' %}selected{% endif %}{% endif %}>0</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '1' %}selected{% endif %}{% endif %}>1</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '2' %}selected{% endif %}{% endif %}>2</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '3' %}selected{% endif %}{% endif %}>3</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '4' %}selected{% endif %}{% endif %}>4</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '5' %}selected{% endif %}{% endif %}>5</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '6' %}selected{% endif %}{% endif %}>6</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '7' %}selected{% endif %}{% endif %}>7</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '8' %}selected{% endif %}{% endif %}>8</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '9' %}selected{% endif %}{% endif %}>9</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '10' %}selected{% endif %}{% endif %}>10</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '11' %}selected{% endif %}{% endif %}>11</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '12' %}selected{% endif %}{% endif %}>12</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '13' %}selected{% endif %}{% endif %}>13</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '14' %}selected{% endif %}{% endif %}>14</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '15' %}selected{% endif %}{% endif %}>15</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '16' %}selected{% endif %}{% endif %}>16</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '17' %}selected{% endif %}{% endif %}>17</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '18' %}selected{% endif %}{% endif %}>18</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '19' %}selected{% endif %}{% endif %}>19</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '20' %}selected{% endif %}{% endif %}>20</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '21' %}selected{% endif %}{% endif %}>21</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '22' %}selected{% endif %}{% endif %}>22</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '23' %}selected{% endif %}{% endif %}>23</option>
+          </select>
+    </div>
+    <div class="col-md-2">      
+        <label for="day_of_month">Day of month</label>
+        <select class="form-control" id="day_of_month" name="day_of_month" multiple>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '1' %}selected{% endif %}{% endif %}>1</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '2' %}selected{% endif %}{% endif %}>2</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '3' %}selected{% endif %}{% endif %}>3</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '4' %}selected{% endif %}{% endif %}>4</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '5' %}selected{% endif %}{% endif %}>5</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '6' %}selected{% endif %}{% endif %}>6</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '7' %}selected{% endif %}{% endif %}>7</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '8' %}selected{% endif %}{% endif %}>8</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '9' %}selected{% endif %}{% endif %}>9</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '10' %}selected{% endif %}{% endif %}>10</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '11' %}selected{% endif %}{% endif %}>11</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '12' %}selected{% endif %}{% endif %}>12</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '13' %}selected{% endif %}{% endif %}>13</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '14' %}selected{% endif %}{% endif %}>14</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '15' %}selected{% endif %}{% endif %}>15</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '16' %}selected{% endif %}{% endif %}>16</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '17' %}selected{% endif %}{% endif %}>17</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '18' %}selected{% endif %}{% endif %}>18</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '19' %}selected{% endif %}{% endif %}>19</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '20' %}selected{% endif %}{% endif %}>20</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '21' %}selected{% endif %}{% endif %}>21</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '22' %}selected{% endif %}{% endif %}>22</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '23' %}selected{% endif %}{% endif %}>23</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '24' %}selected{% endif %}{% endif %}>24</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '25' %}selected{% endif %}{% endif %}>25</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '26' %}selected{% endif %}{% endif %}>26</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '27' %}selected{% endif %}{% endif %}>27</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '28' %}selected{% endif %}{% endif %}>28</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '29' %}selected{% endif %}{% endif %}>29</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '30' %}selected{% endif %}{% endif %}>30</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '31' %}selected{% endif %}{% endif %}>31</option>
+        </select>
+    </div>
+    <div class="col-md-2">      
+        <label for="month">Month</label>
+        <select class="form-control" value="{% if data %}{{ data.scheduledtask.month }}{% endif %}" id="month" name="month" multiple>
+            <option {% if data %}{% if data.scheduledtask.month == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.month == '1' %}selected{% endif %}{% endif %}>1</option>
+            <option {% if data %}{% if data.scheduledtask.month == '2' %}selected{% endif %}{% endif %}>2</option>
+            <option {% if data %}{% if data.scheduledtask.month == '3' %}selected{% endif %}{% endif %}>3</option>
+            <option {% if data %}{% if data.scheduledtask.month == '4' %}selected{% endif %}{% endif %}>4</option>
+            <option {% if data %}{% if data.scheduledtask.month == '5' %}selected{% endif %}{% endif %}>5</option>
+            <option {% if data %}{% if data.scheduledtask.month == '6' %}selected{% endif %}{% endif %}>6</option>
+            <option {% if data %}{% if data.scheduledtask.month == '7' %}selected{% endif %}{% endif %}>7</option>
+            <option {% if data %}{% if data.scheduledtask.month == '8' %}selected{% endif %}{% endif %}>8</option>
+            <option {% if data %}{% if data.scheduledtask.month == '9' %}selected{% endif %}{% endif %}>9</option>
+            <option {% if data %}{% if data.scheduledtask.month == '10' %}selected{% endif %}{% endif %}>10</option>
+            <option {% if data %}{% if data.scheduledtask.month == '11' %}selected{% endif %}{% endif %}>11</option>
+            <option {% if data %}{% if data.scheduledtask.month == '12' %}selected{% endif %}{% endif %}>12</option>
+        </select>
+    </div>
+    <div class="col-md-2">      
+        <label for="day_of_week">Day of week</label>
+        <select class="form-control" value="{% if data %}{{ data.scheduledtask.day_of_week }}{% endif %}" id="day_of_week" name="day_of_week" multiple>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '1' %}selected{% endif %}{% endif %}>1</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '2' %}selected{% endif %}{% endif %}>2</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '3' %}selected{% endif %}{% endif %}>3</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '4' %}selected{% endif %}{% endif %}>4</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '5' %}selected{% endif %}{% endif %}>5</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '6' %}selected{% endif %}{% endif %}>6</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '7' %}selected{% endif %}{% endif %}>7</option>
+        </select>
+    </div>
+    <div class="col-md-2">      
+        <label for="day_place">Day of the week in the month</label>
+        <select class="form-control" value="" id="day_place" name="day_place" multiple>
+            <option {% if data %}{% if data.scheduledtask.day_place == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.day_place == 'first' %}selected{% endif %}{% endif %}>first</option>
+            <option {% if data %}{% if data.scheduledtask.day_place == 'second' %}selected{% endif %}{% endif %}>second</option>
+            <option {% if data %}{% if data.scheduledtask.day_place == 'third' %}selected{% endif %}{% endif %}>third</option>
+            <option {% if data %}{% if data.scheduledtask.day_place == 'fourth' %}selected{% endif %}{% endif %}>fourth</option>
+            <option {% if data %}{% if data.scheduledtask.day_place == 'fifth' %}selected{% endif %}{% endif %}>fifth</option>
+        </select>
+    </div>
+  </div><br />
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+      </div>
+  </div>
+</div>
+
+{% endblock %}

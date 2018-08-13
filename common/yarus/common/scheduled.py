@@ -2,6 +2,7 @@
 import re
 
 from yarus.common.yarusobject import YarusObject
+from yarus.common.exceptions import *
 
 class Scheduled(YarusObject):
     

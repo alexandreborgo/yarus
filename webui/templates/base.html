@@ -78,10 +78,10 @@
                             <a href="#"><i class="fas fa-cubes"></i> Repositories<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="{{ url_for('repositories') }}">Repositories</a>
+                                    <a href="{{ url_for('list_object', object_name='repository') }}">Repositories</a>
                                 </li>
                                 <li>
-                                    <a href="{{ url_for('channels') }}">Channels</a>
+                                    <a href="{{ url_for('list_object', object_name='channel') }}">Channels</a>
                                 </li>
                             </ul>
                         </li>
@@ -89,18 +89,18 @@
                             <a href="#"><i class="fas fa-server"></i> Systems<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="{{ url_for('clients') }}">Systems</a>
+                                    <a href="{{ url_for('list_object', object_name='client') }}">Systems</a>
                                 </li>
                                 <li>
-                                    <a href="{{ url_for('groups') }}">Groups</a>
+                                    <a href="{{ url_for('list_object', object_name='group') }}">Groups</a>
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            <a href="{{ url_for('tasks') }}"><i class="fas fa-tasks"></i> Tasks</a>
+                            <a href="{{ url_for('list_object', object_name='task') }}"><i class="fas fa-tasks"></i> Tasks</a>
                         </li>
                         <li>
-                            <a href="{{ url_for('scheduler') }}"><i class="fas fa-clock"></i> Scheduler</a>
+                            <a href="{{ url_for('list_object', object_name='scheduled') }}"><i class="fas fa-clock"></i> Scheduler</a>
                         </li>
                         <li>
                             <a href="{{ url_for('home') }}"><i class="fas fa-users"></i> Users</a>

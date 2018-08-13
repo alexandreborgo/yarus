@@ -73,26 +73,16 @@ def add_upgradable(app, client, lines):
 # --------------------------------------------------------
 
 def sync_repo(app, repo_id):
-
-	# check if repo-id is present
-	repo = getrepo(app, repo_id)
-
-	if not repo:
+	
+	# check if repo exists
+	repository = getobject(app, 'repository', repo_id)        
+	if not repository:
 		app.log.logtask("Error: no repository with ID: " + repo_id + " in the database.")
 		return False
 
-	app.log.logtask("Syncing repository " + repo.name)
+	app.log.logtask("Syncing repository " + repository.name)
 
-	if repo.type == 'APT':
-
-		# declare variables with better names
-		repo_id = repo.ID
-		root_url = repo.URL
-		dist = repo.repository
-		comps = repo.components
-		archs = repo.architectures
-		repo_type = repo.type
-		last_sync = repo.last_sync
+	if repository.type == 'APT':
 
 		# transform comps and arch into a list
 		comps = repo.components.split(',')
@@ -104,7 +94,7 @@ def sync_repo(app, repo_id):
 		# root path of the remote mirror
 		root_remote = repo.URL
 		# root path of the local mirror
-		root_local = repo_folder + "/" + repo.repository
+		root_local = repo_folder + "/" + repo.distribution
 		# pool path of the local mirror
 		pool = root_local + "/pool"
 
@@ -294,21 +284,21 @@ def sync_repo(app, repo_id):
 				app.log.logtask("Can't find local file Packages")
 				return False
 
-	elif repo.type == 'YUM':
+	elif repository.type == 'YUM':
 
 		# we're going for a simple rsync of the arch file
 		# and check the signature of all file ofc !
 
 		# transform comps and arch into a list
-		comps = repo.components.split(',')
-		archs = repo.architectures.split(',')
+		comps = repository.components.split(',')
+		archs = repository.architectures.split(',')
 
 		for comp in comps:
 			for arch in archs:
-				url = repo.URL + repo.release + "/" + comp + "/" + arch
+				url = repository.URL + repository.release + "/" + comp + "/" + arch
 				repos = app.config.rp_folder
 
-				path = repos + "/" + repo.repository + "/" + repo.release + "/" + comp
+				path = repos + "/" + repository.distribution + "/" + repository.release + "/" + comp
 
 				# we create the dir if he isn't already present
 				# we don't put arch in the path because rsync will create it
@@ -317,24 +307,31 @@ def sync_repo(app, repo_id):
 					os.makedirs(path)
 
 				app.log.logtask("Syncing: " + comp + "/" + arch)
+				app.log.logtask("Remote URL: " + url)
+				app.log.logtask("Local path: " + path + "\n")
 
 				# starting sync
+				app.log.logtask("RSYNC output:")
 				result = getDir_rsync(app, url, path)
 
-				if result != 0:
+				if not result:
 					app.log.logtask("Error while trying to sync the repository, RSYNC failled to download the whole repository or a part.")
-					app.log.logtask(str(result))
 					return False
 
 	else:
-		app.log.logtask("The repository type " + repo.type + " isn't implemented yet.")
+		app.log.logtask("The repository type " + repository.type + " isn't implemented yet.")
 
-	repo.setLastSyncDate()
-	repo.update(app.database)
+	repository.setLastSyncDate()
+	repository.update(app.database)
+
+	app.log.logtask("The repository " + repository.name + " is up to date.")
+
+	app.log.logtask("The repository " + repository.name + " is up to date.")
 
 	return True
 
 def sync_channel(app, channel_id):
+	return True
 
 	channel = getchannel(app, channel_id)
 
@@ -361,6 +358,7 @@ def sync_channel(app, channel_id):
 # --------------------------------------------------------
 
 def check_client(app, client_id):
+	return True
 	# get client
 	client = getclient(app, client_id)
 
@@ -380,6 +378,7 @@ def check_client(app, client_id):
 		return False
 
 def config_client(app, client_id):
+	return True
 
 	# get client
 	client = getclient(app, client_id)
@@ -423,7 +422,7 @@ def config_client(app, client_id):
 			for comp in repo.components.split(","):
 				config_file.write("[" + comp + "]\n")
 				config_file.write("name=Yarus - " + repo.name + " - " + comp + "\n")
-				baseurl = "baseurl=http://155.6.102.161/repos/" + repo.repository + "/" + repo.release + "/" + comp + "/" + repo.architectures
+				baseurl = "baseurl=http://155.6.102.161/repos/" + repo.distribution + "/" + repo.release + "/" + comp + "/" + repo.architectures
 				config_file.write(baseurl + "\n")
 				config_file.write("gpgcheck=1\n")
 				config_file.write("gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7\n\n")
@@ -467,7 +466,7 @@ def config_client(app, client_id):
 			for comp in repo.components.split(","):
 				components += comp + " "
 
-			config_file.write("deb http://155.6.102.161/repos/" + repo.repository + " " + repo.path + " " + components + "\n")
+			config_file.write("deb http://155.6.102.161/repos/" + repo.distribution + " " + repo.path + " " + components + "\n")
 
 		config_file.close()
 
@@ -490,6 +489,7 @@ def config_client(app, client_id):
 	return False
 
 def upgradable_client(app, client_id):
+	return True
 
 	# get client
 	client = getclient(app, client_id)
@@ -536,6 +536,7 @@ def upgradable_client(app, client_id):
 	return True
 
 def all_update_client(app, client_id):
+	return True
 	# get client
 	client = getclient(app, client_id)
 	if not client:
@@ -601,6 +602,7 @@ def all_update_client(app, client_id):
 	return True
 
 def approved_update_client(app, client_id):
+	return True
 	# get client
 	client = getclient(app, client_id)
 	if not client:
@@ -668,6 +670,7 @@ def approved_update_client(app, client_id):
 # --------------------------------------------------------
 
 def check_group(app, group_id):
+	return True
 	# get group
 	group = getgroup(app, group_id)
 
@@ -721,13 +724,13 @@ def check_group(app, group_id):
 	return True
 
 def config_group(app, group_id):
-	pass
+	return True
 
 def upgradable_group(app, group_id):
-	pass
+	return True
 
 def all_update_group(app, group_id):
-	pass
+	return True
 
 def approved_update_group(app, group_id):
-	pass
+	return True

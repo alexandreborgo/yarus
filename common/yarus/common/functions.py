@@ -35,15 +35,50 @@ def connectuser(app, user):
 
 	return User().load(app.database, info['ID'])
 
-def getrepo(app, repo_id):
+def getobject(app, object_name, object_id):
 	try:
-		return Repository().load(app.database, repo_id)
+		if object_name == 'repository':
+			return Repository().load(app.database, object_id)
+		elif object_name == 'channel':
+			return Channel().load(app.database, object_id)
+		elif object_name == 'client':
+			return Client().load(app.database, object_id)
+		elif object_name == 'group':
+			return Group().load(app.database, object_id)
+		elif object_name == 'task':
+			return Task().load(app.database, object_id)
+		elif object_name == 'scheduled':
+			return Scheduled().load(app.database, object_id)
+		elif object_name == 'user':
+			return User().load(app.database, object_id)
+
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getobjecttasks(app, object_id):
+	try:
+		return app.database.get_object_tasks(object_id)
 	except MissingValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+def getobjectscheduled(app, object_id):
+	try:
+		return app.database.get_object_scheduled(object_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+
 def getrepobyname(app, name):
 	try:
 		return Repository().load_by_name(app.database, name)
@@ -53,6 +88,61 @@ def getrepobyname(app, name):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+def getclientbyip(app, client_ip):
+	try:
+		return Client().load_by_ip(app.database, client_ip)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getgrouped(app, group_id, client_id):
+	try:
+		return Grouped().load_grouped(app.database, client_id, group_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getgroupbyname(app, name):
+	try:
+		return Group().load_by_name(app.database, name)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getbind(app, client_id, repo_id, channel_id):
+	try:
+		return Bind().load_bind(app.database, client_id, repo_id, channel_id)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getbinds(app, client_id):
+	try:
+		bindedr = app.database.get_binded_repository(client_id)
+		bindedc = app.database.get_binded_channel(client_id)
+		linked = []
+		if bindedc:
+			for item in bindedc:
+				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'c'})
+		if bindedr:
+			for item in bindedr:
+				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'r'})
+		return linked
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
 
 def getchannel(app, channel_id):
 	try:
@@ -82,80 +172,8 @@ def getlink(app, channel_id, repo_id):
 		app.log.debug(str(error))
 		return None
 
-def getclient(app, client_id):
-	try:
-		return Client().load(app.database, client_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-def getclientbyip(app, client_ip):
-	try:
-		return Client().load_by_ip(app.database, client_ip)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 
-def getgroup(app, group_id):
-	try:
-		return Group().load(app.database, group_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-def getgrouped(app, group_id, client_id):
-	try:
-		return Grouped().load_grouped(app.database, client_id, group_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-def getgroupbyname(app, name):
-	try:
-		return Group().load_by_name(app.database, name)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 
-def getbind(app, client_id, repo_id, channel_id):
-	try:
-		return Bind().load_bind(app.database, client_id, repo_id, channel_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-def getbinds(app, client_id):
-	try:
-		bindedr = app.database.get_binded_repository(client_id)
-		bindedc = app.database.get_binded_channel(client_id)
-		linked = []
-		if bindedc:
-			for item in bindedc:
-				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'c'})
-		if bindedr:
-			for item in bindedr:
-				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'r'})
-		return linked
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 
 def getupgradable(app, client_id, package_id):
 	try:
@@ -166,7 +184,6 @@ def getupgradable(app, client_id, package_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
 def removeupgradables(app, client_id):
 	try:
 		app.database.remove_upgradables(client_id)
@@ -176,7 +193,6 @@ def removeupgradables(app, client_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
 def getupgradablebyinfo(app, client_id, name, release, type):
 	try:
 		return app.database.get_upgradable_by_info(client_id, name, release, type)
@@ -186,7 +202,6 @@ def getupgradablebyinfo(app, client_id, name, release, type):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
 def getupgradables(app, client_id):
 	try:
 		return app.database.get_upgradables(client_id)
@@ -196,7 +211,6 @@ def getupgradables(app, client_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
 def getapprovedupgradables(app, client_id):
 	try:
 		return app.database.get_approved_upgradables(client_id)
@@ -206,27 +220,6 @@ def getapprovedupgradables(app, client_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
-def gettask(app, task_id):
-	try:
-		return Task().load(app.database, task_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-
-def getscheduled(app, scheduledtask_id):
-	try:
-		return Scheduled().load(app.database, scheduledtask_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-
 def getuser(app, user_id):
 	try:
 		return User().load(app.database, user_id)
@@ -236,17 +229,6 @@ def getuser(app, user_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
-def getclienttasks(app, client_id):
-	try:
-		return app.database.get_client_tasks(client_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-
 def getcorrespondingrepositories(app, distribution, release):
 	try:
 		return app.database.get_corresponding_repositories(distribution, release)

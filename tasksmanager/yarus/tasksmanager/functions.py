@@ -52,17 +52,36 @@ def getFile_rsync(app, remote, local, file):
 def getDir_rsync(app, url, local):
 	try:
 		new_url = url.replace('http', 'rsync')
-		rsync_cmd = "rsync -azv --no-o --copy-links " + new_url + " " + local
+
+		# rsync options:
+
+		# z: compress data during the transfer
+		# v: verbose level one
+		# r: recursive
+		# t: times preserve
+		rsync_cmd = "rsync -zvrt " + new_url + " " + local
+		
+		# if proxy set in the config file
 		if app.config.px_host != "":
 			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
 		else:
 			env = None
-		result = subprocess.call(rsync_cmd, shell=True, env=env)
+
+		# execute the command
+		process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env, bufsize=1, universal_newlines=True)
+
+		# log the output
+		for line in process.stdout:
+			app.log.logtask(line.strip("\n"))
+
+		# get the final result of rsync
+		result = process.wait()
 
 		# check rsync result
 		if result != 0:
-			return result
-		return 0
+			return False
+		return True
+
 	except Exception as exception:
 		print("Can't get dir: " + url)
 		print(exception)

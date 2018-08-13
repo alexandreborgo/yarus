@@ -10,7 +10,7 @@
     List of repositories
     <div class="pull-right">
         <div class="btn-group">
-            <a href="{{ url_for('addrepository') }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('add_object', object_name='repository') }}" type="button" class="btn btn-default btn-xs">
                 Add a repository
             </a>
         </div>
@@ -19,48 +19,42 @@
   <div class="panel-body">
     <div class="row" style="padding:15px;">
 
-{% if result.data %}
-<table id="repositories-table">
-    <thead>
-      <tr>
-        <th></th>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Distribution</th>
-        <th>Release</th>
-        <th>Components</th>
-        <th>Architectures</th>
-        <th>Last sync</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for repository in result.data %}
-        <tr>
-          <td></td>
-          <td>{{ repository.ID }}</td>
-          <td>{{ repository.name }}</td>
-          <td>{{ repository.type }}</td>
-          <td>{{ repository.repository }}</td>
-          <td>{{ repository.release }}</td>
-          <td>{{ repository.components }}</td>
-          <td>{{ repository.architectures }}</td>
-          <td>{{ repository.last_sync }}</td>
-          <td>
-            <a href="{{ url_for('seerepository', repo_id=repository.ID) }}"><span class="fas fa-eye actions"></span></a>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endif %}
-
-
+      <table id="repositories-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Distribution</th>
+              <th>Release</th>
+              <th>Components</th>
+              <th>Architectures</th>
+              <th>Last sync</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for repository in result.data %}
+              <tr>
+                <td></td>
+                <td>{{ repository.ID }}</td>
+                <td>{{ repository.name }}</td>
+                <td>{{ repository.type }}</td>
+                <td>{{ repository.distribution }}</td>
+                <td>{{ repository.release }}</td>
+                <td>{{ repository.components }}</td>
+                <td>{{ repository.architectures }}</td>
+                <td>{{ repository.last_sync }}</td>
+                <td>
+                  <a href="{{ url_for('see_object', object_name='repository', object_id=repository.ID) }}"><span class="fas fa-eye actions"></span></a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <!-- /.row (nested) -->
   </div>
-  <!-- /.panel-body -->
 </div>
 
 {% endblock %}
@@ -73,6 +67,7 @@
       "iDisplayLength": 25,
       buttons: [  
         'selectAll',
+        'selectNone',
         {
           text: 'Delete',
           action: function () {
@@ -83,7 +78,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('deleterepositories', repos_id='') }}" + id
+            url = "{{ url_for('delete_object', object_name='repository', return_object='repository', return_id='none', objects_id='') }}" + id
             $(location).attr('href', url);
           }
         },
@@ -99,7 +94,6 @@
       },
       order: [[ 1, 'asc' ]]
     });
-
     table.column( 1 ).visible( false );
   } );
 </script>

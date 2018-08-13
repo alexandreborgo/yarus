@@ -1,14 +1,16 @@
 
 import sys
 import time
+import threading
 
 from yarus.tasksmanager.apptasksmanager import AppTasksManager
+from yarus.tasksmanager.apptask import AppTask
 from yarus.tasksmanager import actions
 from yarus.common.task import Task
 from yarus.common.exceptions import *
 from yarus.common.const import TASK_ACTIONS
 
-WAIT = 5
+WAIT = 20
 
 class YarusTasksManager():
 
@@ -27,65 +29,95 @@ class YarusTasksManager():
 		else:
 			return None
 
-	def alterTaskStatus(self, task, new_status):
+	def alterTaskStatus(self, app, task, new_status):
 		try:
 			task.setStatus(new_status)
-			task.update(self.app.database)
+			task.update(app.database)
 		except DatabaseError as error:
-			self.app.log.logtask(str(error))
+			app.log.logtask(str(error))
 			return False
 		return True
 
 	def execute(self, task):
-		task.setStartTime()
-		task.update(self.app.database)
-		self.app.log.settasklogfile(task)
-		self.alterTaskStatus(task, 'running')
 
-		if task.action in TASK_ACTIONS:
-			"""try:"""
-			action = getattr(actions, task.action)
-			result = action(self.app, task.object_id)
-			"""except Exception as error:
-				self.alterTaskStatus(task, 'failed')
-				self.app.log.logtask("The following error occured during the task :")
-				self.app.log.logtask(error)
-				task.setEndTime()
-				task.update(self.app.database)
-				self.app.log.logtask("Executed in " + str(task.end_time - task.start_time) + " seconds.")
-				return False"""
+		# start the app context
+		app = AppTask()
 
-			if result:
-				self.alterTaskStatus(task, 'completed')
-				self.app.log.logtask("The task " + task.ID + " was succesfully executed.")
-				task.setEndTime()
-				task.update(self.app.database)
-				self.app.log.logtask("Executed in " + str(task.end_time - task.start_time) + " seconds.")
-				return True
-			else:
-				self.alterTaskStatus(task, 'failed')
-				self.app.log.logtask("The task " + task.ID + " failed during its execution.")
-				task.setEndTime()
-				task.update(self.app.database)
-				return False
-		else:
-			self.alterTaskStatus(task, 'failed')
-			self.app.log.logtask("The action: '" + task.action + "' isn't recognized as a task action.")
-			task.setEndTime()
-			task.update(self.app.database)
+		if not app.start(task):
 			return False
+		
+		try:
+			app.database.connect()
+
+			# set the start date
+			task.setStartTime()
+			task.update(app.database)
+
+			# set the status of the task to running 
+			self.alterTaskStatus(app, task, 'running')
+
+			if task.action in TASK_ACTIONS:
+
+				# get the function of the action and execute it
+				try:
+					action = getattr(actions, task.action)
+					result = action(app, task.object_id)
+
+				except Exception as error:
+					self.alterTaskStatus(app, task, 'failed')
+					app.log.logtask("The following error occured during the task :")
+					app.log.logtask(error)
+				
+				# check the result
+				if result:
+					self.alterTaskStatus(app, task, 'completed')
+					app.log.logtask("The task " + task.ID + " was succesfully executed.")			
+				else:
+					self.alterTaskStatus(app, task, 'failed')
+					app.log.logtask("The task " + task.ID + " failed during its execution.")
+			else:
+				self.alterTaskStatus(app, task, 'failed')
+				app.log.logtask("The action: '" + task.action + "' isn't recognized as a task action or isn't implemented yet.")
+
+			# set finish date
+			task.setEndTime()
+			task.update(app.database)
+			app.log.logtask("Executed in " + str(task.end_time - task.start_time) + " seconds.")
+		
+		except DatabaseError as error:
+			app.log.log(error)
+			sys.exit()
+
+		finally:
+			app.database.close()
 
 	def run(self):
+
+		pool = []
+
 		while True:
+
+			sync_task = False
+			tasks_running = []
+
+			# check running task
+			for thread in pool:
+				if not thread.is_alive():
+					pool.remove(thread)
+					continue
+				tasks_running.append(thread.name)
+
 			# check for pending task
 			self.app.database.connect()
 			task = self.checkForTasks()
 			self.app.database.close()
+			
 			if task:
-				print("The task (ID: " + str(task.ID) + ") will be executed. Action: " + task.action + ". On: " + str(task.object_id))
-				self.app.database.connect()
-				self.execute(task)
-				self.app.database.close()
+				# we check if the task isn't already running
+				if not task.ID in tasks_running:
+					thread = threading.Thread(target=self.execute, name=task.ID, args=(task,))
+					pool.append(thread)
+					thread.start()			
 			else:
 				print("No task to execute.")
 				print("Waiting for " + str(WAIT) + " seconds before next check.")

@@ -8,7 +8,7 @@
 
 {% if data %}
 {% if data.client.ID %}
-<a href="{{ url_for('seeclient', client_id=data.client.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
+<a href="{{ url_for('see_object', object_name='client', object_id=data.client.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
 {% endif %}
 {% endif %}
 

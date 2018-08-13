@@ -17,33 +17,33 @@ class Config:
 	def start(self):
 
 		# select the right configuration file depending on what system we're in
-		if self.component == 'engine' or self.component == 'tasks-manager':
+		if self.component == 'engine' or self.component == 'tasks-manager' or self.component == 'task':
 			config_file_name = '/etc/yarus/config_engine.yml'
 		elif self.component == 'client':
 			config_file_name = '/etc/yarus/config_client.yml'
 		else:
-			self.app.log.seterror(15, "Internal Server Error: no app component given.")
+			self.app.log.error("Internal Server Error: no app component given.")
 			return False
 
 		# open the configuration file
 		try:
 			config_file = open(config_file_name, 'r')
 		except IOError as error:
-			self.app.log.seterror(15, "Configuration file not found or get permission denied when trying to read it.")
+			self.app.log.error("Configuration file not found or get permission denied when trying to read it.")
 			return False
 
 		# parse yaml
 		try:
 			config = yaml.load(config_file)
 		except yaml.YAMLError as error:
-			self.app.log.seterror(15, "Configuration file is malformed, it is not good YAML format.")
+			self.app.log.error("Configuration file is malformed, it is not good YAML format.")
 			return False
 
 		# extract information
 		try:
 			# config only for the engine and tasks manager
-			if self.component == 'engine' or self.component == 'tasks-manager':
-
+			if self.component == 'engine' or self.component == 'tasks-manager' or self.component == 'task':
+				self.app.log.debug("component: " + self.component)
 				# database related information: host, name, username, password
 				if 'database' in config:
 
@@ -116,7 +116,7 @@ class Config:
 				raise(MissingValueException("Missing engine's information"))
 
 		except MissingValueException as error:
-			print(error)
+			self.app.log.error(error)
 			return False
 
 		return True

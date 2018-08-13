@@ -10,7 +10,7 @@
     List of systems
     <div class="pull-right">
       <div class="btn-group">
-          <a href="{{ url_for('addclient') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_object', object_name='client') }}" type="button" class="btn btn-default btn-xs">
               Add a system
           </a>
       </div>
@@ -40,7 +40,7 @@
               <td>{{ client.distribution }}</td>
               <td>{{ client.version }}</td>
               <td>
-                <a href="{{ url_for('seeclient', client_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
+                <a href="{{ url_for('see_object', object_name='client', object_id=client.ID) }}"><span class="fas fa-eye actions"></span></a>
               </td>
             </tr>
             {% endfor %}
@@ -61,6 +61,7 @@
       "iDisplayLength": 25,
       buttons: [  
         'selectAll',
+        'selectNone',
         {
           text: 'Delete',
           action: function () {
@@ -71,7 +72,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('deleteclients', clients_id='') }}" + id
+            url = "{{ url_for('delete_object', object_name='client', return_object='client', return_id='none', objects_id='') }}" + id
             $(location).attr('href', url);
           }
         },

@@ -7,6 +7,9 @@
 
 {% if result.data %}
 
+<a href="{{ url_for('list_object', object_name='task') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the tasks list</a><br/>
+<a href="{{ url_for('see_object', object_name='task', object_id=result.data.ID) }}"><i class="fas fa-sync-alt"></i> Actualize the page</a><br/><br />
+
 <div class="panel panel-default">
   <div class="panel-heading">
     Task's information
@@ -24,8 +27,8 @@
         <td>{{ result.data.action }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Object ID</td>
-        <td>{{ result.data.object_id }}</td>
+        <td style="font-weight: bold;">Object</td>
+        <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name=result.data.object_type, object_id=result.data.object_id) }}">{{ result.data.object_name }}</a></td>
       </tr>
       <tr>
         <td style="font-weight: bold;">Status</td>

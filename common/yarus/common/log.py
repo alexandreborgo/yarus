@@ -21,8 +21,19 @@ class LogSystem:
 			print("ERROR: " + str(error))
 			return False
 
-	def settasklogfile(self, task):
-		self.task_log_file = '/var/log/yarus/tasks/' + task.ID + '.log'
+	def log(self, errmsg):
+		print(str(errmsg))
+		try:
+			file = open(self.log_file, 'a')
+			file.write(str(datetime.datetime.now()) + ": " + errmsg + "\n")
+			file.close()
+		except IOError as error:
+			print("Unable to write the error into the log file: " + self.log_file)
+			print("ERROR: " + str(error))
+			return False
+
+	def settasklogfile(self, ID):
+		self.task_log_file = '/var/log/yarus/tasks/' + ID + '.log'
 
 	def logtask(self, message):
 		print(str(message))

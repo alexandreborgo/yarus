@@ -14,21 +14,24 @@ parser.add_argument('--scheduled-task-id', action='store')
 
 args = parser.parse_args()
 
+ # start the app context
+app = AppTasksManager()
+
+if not app.start():
+    app.log.error("Can't start AppTaskManager.")
+    sys.exit(0)
+
 if args.scheduled_task_id:
-    # start the app context
-    app = AppTasksManager()
-    
-    if not app.start():
-        sys.exit(1)
-        
+           
     app.database.connect()
-    
-    scheduled_task = getscheduled(app, args.scheduled_task_id)
-    
+
+    # check if the object exists
+    scheduled_task = getobject(app, 'scheduled', args.scheduled_task_id)
     if not scheduled_task:
-        print("Scheduled task with ID: " + args.scheduled_task_id + " not found.")
-        sys.exit(1)
+        app.log.error("Scheduled task with ID: " + args.scheduled_task_id + " not found.")
+        sys.exit(0)
     
+    # generate task object
     task = Task()
     task.setID(getnewid())
     task.setStatus('pending')
@@ -36,10 +39,13 @@ if args.scheduled_task_id:
     task.setAction(scheduled_task.task_action)
     task.setObjectID(scheduled_task.object_id)
     task.setManagerID(scheduled_task.manager_id)
+
+    # push into the database
     task.insert(app.database)
 
-    print("Task created with ID : " + task.ID)
+    app.log.log("Task created with ID : " + task.ID)
 
     app.database.close()
 else:
-    sys.exit(1)
+    app.log.error("No scheduled task ID given.")
+    sys.exit(0)

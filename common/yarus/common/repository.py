@@ -8,7 +8,7 @@ class Repository(YarusObject):
 	def __init__(self):
 		self.ID = ""
 		self.URL = ""
-		self.repository = ""
+		self.distribution = ""
 		self.release = ""
 		self.path = ""
 		self.components = ""
@@ -32,15 +32,15 @@ class Repository(YarusObject):
 				raise(InvalidValueException("The given URL (" + URL + ") is invalid."))
 		else:
 			raise(MissingValueException("The URL is missing."))
-	def setRepository(self, repository):
-		if repository:
-			if re.match("^[a-zA-z0-9\-\_\.]*$", repository):
-				self.repository = repository
+	def setDistribution(self, distribution):
+		if distribution:
+			if re.match("^[a-zA-z0-9\-\_\.]*$", distribution):
+				self.distribution = distribution
 				return True
 			else:
-				raise(InvalidValueException("The given repository (" + repository + ") is invalid."))
+				raise(InvalidValueException("The given distribution (" + distribution + ") is invalid."))
 		else:
-			raise(MissingValueException("The repository is missing."))
+			raise(MissingValueException("The distribution is missing."))
 	def setRelease(self, release):
 		if release:
 			if re.match("^[a-zA-z0-9\-\_\.]*$", release):

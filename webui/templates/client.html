@@ -7,7 +7,8 @@
 
 {% if result.data %}
 
-<a href="{{ url_for('seeclient', client_id=result.data.ID) }}"><i class="fas fa-sync-alt"></i> Actualize the page</a>.<br/><br />
+<a href="{{ url_for('list_object', object_name='client') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the clients list</a><br/>
+<a href="{{ url_for('see_object', object_name='client', object_id=result.data.ID) }}"><i class="fas fa-sync-alt"></i> Actualize the page</a><br/><br />
 
 <div class="panel panel-default">
   <div class="panel-heading">
@@ -77,179 +78,54 @@
     <div class="panel-body">
       <div class="row" style="padding:15px;">      
           Action:
-          <a href="{{ url_for('editclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('edit_object', object_name='client', object_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               Edit
           </a>
-          <a href="{{ url_for('deleteclients', clients_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('delete_object', object_name='client', return_object='client', return_id='none', objects_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
               Delete
           </a>
           <br />
           <br />
           Task: 
-          <a href="{{ url_for('checkclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_task', object_name='client', object_id=result.data.ID, task_action='check_client') }}" type="button" class="btn btn-default btn-xs">
               Check
           </a>
       
-          <a href="{{ url_for('configclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_task', object_name='client', object_id=result.data.ID, task_action='config_client') }}" type="button" class="btn btn-default btn-xs">
               Configure
           </a>
       
-          <a href="{{ url_for('upgradableclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_task', object_name='client', object_id=result.data.ID, task_action='upgradable_client') }}" type="button" class="btn btn-default btn-xs">
               List upgradable packages
           </a>
       
-          <a href="{{ url_for('approvedupdateclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_task', object_name='client', object_id=result.data.ID, task_action='approved_update_client') }}" type="button" class="btn btn-default btn-xs">
             Update approved
           </a>
       
-          <a href="{{ url_for('allupdateclient', client_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_task', object_name='client', object_id=result.data.ID, task_action='all_update_client') }}" type="button" class="btn btn-default btn-xs">
             Update all
           </a>
           <br />
           <br />
           Schedule task:
-          <a href="{{ url_for('addscheduledtask', object_type='client', object_id=result.data.ID, action='check_client') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_scheduled', object_name='client', object_id=result.data.ID, task_action='check_client') }}" type="button" class="btn btn-default btn-xs">
             Check
           </a>
-          <a href="{{ url_for('addscheduledtask', object_type='client', object_id=result.data.ID, action='config_client') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_scheduled', object_name='client', object_id=result.data.ID, task_action='config_client') }}" type="button" class="btn btn-default btn-xs">
             Configure
           </a>
-          <a href="{{ url_for('addscheduledtask', object_type='client', object_id=result.data.ID, action='upgradable_client') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_scheduled', object_name='client', object_id=result.data.ID, task_action='upgradable_client') }}" type="button" class="btn btn-default btn-xs">
             List upgradable packages
           </a>
-          <a href="{{ url_for('addscheduledtask', object_type='client', object_id=result.data.ID, action='approved_update_client') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_scheduled', object_name='client', object_id=result.data.ID, task_action='approved_update_client') }}" type="button" class="btn btn-default btn-xs">
             Update approved
           </a>
-          <a href="{{ url_for('addscheduledtask', object_type='client', object_id=result.data.ID, action='all_update_client') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_scheduled', object_name='client', object_id=result.data.ID, task_action='all_update_client') }}" type="button" class="btn btn-default btn-xs">
             Update all
           </a>
       </div>
     </div>
-</div>
-
-<div class="panel panel-default">
-    <div class="panel-heading">
-      Tasks
-    </div>
-    <div class="panel-body">
-      <div class="row" style="padding:15px;">      
-          <table id="tasks-table">
-              <thead>
-                <tr style="font-weight: bold;">
-                  <td></td>
-                  <td>ID</td>
-                  <td>Action</td>
-                  <td>Object ID</td>
-                  <td>Status</td>
-                  <td>Creation date</td>
-                  <td>Start date</td>
-                  <td>End date</td>
-                  <td>Actions</td>
-                </tr>
-              </thead>
-              <tbody>
-                {% for task in result.data.tasks %}
-                  <tr>
-                    <td></td>
-                    <td>{{ task.ID }}</td>
-                    <td>{{ task.action }}</td>
-                    <td>{{ task.object_id }}</td>
-                    <td>
-                      {% if task.status == 'completed' %}
-                        <span class="label label-success">Completed</span>
-                      {% elif task.status == 'failed' %}
-                        <span class="label label-danger">Failed</span>
-                      {% elif task.status == 'pending' %}
-                      <span class="label label-info">Pending</span>
-                      {% elif task.status == 'running' %}
-                        <span class="label label-primary">Running</span>
-                      {% endif %}
-                    </td>
-                    <td>{{ task.creation_date }}</td>
-                    <td>{{ task.start_time }}</td>
-                    <td>{{ task.end_time }}</td>
-                    <td>
-                      <a href="{{ url_for('seetask', task_id=task.ID) }}"><span class="fas fa-eye actions"></span></a>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-      </div>
-    </div>
-</div>
-
-<div class="panel panel-default">
-  <div class="panel-heading">
-    Repositories/Channels linked to the client
-  </div>
-  <div class="panel-body">
-    <div class="row" style="padding:15px;">
-
-      <table id="repochan-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for object in result.data.linked %}
-            <tr>
-              <td></td>
-              <td>{% if object.type == 'r' %}r{% elif object.type == 'c' %}c{% endif %}:{{ object.ID }}</td>
-              <td>{{ object.name }}</td>
-              <td>{{ object.description }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="panel panel-default">
-  <div class="panel-heading">
-    Link repositories/channels to the client
-  </div>
-  <div class="panel-body">
-    <div class="row" style="padding:15px;">
-
-      <table id="add-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>ID</th>
-            <th>Type</th>
-            <th>Name</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-            {% for channel in result.data.channels %}
-            <tr>
-              <td></td>
-              <td>c:{{ channel.ID }}</td>
-              <td>Channel</td>
-              <td>{{ channel.name }}</td>
-              <td>{{ channel.description }}</td>
-            </tr>
-          {% endfor %}
-          {% for repository in result.data.repositories %}
-          <tr>
-            <td></td>
-            <td>r:{{ repository.ID }}</td>
-            <td>Repository</td>
-            <td>{{ repository.name }}</td>
-            <td>{{ repository.description }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
 </div>
 
 <div class="panel panel-default">
@@ -288,8 +164,186 @@
           </tbody>
         </table>
         {% else %}
-        No package to update. Start the task "List upgradable packages" to find package that need an update.
+        No package to update. Start the task "List upgradable packages" to find packages that need an update.
         {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+      Tasks
+    </div>
+    <div class="panel-body">
+      <div class="row" style="padding:15px;">      
+          <table id="tasks-table">
+              <thead>
+                <tr style="font-weight: bold;">
+                  <td></td>
+                  <td>ID</td>
+                  <td>Action</td>
+                  <td>Status</td>
+                  <td>Creation date</td>
+                  <td>Start date</td>
+                  <td>End date</td>
+                  <td>Actions</td>
+                </tr>
+              </thead>
+              <tbody>
+                {% for task in result.data.tasks %}
+                  <tr>
+                    <td></td>
+                    <td>{{ task.ID }}</td>
+                    <td>{{ task.action }}</td>
+                    <td>
+                      {% if task.status == 'completed' %}
+                        <span class="label label-success">Completed</span>
+                      {% elif task.status == 'failed' %}
+                        <span class="label label-danger">Failed</span>
+                      {% elif task.status == 'pending' %}
+                      <span class="label label-info">Pending</span>
+                      {% elif task.status == 'running' %}
+                        <span class="label label-primary">Running</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ task.creation_date }}</td>
+                    <td>{{ task.start_time }}</td>
+                    <td>{{ task.end_time }}</td>
+                    <td>
+                      <a href="{{ url_for('see_object', object_name='task', object_id=task.ID) }}"><span class="fas fa-eye actions"></span></a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+      </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Scheduled tasks
+    <div class="pull-right">
+      <div class="btn-group">
+          <a href="{{ url_for('add_scheduled', object_name='channel', object_id=result.data.ID, task_action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
+              Sync
+          </a>
+      </div>
+  </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+  <table id="scheduledtasks-table">
+    <thead>
+      <tr style="font-weight: bold;">
+        <td></td>
+        <td>ID</td>
+        <td>Name</td>
+        <td>Description</td>
+        <td>Action</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for scheduledtask in result.data.scheduled %}
+        <tr>
+          <td></td>
+          <td>{{ scheduledtask.ID }}</td>
+          <td>{{ scheduledtask.name }}</td>
+          <td>{{ scheduledtask.description }}</td>
+          <td>{{ scheduledtask.task_action }}</td>
+          <td>
+            <a href=""><span class="fas fa-eye actions"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Repositories/Channels linked to the client
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+      <table id="repochan-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for object in result.data.linked %}
+          {% if object.type == 'r' %}
+          {% set type = 'repository' %}
+          {% elif object.type == 'c' %}
+          {% set type = 'channel' %}
+          {% endif %}
+            <tr>
+              <td></td>
+              <td>{% if object.type == 'r' %}r{% elif object.type == 'c' %}c{% endif %}:{{ object.ID }}</td>
+              <td>{% if object.type == 'r' %}Repository{% elif object.type == 'c' %}Channel{% endif %}</td>
+              <td>{{ object.name }}</td>
+              <td>{{ object.description }}</td>
+              <td><a href="{{ url_for('see_object', object_name=type, object_id=object.ID) }}"><span class="fas fa-eye actions"></span></a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Link repositories/channels to the client
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+      <table id="add-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for channel in result.data.channels %}
+            <tr>
+              <td></td>
+              <td>c:{{ channel.ID }}</td>
+              <td>Channel</td>
+              <td>{{ channel.name }}</td>
+              <td>{{ channel.description }}</td>
+              <td><a href="{{ url_for('see_object', object_name='channel', object_id=channel.ID) }}"><span class="fas fa-eye actions"></span></a></td>
+            </tr>
+          {% endfor %}
+          {% for repository in result.data.repositories %}
+          <tr>
+            <td></td>
+            <td>r:{{ repository.ID }}</td>
+            <td>Repository</td>
+            <td>{{ repository.name }}</td>
+            <td>{{ repository.description }}</td>
+            <td><a href="{{ url_for('see_object', object_name='repository', object_id=repository.ID) }}"><span class="fas fa-eye actions"></span></a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -369,7 +423,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('unlinkclient', client_id=result.data.ID, rc_id='') }}" + id
+            url = "{{ url_for('unlink', object_name='client', object_id=result.data.ID, lk_obj_id='') }}" + id
             $(location).attr('href', url);
           }
         },
@@ -402,7 +456,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('linkclient', client_id=result.data.ID, rc_id='') }}" + id
+            url = "{{ url_for('link', object_name='client', object_id=result.data.ID, lk_obj_id='') }}" + id
             $(location).attr('href', url);
           }
         },
@@ -435,7 +489,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('deletetasks', tasks_id='') }}" + id
+            url = "{{ url_for('delete_object', object_name='task', return_object='client', return_id=result.data.ID, objects_id='') }}" + id
             $(location).attr('href', url);
           }
         },
@@ -452,6 +506,39 @@
       order: [[ 1, 'asc' ]]
     });
     table4.column( 1 ).visible( false );
+
+    var table6 = $('#scheduledtasks-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table6.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('delete_object', object_name='scheduled', return_object='client', return_id=result.data.ID, objects_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+    table6.column( 1 ).visible( false );
   });
 </script>
 {% endif %}

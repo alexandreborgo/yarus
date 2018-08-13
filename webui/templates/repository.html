@@ -7,6 +7,9 @@
 
 {% if result.data %}
 
+<a href="{{ url_for('list_object', object_name='repository') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the repositories list</a><br/>
+<a href="{{ url_for('see_object', object_name='repository', object_id=result.data.ID) }}"><i class="fas fa-sync-alt"></i> Actualize the page</a><br/><br />
+
 <div class="panel panel-default">
   <div class="panel-heading">
     Repository's information
@@ -30,11 +33,11 @@
       </tr>
       <tr>
         <td style="font-weight: bold;">Remote root URL of the repository</td>
-        <td>{{ result.data.URL }}</td>
+        <td><i class="fas fa-external-link-alt"></i> <a href="{{ result.data.URL }}">{{ result.data.URL }}</a></td>
       </tr>
       <tr>
         <td style="font-weight: bold;">Distribution</td>
-        <td>{{ result.data.repository }}</td>
+        <td>{{ result.data.distribution }}</td>
       </tr>
       <tr>
         <td style="font-weight: bold;">Release</td>
@@ -83,28 +86,202 @@
       <div class="panel-body">
         <div class="row" style="padding:15px;">      
             Action:
-            <a href="{{ url_for('editrepository', repo_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('edit_object', object_name='repository', object_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
                 Edit
             </a>
-            <a href="{{ url_for('deleterepositories', repos_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('delete_object', object_name='repository', return_object='repository', return_id='none', objects_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
                 Delete
             </a>
             <br />
             <br />
             Task: 
-            <a href="{{ url_for('syncrepository', repo_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('add_task', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
                 Sync
             </a>
             <br />
             <br />
             Schedule a task: 
-            <a href="{{ url_for('addscheduledtask', object_type='repo', object_id=result.data.ID, action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('add_scheduled', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
                 Sync
             </a>
         </div>
       </div>
 </div>
 
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Tasks
+    <div class="pull-right">
+      <div class="btn-group">
+        <a href="{{ url_for('add_task', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+            Sync
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">      
+        <table id="tasks-table">
+            <thead>
+              <tr style="font-weight: bold;">
+                <td></td>
+                <td>ID</td>
+                <td>Action</td>
+                <td>Status</td>
+                <td>Creation date</td>
+                <td>Start date</td>
+                <td>End date</td>
+                <td>Actions</td>
+              </tr>
+            </thead>
+            <tbody>
+              {% for task in result.data.tasks %}
+                <tr>
+                  <td></td>
+                  <td>{{ task.ID }}</td>
+                  <td>{{ task.action }}</td>
+                  <td>
+                    {% if task.status == 'completed' %}
+                      <span class="label label-success">Completed</span>
+                    {% elif task.status == 'failed' %}
+                      <span class="label label-danger">Failed</span>
+                    {% elif task.status == 'pending' %}
+                    <span class="label label-info">Pending</span>
+                    {% elif task.status == 'running' %}
+                      <span class="label label-primary">Running</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ task.creation_date }}</td>
+                  <td>{{ task.start_time }}</td>
+                  <td>{{ task.end_time }}</td>
+                  <td>
+                    <a href="{{ url_for('see_object', object_name='task', object_id=task.ID) }}"><span class="fas fa-eye actions"></span></a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Scheduled tasks
+    <div class="pull-right">
+      <div class="btn-group">
+        <a href="{{ url_for('add_scheduled', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+            Sync
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+  <table id="scheduledtasks-table">
+    <thead>
+      <tr style="font-weight: bold;">
+        <td></td>
+        <td>ID</td>
+        <td>Name</td>
+        <td>Description</td>
+        <td>Action</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for scheduledtask in result.data.scheduled %}
+        <tr>
+          <td></td>
+          <td>{{ scheduledtask.ID }}</td>
+          <td>{{ scheduledtask.name }}</td>
+          <td>{{ scheduledtask.description }}</td>
+          <td>{{ scheduledtask.task_action }}</td>
+          <td>
+            <a href="{{ url_for('see_object', object_name='scheduled', object_id=scheduledtask.ID) }}"><span class="fas fa-eye actions"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+</div>
+
 {% endif %}
 
+{% endblock %}
+
+{% block pagejs %}
+{% if result.data %}
+<script>
+  $(document).ready( function () {
+    var table4 = $('#tasks-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table4.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('delete_object', object_name='task', return_object='repository', return_id=result.data.ID, objects_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+    table4.column( 1 ).visible( false );
+
+    var table = $('#scheduledtasks-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Delete',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('delete_object', object_name='scheduled', return_object='repository', return_id=result.data.ID, objects_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+    table.column( 1 ).visible( false );
+  });
+</script>
+{% endif %}
 {% endblock %}
