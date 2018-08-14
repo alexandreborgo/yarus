@@ -67,6 +67,7 @@ class YarusTasksManager():
 					self.alterTaskStatus(app, task, 'failed')
 					app.log.logtask("The following error occured during the task :")
 					app.log.logtask(error)
+					result = False
 				
 				# check the result
 				if result:
@@ -119,6 +120,4 @@ class YarusTasksManager():
 					pool.append(thread)
 					thread.start()			
 			else:
-				print("No task to execute.")
-				print("Waiting for " + str(WAIT) + " seconds before next check.")
 				time.sleep(WAIT)

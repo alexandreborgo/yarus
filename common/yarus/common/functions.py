@@ -4,6 +4,7 @@ import string
 import time
 
 from yarus.common.repository import Repository
+from yarus.common.daterepository import Daterepository
 from yarus.common.channel import Channel
 from yarus.common.user import User
 from yarus.common.link import Link
@@ -14,6 +15,7 @@ from yarus.common.group import Group
 from yarus.common.upgradable import Upgradable
 from yarus.common.grouped import Grouped
 from yarus.common.scheduled import Scheduled
+from yarus.common.package import Package
 from yarus.common.exceptions import *
 
 def getnewid():
@@ -77,7 +79,24 @@ def getobjectscheduled(app, object_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
+def getpackage(app, repository, comp, name, version, arch, rel):
+	try:
+		return Package().load_package(app.database, repository, comp, name, version, arch, rel)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getdaterepository(app, repository, daterepo):
+	try:
+		return Daterepository().load_daterepository(app.database, repository, daterepo)
+	except MissingValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
 
 def getrepobyname(app, name):
 	try:

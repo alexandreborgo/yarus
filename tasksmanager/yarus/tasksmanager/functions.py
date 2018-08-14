@@ -10,8 +10,6 @@ import requests
 import hashlib
 import time
 
-# check if line matchs content we need (comps, archs)
-# return the l if it matchs or None if it doesn't
 def parseReleaseLine(line, comps, archs):
 	for comp in comps:
 		for arch in archs:
@@ -28,37 +26,10 @@ def parseReleaseLine(line, comps, archs):
 				return line
 	return None
 
-# download file using rsync into /tmp/yarus and return the file path
-def getFile_rsync(app, remote, local, file):
-	try:
-		remote = remote.replace('http', 'rsync')
-		rsync_cmd = "rsync -azq --no-o --copy-links " + remote + "/" + file + " " + local
-		if app.config.px_host != "":
-			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
-		else:
-			env = None
-		result = subprocess.call(rsync_cmd, shell=True, env=env)
-		# check rsync result
-		if result == 20:
-			sys.exit(0)
-		elif result != 0:
-			return False
-		else:
-			return local + "/" + file
-	except Exception as exception:
-		print(exception)
-		return None
-
 def getDir_rsync(app, url, local):
 	try:
 		new_url = url.replace('http', 'rsync')
 
-		# rsync options:
-
-		# z: compress data during the transfer
-		# v: verbose level one
-		# r: recursive
-		# t: times preserve
 		rsync_cmd = "rsync -zvrt " + new_url + " " + local
 		
 		# if proxy set in the config file
@@ -87,28 +58,31 @@ def getDir_rsync(app, url, local):
 		print(exception)
 		return None
 
-def checkingSignature(path, signature):
-	# checking sha256 signature
-	sha256_hash = hashlib.sha256()
-
-	# open the local file
+def getFile_rsync(app, url, local, file):
 	try:
-		f = open(path, 'rb')
-	except Exception as error:
-		return False
+		new_url = url.replace('http', 'rsync')
 
-	# read data and calculate hash
-	while True:
-		data = f.read(65536)
-		if not data:
-			break
-		sha256_hash.update(data)
+		rsync_cmd = "rsync -zvrt " + new_url + file + " " + local
+		
+		# if proxy set in the config file
+		if app.config.px_host != "":
+			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
+		else:
+			env = None
+			
+		# execute the command
+		process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env, bufsize=1, universal_newlines=True)
 
-	# compare hashs
-	if signature == sha256_hash.hexdigest():
-		return True
+		# get the final result of rsync
+		result = process.wait()
 
-	return False
+		# check rsync result
+		if result != 0:
+			return False
+		return local + "/" + file
+
+	except Exception as exception:
+		return None
 
 def checkingSignatureFromSig(path, signature):
 
@@ -145,70 +119,53 @@ def getSigFile(file):
 
 	return sha256_hash.hexdigest()
 
+def check256(path, signature):
+	# checking sha256 signature
+	sha256_hash = hashlib.sha256()
 
-def tryDownloadFile(app, remote_file_dir, local_file_dir, file, signature):
+	# open the local file
+	try:
+		f = open(path, 'rb')
+	except Exception as error:
+		return False
+
+	# read data and calculate hash
+	while True:
+		data = f.read(65536)
+		if not data:
+			break
+		sha256_hash.update(data)
+
+	# compare hashs
+	if signature == sha256_hash.hexdigest():
+		return True
+	return False
+
+def tryDownloadFile(app, remote, local, file, algo, signature):
 	# downloading the file
-	print("Downloading: " + file)
+	app.log.logtask("Downloading: " + file)
 
 	# we'll try 3 times to get the file with the valid signature
 	# if we can't get it, we remove the file and print a mistake
 	for try_dl in range(1,4):
 
 		if try_dl > 1:
-			print("Trying downloading again (" + str(try_dl) + ")...")
+			app.log.logtask("Trying to download again (" + str(try_dl) + ")...")
 
 		# downloading
-		path = getFile_rsync(app, remote_file_dir, local_file_dir, file)
+		path = getFile_rsync(app, remote, local, file)
 
 		if not path:
-			print("The file: " + file + " couldn't be downloaded.")
+			app.log.logtask("The file: " + file + " couldn't be downloaded.")
 			continue
 
-		if not checkingSignature(path, signature):
-			if try_dl == 3:
-				print("The signature of the file is invalid for the third time.")
-				print("At this point the only safe thing sync process can do is fail.")
-				return False
+		if algo == 'sha256':
+			if not check256(path, signature):
+				if try_dl == 3:
+					app.log.logtask("The signature of the file is invalid for the third time.")
+					# TODO: remove file
+					return False
+				else:
+					app.log.logtask("The signature of the local file is invalid.")
 			else:
-				print("The signature of the local file is invalid.")
-		else:
-			return True
-
-def tryDownloadPkg(app, root_remote, root_local, pkg_url, pkg_name, signature):
-	print("Downloading package: " + pkg_name)
-
-	# we'll try 3 times to get the file with the valid signature
-	# if we can't get it, remove file and print error
-	for try_dl in range(1,4):
-
-		if try_dl > 1:
-			print("Trying downloading again (" + str(try_dl) + ")...")
-
-		# downloading
-		remote_pkg_dir = root_remote
-		local_pkg_dir = root_local + "/"
-
-		for x in pkg_url.split("/"):
-			if x != pkg_url.split("/")[-1]:
-				remote_pkg_dir += x + "/"
-				local_pkg_dir += x + "/"
-
-		if not os.path.isdir(local_pkg_dir):
-			os.makedirs(local_pkg_dir)
-
-		path = getFile_rsync(app, remote_pkg_dir, local_pkg_dir, pkg_name)
-
-		if not path:
-			print("The package: " + pkg_name + " couldn't be downloaded.")
-			continue
-
-		# checking signature
-		if not checkingSignature(path, signature):
-			if try_dl == 3:
-				print("The signature of the file is invalid for the third time.")
-				print("At this point the only safe thing sync process can do is fail.")
-				return False
-			else:
-				print("The signature of the local file is invalid.")
-		else:
-			return True
+				return True

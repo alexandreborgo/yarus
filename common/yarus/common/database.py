@@ -36,21 +36,41 @@ class Mysql:
 		except Exception as error:
 			raise(DatabaseError("Unable to close the connection to the database correctly."))
 
-	def execute(self, request):
-		try:
-			self.cursor.execute(request)
+	def execute(self, request, data=""):
+		try:			
+			if data != "":
+				self.cursor.execute(request, data)
+			else:
+				self.cursor.execute(request)
+			
 			self.connection.commit()
 
 			return True
 		except Error as error:
 			self.app.log.error(str(error))
 			raise(DatabaseError(error))
-	def get_one(self, request):
-		self.cursor.execute(request)
-		return self.cursor.fetchone()
-	def get_all(self, request):
-		self.cursor.execute(request)
-		return self.cursor.fetchall()
+	def get_one(self, request, data=""):
+		try:			
+			if data != "":
+				self.cursor.execute(request, data)
+			else:
+				self.cursor.execute(request)
+			
+			return self.cursor.fetchone()
+		except Error as error:
+			self.app.log.error(str(error))
+			raise(DatabaseError(error))
+	def get_all(self, request, data=""):
+		try:			
+			if data != "":
+				self.cursor.execute(request, data)
+			else:
+				self.cursor.execute(request)
+			
+			return self.cursor.fetchall()
+		except Error as error:
+			self.app.log.error(str(error))
+			raise(DatabaseError(error))
 
 	def get_object(self, object_table, ID):
 		request = "SELECT * FROM " + object_table + " WHERE ID='" + ID + "'"
@@ -58,33 +78,40 @@ class Mysql:
 	def get_all_object(self, object_table):
 		request = "SELECT * FROM " + object_table + " ORDER BY creation_date ASC"
 		return self.get_all(request)
+	
 	def update_object(self, object_table, values):
 		inds = ''
 		vals = ''
+		data = []
 		first = list(values.keys())[0]
 		for k, v in values.items():
-			tmp = ('null' if v == None else "'" + str(v) + "'")
+			tmp = (None if v == None else str(v))
 			if k == first:
-				vals += "`" + k + "`" + "=" + tmp
+				vals += "`" + k + "`" + "=%s"
+				data.append(tmp)
 			else:
-				vals += ", " + "`" + k + "`" + "=" + tmp
+				vals += ", " + "`" + k + "`" + "=%s"
+				data.append(tmp)
 		request = "UPDATE " + object_table + " SET " + vals + " WHERE ID='" + values['ID'] + "'"
-		self.execute(request)
+		self.execute(request, tuple(data))
 		return True
 	def insert_object(self, object_table, values):
 		inds = ''
 		vals = ''
+		data = []
 		first = list(values.keys())[0]
 		for k, v in values.items():
-			tmp = ('null' if v == None else "'" + str(v) + "'")
+			tmp = (None if v == None else str(v))
 			if k == first:
 				inds += "`" + k + "`"
-				vals += tmp
+				vals += "%s"
+				data.append(tmp)
 			else:
 				inds += ", " + "`" + k + "`"
-				vals += ", " + tmp
+				vals += ", %s"
+				data.append(tmp)
 		request = "INSERT INTO " + object_table + " (" + inds + ") VALUES(" + vals + ")"
-		self.execute(request)
+		self.execute(request, tuple(data))
 		return True
 	def delete_object(self, object_table, values):
 		for k, v in values.items():
@@ -177,3 +204,14 @@ class Mysql:
 	def get_corresponding_repositories(self, distribution, release):
 		request = "SELECT * FROM yarus_repository WHERE repository='" + distribution + "' AND `release`='" + release + "'"
 		return self.get_all(request)
+
+	def get_package(self, object_table, repository, comp, name, version, arch, rel):
+		request = "SELECT * FROM yarus_package WHERE repository=%s AND component=%s AND name=%s AND version=%s AND architecture=%s AND `release`=%s"
+		data = (repository, comp, name, version, arch, rel)
+		self.cursor.execute(request, data)
+		return self.cursor.fetchone()
+
+	def get_daterepository(self, object_table, repository, date):
+		request = "SELECT * FROM " + object_table + " WHERE repository=%s AND date=%s"
+		data = (repository, date)
+		return self.get_one(request, data)
