@@ -40,8 +40,8 @@
     <textarea class="form-control" id="description" name="description" placeholder="Scheduled task description">{% if data %}{{ data.scheduledtask.description }}{% endif %}</textarea>
   </div>
   <div class="form-group">
-    <label for="task_action">Action</label>
-    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.scheduledtask.task_action }}{% else %}{{ task_action }}{% endif %}" id="task_action" name="task_action" READONLY>
+    <label for="action">Action</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.scheduledtask.action }}{% else %}{{ action }}{% endif %}" id="action" name="action" READONLY>
   </div>
   <div class="form-group">
     <label for="object_id">Object ID</label>

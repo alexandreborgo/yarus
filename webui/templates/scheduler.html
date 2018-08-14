@@ -31,7 +31,7 @@
           <td>{{ scheduledtask.ID }}</td>
           <td>{{ scheduledtask.name }}</td>
           <td>{{ scheduledtask.description }}</td>
-          <td>{{ scheduledtask.task_action }}</td>
+          <td>{{ scheduledtask.action }}</td>
           <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name=scheduledtask.object_type, object_id=scheduledtask.object_id) }}">{{ scheduledtask.object_name }}</a></td>
           <td>{{ scheduledtask.creation_date }}</td>
           <td>

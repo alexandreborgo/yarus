@@ -1,5 +1,5 @@
+
 from yarus.common.yarusobject import YarusObject
-from yarus.common.exceptions import *
 
 class Daterepository(YarusObject):
     
@@ -9,7 +9,7 @@ class Daterepository(YarusObject):
         self.date = ""
         
     def load_daterepository(self, database, repository, date):
-        object_tmp = database.get_daterepository("yarus_daterepository", repository, date)
+        object_tmp = database.get_daterepository(repository, date)
         if not object_tmp:
             return None
         for key, value in vars(self).items():

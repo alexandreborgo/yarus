@@ -95,13 +95,13 @@
             <br />
             <br />
             Task: 
-            <a href="{{ url_for('add_task', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('add_task', object_name='repository', object_id=result.data.ID, action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
                 Sync
             </a>
             <br />
             <br />
             Schedule a task: 
-            <a href="{{ url_for('add_scheduled', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+            <a href="{{ url_for('add_scheduled', object_name='repository', object_id=result.data.ID, action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
                 Sync
             </a>
         </div>
@@ -113,7 +113,7 @@
     Tasks
     <div class="pull-right">
       <div class="btn-group">
-        <a href="{{ url_for('add_task', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+        <a href="{{ url_for('add_task', object_name='repository', object_id=result.data.ID, action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
             Sync
         </a>
       </div>
@@ -170,7 +170,7 @@
     Scheduled tasks
     <div class="pull-right">
       <div class="btn-group">
-        <a href="{{ url_for('add_scheduled', object_name='repository', object_id=result.data.ID, task_action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
+        <a href="{{ url_for('add_scheduled', object_name='repository', object_id=result.data.ID, action='sync_repo') }}" type="button" class="btn btn-default btn-xs">
             Sync
         </a>
       </div>
@@ -196,7 +196,7 @@
           <td>{{ scheduledtask.ID }}</td>
           <td>{{ scheduledtask.name }}</td>
           <td>{{ scheduledtask.description }}</td>
-          <td>{{ scheduledtask.task_action }}</td>
+          <td>{{ scheduledtask.action }}</td>
           <td>
             <a href="{{ url_for('see_object', object_name='scheduled', object_id=scheduledtask.ID) }}"><span class="fas fa-eye actions"></span></a>
           </td>

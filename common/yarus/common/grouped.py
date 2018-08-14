@@ -1,6 +1,6 @@
 
-import re
 from yarus.common.yarusobject import YarusObject
+from yarus.common.check_functions import *
 from yarus.common.exceptions import *
 
 class Grouped(YarusObject):
@@ -16,27 +16,6 @@ class Grouped(YarusObject):
 		for key, value in vars(self).items():
 			setattr(self, key, object_tmp[key])
 		return self
-
 	def delete_grouped(self, database):
 		database.delete_grouped(self.client_id, self.group_id)
 		return True
-
-	def setClientID(self, ID):
-		if ID:
-			if re.match("^[a-zA-z0-9-_]*$", ID):
-				self.client_id = ID
-				return True
-			else:
-				raise(InvalidValueException("The given client ID (" + ID + ") is invalid."))
-		else:
-			raise(MissingValueException("The client ID is missing."))
-
-	def setGroupID(self, ID):
-		if ID:
-			if re.match("^[a-zA-z0-9-_]*$", ID):
-				self.group_id = ID
-				return True
-			else:
-				raise(InvalidValueException("The group ID (" + ID + ") is invalid."))
-		else:
-			raise(MissingValueException("The group ID is missing."))

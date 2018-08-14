@@ -101,11 +101,11 @@ def after_request(response):
     return response
 
 # add a task
-@app.route("/<string:object_name>/<string:object_id>/task/<string:task_action>", methods=['GET'])
-def add_task(object_name, object_id, task_action):
+@app.route("/<string:object_name>/<string:object_id>/task/<string:action>", methods=['GET'])
+def add_task(object_name, object_id, action):
     data = {}
     new_task = {}
-    new_task['action'] = task_action
+    new_task['action'] = action
     new_task['object_id'] = object_id
     data['task'] = new_task
     result = callapi("post", "/create/task", data)
@@ -120,15 +120,15 @@ def add_task(object_name, object_id, task_action):
         return see_object('group', object_id, result['status'], result['message'])
 
 # add a scheduled task
-@app.route("/<string:object_name>/<string:object_id>/scheduled/<string:task_action>/", methods=['GET', 'POST'])
-def add_scheduled(object_name, object_id, task_action):
+@app.route("/<string:object_name>/<string:object_id>/scheduled/<string:action>/", methods=['GET', 'POST'])
+def add_scheduled(object_name, object_id, action):
     
     if request.method == 'POST':
         data = {}
         data['scheduledtask'] = {}
         data['scheduledtask']['name'] = request.form['name']
         data['scheduledtask']['description'] = request.form['description']
-        data['scheduledtask']['task_action'] = request.form['task_action']
+        data['scheduledtask']['action'] = request.form['action']
         data['scheduledtask']['object_id'] = request.form['object_id']
         data['scheduledtask']['hour'] = request.form['hour']
         data['scheduledtask']['minute'] = request.form['minute']
@@ -137,9 +137,9 @@ def add_scheduled(object_name, object_id, task_action):
         data['scheduledtask']['day_of_week'] = request.form['day_of_week']
         data['scheduledtask']['day_place'] = request.form['day_place']
         result = callapi("post", "/create/scheduled", data)
-        return render_template('addscheduled.html', result=result, connected='1', object_name=object_name, object_id=object_id, task_action=task_action, data=data)
+        return render_template('addscheduled.html', result=result, connected='1', object_name=object_name, object_id=object_id, action=action, data=data)
 
-    return render_template('addscheduled.html', connected='1', object_name=object_name, object_id=object_id, task_action=task_action)
+    return render_template('addscheduled.html', connected='1', object_name=object_name, object_id=object_id, action=action)
 
 # list object
 @app.route('/list/<string:object_name>', methods=['GET'])
@@ -294,114 +294,114 @@ def list_object(object_name, status=0, message=""):
                             item['object_name'] = "Client: unknown"
                         item['action'] = "Update all packages"
 
-                if 'task_action' in item:
-                    if item['task_action'] == 'sync_repo':
+                if 'action' in item:
+                    if item['action'] == 'sync_repo':
                         result_tmp = callapi("get", "/see/repository/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'repository'
                         else:
                             item['object_name'] = "Repository: unknown"
-                        item['task_action'] = "Sync repository"
+                        item['action'] = "Sync repository"
 
-                    elif item['task_action'] == 'sync_channel':
+                    elif item['action'] == 'sync_channel':
                         result_tmp = callapi("get", "/see/channel/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'channel'
                         else:
                             item['object_name'] = "Channel: unknown"
-                        item['task_action'] = "Sync channel"
+                        item['action'] = "Sync channel"
                     
-                    elif item['task_action'] == 'check_client':
+                    elif item['action'] == 'check_client':
                         result_tmp = callapi("get", "/see/client/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'client'
                         else:
                             item['object_name'] = "Client: unknown"
-                        item['task_action'] = "Check client"
+                        item['action'] = "Check client"
                     
-                    elif item['task_action'] == 'config_client':
+                    elif item['action'] == 'config_client':
                         result_tmp = callapi("get", "/see/client/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'client'
                         else:
                             item['object_name'] = "Client: unknown"
-                        item['task_action'] = "Configure client"
+                        item['action'] = "Configure client"
                     
-                    elif item['task_action'] == 'upgradable_client':
+                    elif item['action'] == 'upgradable_client':
                         result_tmp = callapi("get", "/see/client/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'v'
                         else:
                             item['object_name'] = "Client: unknown"
-                        item['task_action'] = "List upgradable packages"
+                        item['action'] = "List upgradable packages"
 
-                    elif item['task_action'] == 'config_group':
+                    elif item['action'] == 'config_group':
                         result_tmp = callapi("get", "/see/group/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'v'
                         else:
                             item['object_name'] = "Group: unknown"
-                        item['task_action'] = "Configure group"
+                        item['action'] = "Configure group"
                     
-                    elif item['task_action'] == 'check_group':
+                    elif item['action'] == 'check_group':
                         result_tmp = callapi("get", "/see/group/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'group'
                         else:
                             item['object_name'] = "Group: unknown"
-                        item['task_action'] = "Check group"
+                        item['action'] = "Check group"
                     
-                    elif item['task_action'] == 'upgradable_group':
+                    elif item['action'] == 'upgradable_group':
                         result_tmp = callapi("get", "/see/group/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'group'
                         else:
                             item['object_name'] = "Group: unknown"
-                        item['task_action'] = "List upgradable packages"
+                        item['action'] = "List upgradable packages"
                     
-                    elif item['task_action'] == 'approved_update_group':
+                    elif item['action'] == 'approved_update_group':
                         result_tmp = callapi("get", "/see/group/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'group'
                         else:
                             item['object_name'] = "Group: unknown"
-                        item['task_action'] = "Update approved packages"
+                        item['action'] = "Update approved packages"
                     
-                    elif item['task_action'] == 'approved_update_client' :
+                    elif item['action'] == 'approved_update_client' :
                         result_tmp = callapi("get", "/see/client/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'client'
                         else:
                             item['object_name'] = "Client: unknown"
-                        item['task_action'] = "Update approved packages"
+                        item['action'] = "Update approved packages"
                     
-                    elif item['task_action'] == 'all_update_group':
+                    elif item['action'] == 'all_update_group':
                         result_tmp = callapi("get", "/see/group/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'group'
                         else:
                             item['object_name'] = "Group: unknown"
-                        item['task_action'] = "Update all packages"
+                        item['action'] = "Update all packages"
                     
-                    elif item['task_action'] == 'all_update_client':
+                    elif item['action'] == 'all_update_client':
                         result_tmp = callapi("get", "/see/client/" + item['object_id'])
                         if result_tmp['status'] == 0:
                             item['object_name'] = result_tmp['data']['name']
                             item['object_type'] = 'client'
                         else:
                             item['object_name'] = "Client: unknown"
-                        item['task_action'] = "Update all packages"
+                        item['action'] = "Update all packages"
 
                 new_data.append(item)
             result['data'] = new_data
@@ -578,114 +578,114 @@ def see_object(object_name, object_id, status=0, message=""):
                     result['data']['object_name'] = "Client: unknown"
                 result['data']['action'] = "Update all packages"
 
-        if 'task_action' in result['data']:
-            if result['data']['task_action'] == 'sync_repo':
+        if 'action' in result['data']:
+            if result['data']['action'] == 'sync_repo':
                 result_tmp = callapi("get", "/see/repository/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'repository'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Repository: unknown"
-                result['data']['task_action'] = "Sync repository"
+                result['data']['action'] = "Sync repository"
 
-            elif result['data']['task_action'] == 'sync_channel':
+            elif result['data']['action'] == 'sync_channel':
                 result_tmp = callapi("get", "/see/channel/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'channel'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Channel: unknown"
-                result['data']['task_action'] = "Sync channel"
+                result['data']['action'] = "Sync channel"
 
-            elif result['data']['task_action'] == 'check_client':
+            elif result['data']['action'] == 'check_client':
                 result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'client'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Client: unknown"
-                result['data']['task_action'] = "Check client"
+                result['data']['action'] = "Check client"
 
-            elif result['data']['task_action'] == 'config_client':
+            elif result['data']['action'] == 'config_client':
                 result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'client'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Client: unknown"
-                result['data']['task_action'] = "Configure client"
+                result['data']['action'] = "Configure client"
 
-            elif result['data']['task_action'] == 'upgradable_client':
+            elif result['data']['action'] == 'upgradable_client':
                 result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'client'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Client: unknown"
-                result['data']['task_action'] = "List upgradable packages"
+                result['data']['action'] = "List upgradable packages"
 
-            elif result['data']['task_action'] == 'config_group':
+            elif result['data']['action'] == 'config_group':
                 result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'group'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Group: unknown"
-                result['data']['task_action'] = "Configure group"
+                result['data']['action'] = "Configure group"
 
-            elif result['data']['task_action'] == 'check_group':
+            elif result['data']['action'] == 'check_group':
                 result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'group'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Group: unknown"
-                result['data']['task_action'] = "Check group"
+                result['data']['action'] = "Check group"
 
-            elif result['data']['task_action'] == 'upgradable_group':
+            elif result['data']['action'] == 'upgradable_group':
                 result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'group'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Group: unknown"
-                result['data']['task_action'] = "List upgradable packages"
+                result['data']['action'] = "List upgradable packages"
 
-            elif result['data']['task_action'] == 'approved_update_group':
+            elif result['data']['action'] == 'approved_update_group':
                 result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'group'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Group: unknown"
-                result['data']['task_action'] = "Update approved packages"
+                result['data']['action'] = "Update approved packages"
 
-            elif result['data']['task_action'] == 'approved_update_client':
+            elif result['data']['action'] == 'approved_update_client':
                 result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'client'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Client: unknown"
-                result['data']['task_action'] = "Update approved packages"
+                result['data']['action'] = "Update approved packages"
 
-            elif result['data']['task_action'] == 'all_update_group':
+            elif result['data']['action'] == 'all_update_group':
                 result_tmp = callapi("get", "/see/group/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'group'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Group: unknown"
-                result['data']['task_action'] = "Update all packages"
+                result['data']['action'] = "Update all packages"
 
-            elif result['data']['task_action'] == 'all_update_client':
+            elif result['data']['action'] == 'all_update_client':
                 result_tmp = callapi("get", "/see/client/" + result['data']['object_id'])
                 if result_tmp['status'] == 0:
                     result['data']['object_type'] = 'client'
                     result['data']['object_name'] = result_tmp['data']['name']
                 else:
                     result['data']['object_name'] = "Client: unknown"
-                result['data']['task_action'] = "Update all packages"
+                result['data']['action'] = "Update all packages"
 
     # get tasks and scheduled tasks
     if object_name == 'repository' or object_name == 'channel' or object_name == 'client' or object_name == 'group':
@@ -751,42 +751,42 @@ def see_object(object_name, object_id, status=0, message=""):
             new_data = []
             for scheduled in result_scheduled['data']:               
 
-                if 'task_action' in scheduled:
-                    if scheduled['task_action'] == 'sync_repo':
-                        scheduled['task_action'] = "Sync repository"
+                if 'action' in scheduled:
+                    if scheduled['action'] == 'sync_repo':
+                        scheduled['action'] = "Sync repository"
 
-                    elif scheduled['task_action'] == 'sync_channel':
-                        scheduled['task_action'] = "Sync channel"
+                    elif scheduled['action'] == 'sync_channel':
+                        scheduled['action'] = "Sync channel"
                     
-                    elif scheduled['task_action'] == 'check_client':
-                        scheduled['task_action'] = "Check client"
+                    elif scheduled['action'] == 'check_client':
+                        scheduled['action'] = "Check client"
                     
-                    elif scheduled['task_action'] == 'config_client':
-                        scheduled['task_action'] = "Configure client"
+                    elif scheduled['action'] == 'config_client':
+                        scheduled['action'] = "Configure client"
                     
-                    elif scheduled['task_action'] == 'upgradable_client':
-                        scheduled['task_action'] = "List upgradable packages"
+                    elif scheduled['action'] == 'upgradable_client':
+                        scheduled['action'] = "List upgradable packages"
 
-                    elif scheduled['task_action'] == 'config_group':
-                        scheduled['task_action'] = "Configure group"
+                    elif scheduled['action'] == 'config_group':
+                        scheduled['action'] = "Configure group"
                     
-                    elif scheduled['task_action'] == 'check_group':
-                        scheduled['task_action'] = "Check group"
+                    elif scheduled['action'] == 'check_group':
+                        scheduled['action'] = "Check group"
                     
-                    elif scheduled['task_action'] == 'upgradable_group':
-                        scheduled['task_action'] = "List upgradable packages"
+                    elif scheduled['action'] == 'upgradable_group':
+                        scheduled['action'] = "List upgradable packages"
                     
-                    elif scheduled['task_action'] == 'approved_update_group':
-                        scheduled['task_action'] = "Update approved packages"
+                    elif scheduled['action'] == 'approved_update_group':
+                        scheduled['action'] = "Update approved packages"
                     
-                    elif scheduled['task_action'] == 'approved_update_client' :
-                        scheduled['task_action'] = "Update approved packages"
+                    elif scheduled['action'] == 'approved_update_client' :
+                        scheduled['action'] = "Update approved packages"
                     
-                    elif scheduled['task_action'] == 'all_update_group':
-                        scheduled['task_action'] = "Update all packages"
+                    elif scheduled['action'] == 'all_update_group':
+                        scheduled['action'] = "Update all packages"
                     
-                    elif scheduled['task_action'] == 'all_update_client':
-                        scheduled['task_action'] = "Update all packages"
+                    elif scheduled['action'] == 'all_update_client':
+                        scheduled['action'] = "Update all packages"
 
                 new_data.append(scheduled)
 

@@ -1,6 +1,6 @@
 
-import re
 from yarus.common.yarusobject import YarusObject
+from yarus.common.check_functions import *
 from yarus.common.exceptions import *
 
 class Repository(YarusObject):
@@ -20,69 +20,28 @@ class Repository(YarusObject):
 		self.description = ""
 		self.manager_id = 0
 
-	"""
-		Setters
-	"""
 	def setURL(self, URL):
-		if URL:
-			if re.match("^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$", URL):
-				self.URL = URL
-				return True
-			else:
-				raise(InvalidValueException("The given URL (" + URL + ") is invalid."))
+		if check_url(URL):
+			self.URL = URL
 		else:
-			raise(MissingValueException("The URL is missing."))
-	def setDistribution(self, distribution):
-		if distribution:
-			if re.match("^[a-zA-z0-9\-\_\.]*$", distribution):
-				self.distribution = distribution
-				return True
-			else:
-				raise(InvalidValueException("The given distribution (" + distribution + ") is invalid."))
-		else:
-			raise(MissingValueException("The distribution is missing."))
+			raise(InvalidValueException("The URL is missing or invalid."))
 	def setRelease(self, release):
-		if release:
-			if re.match("^[a-zA-z0-9\-\_\.]*$", release):
-				self.release = release
-				return True
-			else:
-				raise(InvalidValueException("The given release (" + release + ") is invalid."))
+		if check_release(release):
+			self.release = release
 		else:
-			raise(MissingValueException("The release is missing."))
+			raise(InvalidValueException("The release is missing or invalid."))
 	def setPath(self, path):
-		if path:
-			if re.match("^[a-zA-z0-9\-\_\.\/]*$", path):
-				self.path = path
-				return True
-			else:
-				raise(InvalidValueException("The given path (" + path + ") is invalid."))
+		if check_path(path):
+			self.path = path
 		else:
-			raise(MissingValueException("The path is missing."))
+			raise(InvalidValueException("The path is missing or invalid."))
 	def setComponents(self, components):
-		if components:
-			if re.match("^[a-zA-z0-9\-\_\.,]*$", components):
-				self.components = components
-				return True
-			else:
-				raise(InvalidValueException("The given components (" + components + ") is invalid."))
+		if check_components(components):
+			self.components = components
 		else:
-			raise(MissingValueException("The components is missing."))
+			raise(InvalidValueException("The components is missing or invalid."))
 	def setArchitectures(self, architectures):
-		if architectures:
-			if re.match("^[a-zA-z0-9\-\_\.,]*$", architectures):
-				self.architectures = architectures
-				return True
-			else:
-				raise(InvalidValueException("The given architectures (" + architectures + ") is invalid."))
+		if check_architectures(architectures):
+			self.architectures = architectures
 		else:
-			raise(MissingValueException("The architectures is missing."))
-	def setType(self, rtype):
-		if rtype:
-			if rtype == 'YUM' or rtype =='APT':
-				self.type = rtype
-				return True
-			else:
-				raise(InvalidValueException("The given repository type (" + rtype + ") is invalid."))
-		else:
-			raise(MissingValueException("The repository type is missing."))
+			raise(InvalidValueException("The architectures is missing or invalid."))

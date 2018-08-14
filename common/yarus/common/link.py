@@ -1,6 +1,6 @@
 
-import re
 from yarus.common.yarusobject import YarusObject
+from yarus.common.check_functions import *
 from yarus.common.exceptions import *
 
 class Link(YarusObject):
@@ -16,27 +16,6 @@ class Link(YarusObject):
 		for key, value in vars(self).items():
 			setattr(self, key, object_tmp[key])
 		return self
-
 	def delete_link(self, database):
 		database.delete_link(self.channel_id, self.repo_id)
 		return True
-
-	def setRepoID(self, ID):
-		if ID:
-			if re.match("^[a-zA-z0-9-_]*$", ID):
-				self.repo_id = ID
-				return True
-			else:
-				raise(InvalidValueException("The given repository ID (" + ID + ") is invalid."))
-		else:
-			raise(MissingValueException("The repository ID is missing."))
-
-	def setChannelID(self, ID):
-		if ID:
-			if re.match("^[a-zA-z0-9-_]*$", ID):
-				self.channel_id = ID
-				return True
-			else:
-				raise(InvalidValueException("The channel ID (" + ID + ") is invalid."))
-		else:
-			raise(MissingValueException("The channel ID is missing."))

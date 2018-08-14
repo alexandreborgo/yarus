@@ -36,6 +36,82 @@ class Mysql:
 		except Exception as error:
 			raise(DatabaseError("Unable to close the connection to the database correctly."))
 
+
+	
+	
+	def get_object_tasks(self, object_id):
+		request = "SELECT * FROM yarus_task WHERE object_id='" + object_id + "'"
+		return self.get_all(request)
+	
+	def get_object_scheduled(self, object_id):
+		request = "SELECT * FROM yarus_scheduled WHERE object_id='" + object_id + "'"
+		return self.get_all(request)
+
+
+	def get_user_t(self, token):
+		request = "SELECT ID,token_expire FROM yarus_user WHERE token='" + token + "'"
+		return self.get_one(request)
+	def get_user_up(self, name, password):
+		sha256_hash = hashlib.sha256()
+		sha256_hash.update(password.encode('utf-8'))
+		hashed_password = sha256_hash.hexdigest()
+		request = "SELECT ID FROM yarus_user WHERE name='" + name + "' AND password='" + hashed_password + "'"
+		data = (name, hashed_password)
+		return self.get_one(request)
+
+	
+
+	
+	def get_links(self, channel_id):
+		request = "SELECT * FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
+		return self.get_all(request)
+	
+
+	def get_binded_repository(self, client_id):
+		request = "SELECT yarus_repository.ID, yarus_repository.name, yarus_repository.description FROM yarus_bind INNER JOIN yarus_repository ON yarus_bind.repo_id=yarus_repository.ID WHERE yarus_bind.client_id='" + client_id + "' "
+		return self.get_all(request)
+	def get_binded_channel(self, client_id):
+		request = "SELECT yarus_channel.ID, yarus_channel.name, yarus_channel.description FROM yarus_bind INNER JOIN yarus_channel ON yarus_bind.channel_id=yarus_channel.ID WHERE yarus_bind.client_id='" + client_id + "' "
+		return self.get_all(request)
+	
+
+	def get_upgradable(self, client_id, package_id):
+			request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND ID='" + package_id + "'"
+			return self.get_one(request)
+	def remove_upgradables(self, client_id):
+		request = "DELETE FROM yarus_upgradable WHERE client_id='" + client_id + "'"
+		return self.execute(request)
+		
+	def get_upgradable_by_info(self, client_id, name, release, type):
+		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND name='" + name + "' AND `release`='" + release + "' AND type='" + type + "'"
+		return self.get_all(request)
+	def get_upgradables(self, client_id):
+		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' "
+		return self.get_all(request)
+	def get_approved_upgradables(self, client_id):
+		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
+		return self.get_all(request)
+
+	def get_pending_task(self):
+		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC LIMIT 1"
+		return self.get_one(request)
+
+	
+	def get_groupeds(self, group_id):
+		request = "SELECT * FROM yarus_grouped INNER JOIN yarus_client ON yarus_grouped.client_id=yarus_client.ID WHERE group_id='" + group_id + "'"
+		return self.get_all(request)
+	
+
+	def get_scheduled_tasks(self):
+		request = "SELECT * FROM yarus_scheduled"
+		return self.get_all(request)
+
+	def get_corresponding_repositories(self, distribution, release):
+		request = "SELECT * FROM yarus_repository WHERE repository='" + distribution + "' AND `release`='" + release + "'"
+		return self.get_all(request)
+
+# approved
+
 	def execute(self, request, data=""):
 		try:			
 			if data != "":
@@ -73,8 +149,9 @@ class Mysql:
 			raise(DatabaseError(error))
 
 	def get_object(self, object_table, ID):
-		request = "SELECT * FROM " + object_table + " WHERE ID='" + ID + "'"
-		return self.get_one(request)
+		request = "SELECT * FROM " + object_table + " WHERE ID=%s"
+		data = (ID,)
+		return self.get_one(request, data)
 	def get_all_object(self, object_table):
 		request = "SELECT * FROM " + object_table + " ORDER BY creation_date ASC"
 		return self.get_all(request)
@@ -117,101 +194,50 @@ class Mysql:
 		for k, v in values.items():
 			request = "DELETE FROM " + object_table + " WHERE " + k + "='" + v + "'"
 			self.execute(request)
-	
-	def get_object_tasks(self, object_id):
-		request = "SELECT * FROM yarus_task WHERE object_id='" + object_id + "'"
-		return self.get_all(request)
-	
-	def get_object_scheduled(self, object_id):
-		request = "SELECT * FROM yarus_scheduled WHERE object_id='" + object_id + "'"
-		return self.get_all(request)
-
-
-	def get_user_t(self, token):
-		request = "SELECT ID,token_expire FROM yarus_user WHERE token='" + token + "'"
-		return self.get_one(request)
-	def get_user_up(self, name, password):
-		sha256_hash = hashlib.sha256()
-		sha256_hash.update(password.encode('utf-8'))
-		hashed_password = sha256_hash.hexdigest()
-		request = "SELECT ID FROM yarus_user WHERE name='" + name + "' AND password='" + hashed_password + "'"
-		return self.get_one(request)
 
 	def get_by_name(self, object_table, name):
-		request = "SELECT * FROM " + object_table + " WHERE name='" + name + "'"
-		return self.get_one(request)
-
-	def get_link(self, channel_id, repo_id):
-		request = "SELECT * FROM yarus_link WHERE repo_id='" + repo_id + "' AND channel_id='" + channel_id + "'"
-		return self.get_one(request)
-	def get_links(self, channel_id):
-		request = "SELECT * FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
-		return self.get_all(request)
-	def delete_link(self, channel_id, repo_id):
-		request = "DELETE FROM yarus_link WHERE repo_id='" + repo_id + "' AND channel_id='" + channel_id + "'"
-		return self.execute(request)
+		request = "SELECT * FROM " + object_table + " WHERE name=%s"
+		data = (name,)
+		return self.get_one(request, data)
 
 	def get_client_by_ip(self, IP):
-		request = "SELECT * FROM yarus_client WHERE IP='" + IP + "'"
-		return self.get_one(request)
-	def get_binded_repository(self, client_id):
-		request = "SELECT yarus_repository.ID, yarus_repository.name, yarus_repository.description FROM yarus_bind INNER JOIN yarus_repository ON yarus_bind.repo_id=yarus_repository.ID WHERE yarus_bind.client_id='" + client_id + "' "
-		return self.get_all(request)
-	def get_binded_channel(self, client_id):
-		request = "SELECT yarus_channel.ID, yarus_channel.name, yarus_channel.description FROM yarus_bind INNER JOIN yarus_channel ON yarus_bind.channel_id=yarus_channel.ID WHERE yarus_bind.client_id='" + client_id + "' "
-		return self.get_all(request)
+		request = "SELECT * FROM yarus_client WHERE IP='%s'"
+		data = (IP,)
+		return self.get_one(request, data)
+	
 	def get_bind(self, client_id, repo_id, channel_id):
-		request = "SELECT * FROM yarus_bind WHERE client_id='" + client_id + "' AND repo_id='" + str(repo_id) + "' AND channel_id='" + str(channel_id) + "'"
-		return self.get_one(request)
+		request = "SELECT * FROM yarus_bind WHERE client_id='%s' AND repo_id='%s' AND channel_id='%s'"
+		data = (client_id, repo_id, channel_id)
+		return self.get_one(request, data)
 	def delete_bind(self, client_id, repo_id, channel_id):
-		request = "DELETE FROM yarus_bind WHERE client_id='" + client_id + "' AND repo_id='" + str(repo_id) + "' AND channel_id='" + str(channel_id) + "'"
-		return self.execute(request)
-	def get_upgradable(self, client_id, package_id):
-			request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND ID='" + package_id + "'"
-			return self.get_one(request)
-	def remove_upgradables(self, client_id):
-		request = "DELETE FROM yarus_upgradable WHERE client_id='" + client_id + "'"
-		return self.execute(request)
-		
-	def get_upgradable_by_info(self, client_id, name, release, type):
-		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND name='" + name + "' AND `release`='" + release + "' AND type='" + type + "'"
-		return self.get_all(request)
-	def get_upgradables(self, client_id):
-		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' "
-		return self.get_all(request)
-	def get_approved_upgradables(self, client_id):
-		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
-		return self.get_all(request)
-
-	def get_pending_task(self):
-		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC LIMIT 1"
-		return self.get_one(request)
+		request = "DELETE FROM yarus_bind WHERE client_id='%s' AND repo_id='%s' AND channel_id='%s'"
+		data = (client_id, repo_id, channel_id)
+		return self.execute(request, data)
+	
+	def get_link(self, channel_id, repo_id):
+		request = "SELECT * FROM yarus_link WHERE channel_id='%s' AND repo_id='%s'"
+		data = (channel_id, repo_id)
+		return self.get_one(request, data)
+	def delete_link(self, channel_id, repo_id):
+		request = "DELETE FROM yarus_link WHERE channel_id='%s' AND repo_id='%s'"
+		data = (channel_id, repo_id)
+		return self.execute(request, data)
 
 	def get_grouped(self, client_id, group_id):
-		request = "SELECT * FROM yarus_grouped WHERE client_id='" + client_id + "' AND group_id='" + group_id + "'"
-		return self.get_one(request)
-	def get_groupeds(self, group_id):
-		request = "SELECT * FROM yarus_grouped INNER JOIN yarus_client ON yarus_grouped.client_id=yarus_client.ID WHERE group_id='" + group_id + "'"
-		return self.get_all(request)
+		request = "SELECT * FROM yarus_grouped WHERE client_id='%s' AND group_id='%s'"
+		data = (client_id, group_id)
+		return self.get_one(request, data)
 	def delete_grouped(self, client_id, group_id):
-		request = "DELETE FROM yarus_grouped WHERE client_id='" + client_id + "' AND group_id='" + group_id + "'"
-		return self.execute(request)	
+		request = "DELETE FROM yarus_grouped WHERE client_id='%s' AND group_id='%s'"
+		data = (client_id, group_id)
+		return self.execute(request, data)
 
-	def get_scheduled_tasks(self):
-		request = "SELECT * FROM yarus_scheduled"
-		return self.get_all(request)
+	def get_daterepository(self, repository, date):
+		request = "SELECT * FROM yarus_daterepository WHERE repository=%s AND date=%s"
+		data = (repository, date)
+		return self.get_one(request, data)
 
-	def get_corresponding_repositories(self, distribution, release):
-		request = "SELECT * FROM yarus_repository WHERE repository='" + distribution + "' AND `release`='" + release + "'"
-		return self.get_all(request)
-
-	def get_package(self, object_table, repository, comp, name, version, arch, rel):
+	def get_package(self, repository, comp, name, version, arch, rel):
 		request = "SELECT * FROM yarus_package WHERE repository=%s AND component=%s AND name=%s AND version=%s AND architecture=%s AND `release`=%s"
 		data = (repository, comp, name, version, arch, rel)
-		self.cursor.execute(request, data)
-		return self.cursor.fetchone()
-
-	def get_daterepository(self, object_table, repository, date):
-		request = "SELECT * FROM " + object_table + " WHERE repository=%s AND date=%s"
-		data = (repository, date)
 		return self.get_one(request, data)

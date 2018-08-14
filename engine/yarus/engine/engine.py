@@ -70,8 +70,9 @@ def getconnecteduser():
         else:
             return user
 
-    except DatabaseError:
-        return jsonify({"status": 1, "message": "Database error."})
+    except DatabaseError as error:
+        print(error)
+        return False
 
 # login
 @app.route('/api/login', methods=['GET'])
@@ -79,12 +80,17 @@ def login():
     try:
         app_engine.database.connect()
         user = getconnecteduser()
-        if type(user) != User:
-            return user
+        print("ok")
+        if not user:
+            return jsonify({"status": 1, "message": "Error user."})
         # user is valid so generate a new token for the session
+        print("ok")
         user.setToken(getnewid())
+        print("ok")
         user.update(app_engine.database)
+        print("ok")
         data = user.todata()
+        print("ok")
         return jsonify({"status": 0, "message": "", "data": data})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
@@ -215,17 +221,18 @@ def create_object(object_name):
 
                 # check if we can reach the remote url
                 try:
-                    if app_engine.config.px_host != "":
+                    if app_engine.config.px_host != "" and app_engine.config.px_host != None:
                         proxies = {
-                            "http"  : app_engine.config.px_host + ":" + str(app_engine.config.px_port)
+                            "http"  : str(app_engine.config.px_host) + ":" + str(app_engine.config.px_port)
                         }
                     else:
                         proxies = None
-
+                        
                     if requests.get(new_object.URL, proxies=proxies).status_code != 200:
                         return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})
                         
                 except Exception as exception:
+                    app_engine.log.error(str(exception))
                     return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})
 
             elif object_name == 'channel':
@@ -286,7 +293,7 @@ def create_object(object_name):
                 new_object.setMinute(data['scheduledtask']['minute'])            
                 new_object.setDayofmonth(data['scheduledtask']['day_of_month'])            
                 new_object.setMonth(data['scheduledtask']['month'])            
-                new_object.setAction(data['scheduledtask']['task_action'])
+                new_object.setAction(data['scheduledtask']['action'])
                 new_object.setObjectID(data['scheduledtask']['object_id'])
                 new_object.setDayofweek(data['scheduledtask']['day_of_week'])
                 new_object.setDayofplace(data['scheduledtask']['day_place'])

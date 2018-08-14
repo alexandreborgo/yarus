@@ -1,6 +1,7 @@
 
-import re
 import time
+
+from yarus.common.check_functions import *
 from yarus.common.exceptions import *
 
 class YarusObject:
@@ -46,44 +47,70 @@ class YarusObject:
 		database.delete_object("yarus_"+self.__class__.__name__.lower(), {'ID':self.ID})
 		return True
 
-	"""
-		Setters
-	"""
 	def setID(self, ID):
-		if ID:
-			if re.match("^[a-zA-z0-9-_]*$", ID):
-				self.ID = ID
-				return True
-			else:
-				raise(InvalidValueException("The given ID (" + ID + ") is invalid."))
+		if check_id(ID):
+			self.ID = ID
 		else:
-			raise(MissingValueException("The ID is missing."))
-
+			raise(InvalidValueException("The ID is missing or invalid."))
 	def setName(self, name):
-		if name:
-			if re.match("^[a-zA-z0-9-_. ]*$", name):
-				self.name = name
-				return True
-			else:
-				raise(InvalidValueException("The given name (" + name + ") is invalid."))
+		if check_name(name):
+			self.name = name
 		else:
-			raise(MissingValueException("The name is missing."))
-
+			raise(InvalidValueException("The name is missing or invalid."))
 	def setDescription(self, description):
-		if description:
-			if re.match("^[a-zA-z0-9-_. @!:,?]*$", description):
-				self.description = description
-				return True
-			else:
-				raise(InvalidValueException("The given description is invalid."))
+		if check_description(description):
+			self.description = description
 		else:
-			raise(MissingValueException("The description is missing."))
-
-	def setManagerID(self, mid):
-		self.manager_id = mid
-
+			raise(InvalidValueException("The description is missing or invalid."))		
 	def setCreationDate(self):
 		self.creation_date = int(time.time())
-
 	def setLastSyncDate(self):
 		self.last_sync = int(time.time())
+	def setStartTime(self):
+		self.start_time = int(time.time())
+	def setEndTime(self):
+		self.end_time = int(time.time())
+	def setType(self, rtype):
+		if check_type(rtype):
+			self.type = rtype
+		else:
+			raise(InvalidValueException("The type is missing or invalid."))		
+	def setDistribution(self, distribution):
+		if check_distribution(distribution):
+			self.distribution = distribution
+		else:
+			raise(InvalidValueException("The distribution is missing or invalid."))
+	def setClientID(self, ID):
+		if check_id(ID):
+			self.client_id = ID
+		else:
+			raise(InvalidValueException("The client ID is missing or invalid."))
+	def setRepoID(self, ID):
+		if check_id(ID):
+			self.repo_id = ID
+		else:
+			raise(InvalidValueException("The repository ID is missing or invalid."))
+	def setChannelID(self, ID):
+		if check_id(ID):
+			self.channel_id = ID
+		else:
+			raise(InvalidValueException("The channel ID is missing or invalid."))
+	def setGroupID(self, group_id):
+		if check_id(group_id):
+			self.group_id = group_id
+		else:
+			raise(InvalidValueException("The group ID is missing or invalid."))
+	def setManagerID(self, manager_id):
+		self.manager_id = manager_id
+		return True
+	def setObjectID(self, object_id):
+		if check_id(object_id):
+			self.object_id = object_id
+		else:
+			raise(InvalidValueException("The object ID is missing or invalid."))
+	def setAction(self, action):
+		if check_action(action):
+			self.action = action
+		else:
+			raise(InvalidValueException("The action is missing or invalid."))
+	

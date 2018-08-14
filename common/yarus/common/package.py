@@ -18,7 +18,7 @@ class Package(YarusObject):
         self.type = ""
         
     def load_package(self, database, repository, comp, name, version, arch, rel):
-        object_tmp = database.get_package("yarus_package", repository, comp, name, version, arch, rel)
+        object_tmp = database.get_package(repository, comp, name, version, arch, rel)
         if not object_tmp:
             return None
         for key, value in vars(self).items():

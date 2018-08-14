@@ -36,7 +36,7 @@ if args.scheduled_task_id:
     task.setID(getnewid())
     task.setStatus('pending')
     task.setCreationDate()
-    task.setAction(scheduled_task.task_action)
+    task.setAction(scheduled_task.action)
     task.setObjectID(scheduled_task.object_id)
     task.setManagerID(scheduled_task.manager_id)
 

@@ -13,7 +13,7 @@ class Scheduled(YarusObject):
         self.manager_id = 0
         self.last_date = 0
         self.creation_date = 0
-        self.task_action = ""
+        self.action = ""
         self.minute = ""
         self.hour = ""
         self.day_of_month = ""
@@ -61,27 +61,7 @@ class Scheduled(YarusObject):
                 raise(InvalidValueException("The given month (" + info + ") is invalid."))
         else:
             raise(MissingValueException("The month is missing."))
-            
-    def setAction(self, info):
-        if info:
-            if re.match("^([0-9]*)|([*])$", info):
-                self.task_action = info
-                return True
-            else:
-                raise(InvalidValueException("The given task action (" + info + ") is invalid."))
-        else:
-            raise(MissingValueException("The task action is missing."))
-            
-    def setObjectID(self, info):
-        if info:
-            if re.match("^([0-9]*)|([*])$", info):
-                self.object_id = info
-                return True
-            else:
-                raise(InvalidValueException("The given object ID (" + info + ") is invalid."))
-        else:
-            raise(MissingValueException("The object ID is missing."))
-    
+
     def setDayofweek(self, info):
         if info:
             if re.match("^([0-9]*)|([*])$", info):
@@ -101,7 +81,4 @@ class Scheduled(YarusObject):
                 raise(InvalidValueException("The given day of week in month (" + info + ") is invalid."))
         else:
             raise(MissingValueException("The day of week in month is missing."))
-            
-    def setManagerID(self, info):
-        self.manager_id = info
-        return True
+

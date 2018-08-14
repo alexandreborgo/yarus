@@ -17,3 +17,4 @@ tasksmanager/build/*
 tasksmanager/dist/*
 tasksmanager/yarus/__pycache__/*
 tasksmanager/yarus/common/__pycache__/*
+doc/_build/*

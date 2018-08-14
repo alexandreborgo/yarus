@@ -63,13 +63,13 @@
         <br />
         <br />
         Task: 
-        <a href="{{ url_for('add_task', object_name='channel', object_id=result.data.ID, task_action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
+        <a href="{{ url_for('add_task', object_name='channel', object_id=result.data.ID, action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
             Sync
         </a>
         <br />
         <br />
         Schedule a task: 
-        <a href="{{ url_for('add_scheduled', object_name='channel', object_id=result.data.ID, task_action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
+        <a href="{{ url_for('add_scheduled', object_name='channel', object_id=result.data.ID, action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
             Sync
         </a>
     </div>
@@ -81,7 +81,7 @@
     Tasks
     <div class="pull-right">
       <div class="btn-group">
-          <a href="{{ url_for('add_task', object_name='channel', object_id=result.data.ID, task_action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_task', object_name='channel', object_id=result.data.ID, action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
               Sync
           </a>
       </div>
@@ -138,7 +138,7 @@
     Scheduled tasks
     <div class="pull-right">
       <div class="btn-group">
-          <a href="{{ url_for('add_scheduled', object_name='channel', object_id=result.data.ID, task_action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
+          <a href="{{ url_for('add_scheduled', object_name='channel', object_id=result.data.ID, action='sync_channel') }}" type="button" class="btn btn-default btn-xs">
               Sync
           </a>
       </div>
@@ -164,7 +164,7 @@
           <td>{{ scheduledtask.ID }}</td>
           <td>{{ scheduledtask.name }}</td>
           <td>{{ scheduledtask.description }}</td>
-          <td>{{ scheduledtask.task_action }}</td>
+          <td>{{ scheduledtask.action }}</td>
           <td>
             <a href=""><span class="fas fa-eye actions"></span></a>
           </td>

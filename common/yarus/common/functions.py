@@ -34,7 +34,7 @@ def connectuser(app, user):
 	if 'token_expire' in info:
 		if int(time.time()) > info['token_expire']:
 			return False
-
+			
 	return User().load(app.database, info['ID'])
 
 def getobject(app, object_name, object_id):
@@ -162,16 +162,6 @@ def getbinds(app, client_id):
 		app.log.debug(str(error))
 		return None
 
-
-def getchannel(app, channel_id):
-	try:
-		return Channel().load(app.database, channel_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 def getchannelbyname(app, name):
 	try:
 		return Channel().load_by_name(app.database, name)
@@ -239,15 +229,6 @@ def getapprovedupgradables(app, client_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-def getuser(app, user_id):
-	try:
-		return User().load(app.database, user_id)
-	except MissingValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 def getcorrespondingrepositories(app, distribution, release):
 	try:
 		return app.database.get_corresponding_repositories(distribution, release)
@@ -257,4 +238,3 @@ def getcorrespondingrepositories(app, distribution, release):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
