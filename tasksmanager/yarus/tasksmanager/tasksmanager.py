@@ -3,8 +3,7 @@ import sys
 import time
 import threading
 
-from yarus.tasksmanager.apptasksmanager import AppTasksManager
-from yarus.tasksmanager.apptask import AppTask
+from yarus.common.app import App
 from yarus.tasksmanager import actions
 from yarus.common.task import Task
 from yarus.common.exceptions import *
@@ -17,7 +16,7 @@ class YarusTasksManager():
 	def __init__(self):
 
 		# start the app context
-		self.app = AppTasksManager()
+		self.app = App()
 
 		if not self.app.start():
 			sys.exit(1)
@@ -41,10 +40,12 @@ class YarusTasksManager():
 	def execute(self, task):
 
 		# start the app context
-		app = AppTask()
+		app = App()
 
-		if not app.start(task):
+		if not app.start():
 			return False
+
+		app.log.settasklogfile(task.ID)
 		
 		try:
 			app.database.connect()

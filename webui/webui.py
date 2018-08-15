@@ -2,8 +2,41 @@
 from flask import Flask, json, request, session, render_template, redirect, url_for
 import requests, datetime
 import os
+import yaml
 
-server = "http://127.0.0.1:6821/api"
+# open the configuration file
+try:
+    config_file = open('/etc/yarus/webui.yml', 'r')
+except IOError as error:
+    print("Unable to read configuration file: " + config_file_name)
+    print(error)
+    sys.exit(1)
+
+# parse yaml
+try:
+    config = yaml.load(config_file)
+except yaml.YAMLError as error:
+    print("Configuration file is malformed, it is not good YAML format: " + config_file_name)
+    print(error)
+    sys.exit(1)
+
+# engine system related information: address, port
+if 'engine' in config:
+    if 'address' in config['engine']:
+        sv_address = config['engine']['address']
+    else:
+        print("Missing engine's IP address.")
+    if 'port' in config['engine']:
+        sv_port = config['engine']['port']
+    else:
+        print("Missing engine's port.")
+else:
+    print("Missing engine's information")
+
+if sv_address and sv_port:
+    server = "http://" + str(sv_address) + ":" + str(sv_port) + "/api"
+else:
+    sys.exit(1)
 
 app = Flask("Yarus Engine")
 app.secret_key = "=kdRfVYg!Xgst-vV?bys6&Z@28s7FJXy4hwFtNHfnb#myFxwf+BgHYzwt+uaaMBN"
@@ -32,7 +65,7 @@ def callapi(method, path, more_data=None):
         try:
             response = call(server + path, data=data)
         except requests.exceptions.ConnectionError as error:
-            return {"status": 1,  "message": "Error connecting YARUS Engine, is it running?"}
+            return {"status": 404,  "message": "Error connecting YARUS Engine, is it running on " + sv_address + ":" + str(sv_port) + "?"}
     else:
         return False
 
@@ -63,7 +96,7 @@ def home():
                     if 'token' in result['data']:
                         session['token'] = result['data']['token']
             else:
-                return render_template('login.html', invalid='1')
+                return render_template('login.html', result=result)
         else:
             return render_template('login.html', invalid='1')
 

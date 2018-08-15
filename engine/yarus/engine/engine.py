@@ -1,19 +1,21 @@
 
+import sys
 import requests
 from flask import Flask, json, jsonify, request
 
-from yarus.engine.appengine import AppEngine
 from yarus.engine.crontab import Crontab
 
+from yarus.common.app import App
 from yarus.common.exceptions import *
 from yarus.common.functions import *
 from yarus.common.user import User
 
 app = Flask("Yarus Engine")
-app_engine = AppEngine(debug=True)
+app_engine = App(debug=True)
 
 if not app_engine.start():
-    print("Error while starting YarusEngine.")
+    app_engine.log.error("Error while starting Yarus Engine.")
+    sys.exit(1)
 
 # return json data from the request
 def extract_data():
@@ -50,7 +52,7 @@ def getconnecteduser():
         else:
             return False
 
-        # creating the user
+        # the user
         tmp_user = User()
         try:
             if username and password:
@@ -80,17 +82,12 @@ def login():
     try:
         app_engine.database.connect()
         user = getconnecteduser()
-        print("ok")
         if not user:
             return jsonify({"status": 1, "message": "Error user."})
         # user is valid so generate a new token for the session
-        print("ok")
         user.setToken(getnewid())
-        print("ok")
         user.update(app_engine.database)
-        print("ok")
         data = user.todata()
-        print("ok")
         return jsonify({"status": 0, "message": "", "data": data})
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
@@ -114,7 +111,6 @@ def checklogin(token):
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
     finally:
         app_engine.database.close()
-
 
 # return the list of all the object of the given type
 @app.route('/api/list/<string:object_name>', methods=['GET'])

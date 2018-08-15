@@ -1,7 +1,0 @@
-engine:
-  address: localhost
-  port: 6821
-
-log:
-  filter: all
-  file: /var/log/yarus/yarus_engine.log

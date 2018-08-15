@@ -36,10 +36,16 @@
                         <h3 class="panel-title">YARUS Login</h3>
                     </div>
                     <div class="panel-body">
-                        {% if invalid %}
-                        <div class="alert alert-danger" role="alert">
-                            Invalid username or password.
-                        </div>
+                        {% if result %}
+                            {% if result.status == 404 %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ result.message }}
+                            </div>
+                            {% elif result.status != 0 %}
+                            <div class="alert alert-danger" role="alert">
+                                Invalid username or password.
+                            </div>
+                            {% endif %}
                         {% endif %}
                         <form action="{{ url_for('home') }}" method="post" role="form">
                             <fieldset>

@@ -3,7 +3,8 @@ from setuptools import setup
 requirements = [
     'mysql-connector-python',
     'requests',
-    'yarus-common'
+    'yarus-common',
+    'lxml'
 ]
 
 setup(
