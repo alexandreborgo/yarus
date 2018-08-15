@@ -54,7 +54,7 @@ def getobject(app, object_name, object_id):
 		elif object_name == 'user':
 			return User().load(app.database, object_id)
 
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 
@@ -64,7 +64,7 @@ def getobject(app, object_name, object_id):
 def getobjecttasks(app, object_id):
 	try:
 		return app.database.get_object_tasks(object_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -73,7 +73,7 @@ def getobjecttasks(app, object_id):
 def getobjectscheduled(app, object_id):
 	try:
 		return app.database.get_object_scheduled(object_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -82,7 +82,7 @@ def getobjectscheduled(app, object_id):
 def getpackage(app, repository, comp, name, version, arch, rel):
 	try:
 		return Package().load_package(app.database, repository, comp, name, version, arch, rel)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -91,7 +91,7 @@ def getpackage(app, repository, comp, name, version, arch, rel):
 def getdaterepository(app, repository, daterepo):
 	try:
 		return Daterepository().load_daterepository(app.database, repository, daterepo)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -101,7 +101,7 @@ def getdaterepository(app, repository, daterepo):
 def getrepobyname(app, name):
 	try:
 		return Repository().load_by_name(app.database, name)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -110,7 +110,7 @@ def getrepobyname(app, name):
 def getclientbyip(app, client_ip):
 	try:
 		return Client().load_by_ip(app.database, client_ip)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -119,7 +119,7 @@ def getclientbyip(app, client_ip):
 def getgrouped(app, group_id, client_id):
 	try:
 		return Grouped().load_grouped(app.database, client_id, group_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -128,7 +128,7 @@ def getgrouped(app, group_id, client_id):
 def getgroupbyname(app, name):
 	try:
 		return Group().load_by_name(app.database, name)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -137,7 +137,7 @@ def getgroupbyname(app, name):
 def getbind(app, client_id, repo_id, channel_id):
 	try:
 		return Bind().load_bind(app.database, client_id, repo_id, channel_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -155,7 +155,7 @@ def getbinds(app, client_id):
 			for item in bindedr:
 				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'r'})
 		return linked
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -165,7 +165,7 @@ def getbinds(app, client_id):
 def getchannelbyname(app, name):
 	try:
 		return Channel().load_by_name(app.database, name)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -174,7 +174,7 @@ def getchannelbyname(app, name):
 def getlink(app, channel_id, repo_id):
 	try:
 		return Link().load_link(app.database, channel_id, repo_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -187,7 +187,7 @@ def getlink(app, channel_id, repo_id):
 def getupgradable(app, client_id, package_id):
 	try:
 		return Upgradable().load_upgradable(app.database, client_id, package_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -196,7 +196,7 @@ def getupgradable(app, client_id, package_id):
 def removeupgradables(app, client_id):
 	try:
 		app.database.remove_upgradables(client_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -205,7 +205,7 @@ def removeupgradables(app, client_id):
 def getupgradablebyinfo(app, client_id, name, release, type):
 	try:
 		return app.database.get_upgradable_by_info(client_id, name, release, type)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -214,7 +214,7 @@ def getupgradablebyinfo(app, client_id, name, release, type):
 def getupgradables(app, client_id):
 	try:
 		return app.database.get_upgradables(client_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -223,7 +223,7 @@ def getupgradables(app, client_id):
 def getapprovedupgradables(app, client_id):
 	try:
 		return app.database.get_approved_upgradables(client_id)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
@@ -232,7 +232,7 @@ def getapprovedupgradables(app, client_id):
 def getcorrespondingrepositories(app, distribution, release):
 	try:
 		return app.database.get_corresponding_repositories(distribution, release)
-	except MissingValueException as error:
+	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:

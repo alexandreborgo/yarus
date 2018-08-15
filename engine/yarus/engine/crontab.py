@@ -1,25 +1,31 @@
 
+"""
+    Crontab interface for scheduled tasks
+"""
 
 import os
 import subprocess
 
 class Crontab():
+    """ crontab interface for scheduled tasks """
 
     tmp_cron_file = "/tmp/crontab"
     scheduler_script = "/var/lib/yarus/yarus-scheduler.py"
 
     def __init__(self):
+        """ init """
         if os.path.isfile(self.tmp_cron_file):
             os.remove(self.tmp_cron_file)
         open(self.tmp_cron_file, 'w').close()
 
     def generate_cron_file(self, database):
+        """ generate a new cron file with all the scheduled tasks """
         cronfile = open(self.tmp_cron_file, 'w')
         crons = database.get_scheduled_tasks()
-            
+
         for cron in crons:
             cronline = ""
-            
+
             # time related information
             cronline += cron['minute'] + " "
             cronline += cron['hour'] + " "
@@ -41,22 +47,22 @@ class Crontab():
 
             # command
             cronline += self.scheduler_script + " --scheduled-task-id " + cron['ID'] + " >> /var/log/yarus/scheduler.log"
-            
+
             # comment on the task
             cronfile.write("# Scheduled task " + cron['name'] + ", " + cron['description'] + "\n")
-            
+
             # the task
             cronfile.write(cronline + "\n")
 
         cronfile.close()
         return True
-        
+
     def set_cron_file(self):
+        """ call crontab 'file' to set up all the scheduled tasks """
         # change the crontab file with the new one
         cron_cmd = "crontab " + self.tmp_cron_file
         result = subprocess.call(cron_cmd, shell=True)
-        
+
         if result != 0:
             return False
-        else:
-            return True
+        return True

@@ -1,14 +1,24 @@
 
+"""
+	YARUS App is used as context to get log system, configuration and database access
+"""
+
 from yarus.common.log import LogSystem
 from yarus.common.config import Config
 from yarus.common.database import Mysql
+from yarus.common.exceptions import DatabaseError
 
 class App:
-
+	""" yarus app """
 	def __init__(self, debug=False):
+		""" init """
 		self.debug = debug
+		self.log = None
+		self.config = None
+		self.database = None
 
 	def start(self):
+		""" setup the context """
 		# load log system
 		self.log = LogSystem(self)
 		self.log.debug("Log system loaded.")
@@ -28,5 +38,4 @@ class App:
 		except DatabaseError as error:
 			self.log.error(error)
 			return False
-
 		return True

@@ -26,7 +26,7 @@ class User(YarusObject):
 			else:
 				raise(InvalidValueException("The given token (" + token + ") is invalid."))
 		else:
-			raise(MissingValueException("The token is missing."))
+			raise(InvalidValueException("The token is missing."))
 
 	def setPassword(self, password):
 		if password:
@@ -36,7 +36,7 @@ class User(YarusObject):
 			else:
 				raise(InvalidValueException("The given password (" + password + ") is invalid."))
 		else:
-			raise(MissingValueException("The password is missing."))
+			raise(InvalidValueException("The password is missing."))
 
 	def setRoleID(self, role_id):
 		if role_id:
@@ -52,7 +52,7 @@ class User(YarusObject):
 			else:
 				raise(InvalidValueException("The given role-id is invalid.")) # invalid
 		else:
-			raise(MissingValueException("The role-id is missing.")) # missing
+			raise(InvalidValueException("The role-id is missing.")) # missing
 
 	def setMail(self, mail):
 		if mail:
@@ -62,4 +62,4 @@ class User(YarusObject):
 			else:
 				raise(InvalidValueException("The given mail (" + mail + ") is invalid."))
 		else:
-			raise(MissingValueException("The mail is missing."))
+			raise(InvalidValueException("The mail is missing."))

@@ -2,7 +2,7 @@
 import yaml
 import sys
 
-from yarus.common.exceptions import MissingValueException
+from yarus.common.exceptions import InvalidValueException
 from yarus.common.exceptions import InvalidValueException
 
 class Config:
@@ -35,21 +35,21 @@ class Config:
 				if 'host' in config['database']:
 					self.db_host = config['database']['host']
 				else:
-					raise(MissingValueException("Missing database's host information."))
+					raise(InvalidValueException("Missing database's host information."))
 				if 'database' in config['database']:
 					self.db_database = config['database']['database']
 				else:
-					raise(MissingValueException("Missing database's name information."))
+					raise(InvalidValueException("Missing database's name information."))
 				if 'user' in config['database']:
 					self.db_user = config['database']['user']
 				else:
-					raise(MissingValueException("Missing database's username information."))
+					raise(InvalidValueException("Missing database's username information."))
 				if 'password' in config['database']:
 					self.db_password = config['database']['password']
 				else:
-					raise(MissingValueException("Missing database's user password information."))
+					raise(InvalidValueException("Missing database's user password information."))
 			else:
-				raise(MissingValueException("Missing database information."))
+				raise(InvalidValueException("Missing database information."))
 
 			# local repository information: folder
 			self.rp_folder = "/var/www/html/repos"
@@ -59,19 +59,19 @@ class Config:
 				if 'host' in config['proxy']:
 					self.px_host = config['proxy']['host']
 				else:
-					raise(MissingValueException("Missing proxy's host information."))
+					raise(InvalidValueException("Missing proxy's host information."))
 				if 'port' in config['proxy']:
 					self.px_port = config['proxy']['port']
 				else:
-					raise(MissingValueException("Missing proxy's port information."))
+					raise(InvalidValueException("Missing proxy's port information."))
 				if 'username' in config['proxy']:
 					self.px_username = config['proxy']['username']
 				else:
-					raise(MissingValueException("Missing proxy's username information."))
+					raise(InvalidValueException("Missing proxy's username information."))
 				if 'password' in config['proxy']:
 					self.px_password = config['proxy']['password']
 				else:
-					raise(MissingValueException("Missing proxy's user password information."))
+					raise(InvalidValueException("Missing proxy's user password information."))
 			else:
 				self.px_host = ""
 				self.px_port = ""
@@ -83,15 +83,15 @@ class Config:
 				if 'address' in config['engine']:
 					self.sv_address = config['engine']['address']
 				else:
-					raise(MissingValueException("Missing engine's IP address."))
+					raise(InvalidValueException("Missing engine's IP address."))
 				if 'port' in config['engine']:
 					self.sv_port = config['engine']['port']
 				else:
-					raise(MissingValueException("Missing engine's port."))
+					raise(InvalidValueException("Missing engine's port."))
 			else:
-				raise(MissingValueException("Missing engine's information"))
+				raise(InvalidValueException("Missing engine's information"))
 
-		except MissingValueException as error:
+		except InvalidValueException as error:
 			self.app.log.error(error)
 			return False
 

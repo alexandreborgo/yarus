@@ -30,7 +30,7 @@ class Scheduled(YarusObject):
             else:
                 raise(InvalidValueException("The given hour (" + info + ") is invalid."))
         else:
-            raise(MissingValueException("The hour is missing."))
+            raise(InvalidValueException("The hour is missing."))
             
     def setMinute(self, info):
         if info:
@@ -40,7 +40,7 @@ class Scheduled(YarusObject):
             else:
                 raise(InvalidValueException("The given minute (" + info + ") is invalid."))
         else:
-            raise(MissingValueException("The minute is missing."))
+            raise(InvalidValueException("The minute is missing."))
             
     def setDayofmonth(self, info):
         if info:
@@ -50,7 +50,7 @@ class Scheduled(YarusObject):
             else:
                 raise(InvalidValueException("The given day of month (" + info + ") is invalid."))
         else:
-            raise(MissingValueException("The day of month is missing."))
+            raise(InvalidValueException("The day of month is missing."))
             
     def setMonth(self, info):
         if info:
@@ -60,7 +60,7 @@ class Scheduled(YarusObject):
             else:
                 raise(InvalidValueException("The given month (" + info + ") is invalid."))
         else:
-            raise(MissingValueException("The month is missing."))
+            raise(InvalidValueException("The month is missing."))
 
     def setDayofweek(self, info):
         if info:
@@ -70,7 +70,7 @@ class Scheduled(YarusObject):
             else:
                 raise(InvalidValueException("The given day of week (" + info + ") is invalid."))
         else:
-            raise(MissingValueException("The day of week is missing."))
+            raise(InvalidValueException("The day of week is missing."))
             
     def setDayofplace(self, info):
         if info:
@@ -80,5 +80,5 @@ class Scheduled(YarusObject):
             else:
                 raise(InvalidValueException("The given day of week in month (" + info + ") is invalid."))
         else:
-            raise(MissingValueException("The day of week in month is missing."))
+            raise(InvalidValueException("The day of week in month is missing."))
 
