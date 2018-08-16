@@ -88,6 +88,15 @@ def getpackage(app, repository, comp, name, version, arch, rel):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+def getpackagebyinfo(app, name, arch, version, release):
+	try:
+		return Package().load_package_by_info(app.database, name, arch, version, release)
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
 def getdaterepository(app, repository, daterepo):
 	try:
 		return Daterepository().load_daterepository(app.database, repository, daterepo)
@@ -180,9 +189,15 @@ def getlink(app, channel_id, repo_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-
-
-
+def getlinks(app, channel_id):
+	try:
+		return app.database.get_links(channel_id)
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
 
 def getupgradable(app, client_id, package_id):
 	try:
@@ -193,6 +208,8 @@ def getupgradable(app, client_id, package_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+
+
 def removeupgradables(app, client_id):
 	try:
 		app.database.remove_upgradables(client_id)
@@ -202,9 +219,9 @@ def removeupgradables(app, client_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-def getupgradablebyinfo(app, client_id, name, release, type):
+def getupgradablebyinfo(app, obj, object_id, package_id):
 	try:
-		return app.database.get_upgradable_by_info(client_id, name, release, type)
+		return Upgradable().load_upgradable_by_info(app.database, obj, object_id, package_id)
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None

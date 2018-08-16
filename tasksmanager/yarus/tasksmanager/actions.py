@@ -15,12 +15,6 @@ from yarus.common.upgradable import Upgradable
 from yarus.tasksmanager.ansible import Ansible
 from yarus.tasksmanager.functions import *
 
-def show_playbook(app, playbook):
-	app.log.logtask("The following playbook will be executed:")
-	with open(playbook) as file:
-		for line in file:
-			app.log.logtask(line)
-
 def getAnsibleOutput(response, host, taskname):
 	if 'plays' in response:
 		for play in response['plays']:
@@ -39,26 +33,29 @@ def taskFailed(response, host):
 				return True
 	return True
 
-def add_upgradable(app, client, lines):
-	if len(lines) == 0:
-		app.log.logtask("No package to update found.")
-		return False
+def parse_upgradable(app, client, lines):
+	if len(lines) <= 0:
+		app.log.logtask("No packages need to be updated.")
+		return True
 	
+	list_upgradable = []
+
 	if client.type == 'YUM':
 		# first lines is useless
 		lines.pop(0)
 
 		for line in lines:
+			# first we get all the information in an array
 			l = line.split(" ")
 			l = list(filter(lambda a: a != '', l))
-			name = l[0].split('.')[0]
-			release = l[1]
-			type = l[2]
-			package_id = getnewid()
-			if getupgradablebyinfo(app, client.ID, name, release, type):
-				continue
-			upgradable = Upgradable(name=name, release=release, type=type, ID=package_id, client_id=client.ID, approved=0)
-			upgradable.insert(app.database)
+			upg = {}
+			upg['name'], upg['arch'] = l[0].split(".")
+			upg['version'], upg['release'] = l[1].split("-")
+			upg['version'] = upg['version'].split(":")[-1]
+			upg['component'] = l[2]
+			upg['upgradable_id'] = getnewid()
+			
+			list_upgradable.append(upg)
 
 	elif client.type == 'APT':
 		# first lines is useless
@@ -68,12 +65,10 @@ def add_upgradable(app, client, lines):
 			l = line.split(" ")
 			name, type = l[0].split('/')
 			release = l[1]
-			package_id = getnewid()
-			if getupgradablebyinfo(app, client.ID, name, release, type):
-				continue
-			upgradable = Upgradable(name=name, release=release, type=type, ID=package_id, client_id=client.ID, approved=0)
-			upgradable.insert(app.database)
+			upgradable_id = getnewid()
+			
 
+	return list_upgradable
 # --------------------------------------------------------
 
 def sync_repo(app, repo_id):
@@ -157,7 +152,7 @@ def sync_repo(app, repo_id):
 
 		# if we get 0 line there's nothing to do
 		if len(file_line) == 0:
-			app.log.logtask("No packages corresponding the components " + repo.components + " and architectures " + repo.architectures + ".")
+			app.log.logtask("No packages corresponding the components " + repository.components + " and architectures " + repository.architectures + ".")
 			return False
 
 		# downloading the files containing package list and other files useful to apt
@@ -262,7 +257,10 @@ def sync_repo(app, repo_id):
 
 							if dl:
 								# download the package
-								path = deb_in_db.location.split(deb_in_db.name)[0]
+								path = ""
+								for x in deb_in_db.location.split("/"):
+									if x != deb_in_db.location.split("/")[-1]:
+										path += x + "/"
 								# create directories if needed
 								if not os.path.isdir(app.config.rp_folder + "/" + repository.distribution + "/" + path):
 									os.makedirs(app.config.rp_folder + "/" + repository.distribution + "/" + path)
@@ -274,7 +272,10 @@ def sync_repo(app, repo_id):
 							deb.insert(app.database)
 							
 							# download the package
-							path = deb.location.split(deb.name)[0]
+							path = ""
+							for x in deb.location.split("/"):
+								if x != deb.location.split("/")[-1]:
+									path += x + "/"
 							# create directories if needed
 							if not os.path.isdir(app.config.rp_folder + "/" + repository.distribution + "/" + path):
 								os.makedirs(app.config.rp_folder + "/" + repository.distribution + "/" + path)
@@ -311,19 +312,22 @@ def sync_repo(app, repo_id):
 				dr.repository = repository.ID
 				dr.date = daterepo
 				dr.insert(app.database)
-		
 
 	elif repository.type == 'YUM':
 
 		# transform comps and arch into a list
 		comps = repository.components.split(',')
-		archs = repository.architectures.split(',')	
+		archs = repository.architectures.split(',')
+
+		# this variable is here to check if there's something new in the repository
+		# we will use it to determine if we need to create a dateversion repository or not
+		new = False
 		
 		for comp in comps:
 			for arch in archs:
 
 				# display current comp/arch
-				app.log.logtask(comp + "/" + arch)
+				app.log.logtask("========== " + comp + "/" + arch + " ==========")
 
 				# set remote root url and local root
 				remote = repository.URL + repository.release + "/" + comp + "/" + arch
@@ -337,6 +341,11 @@ def sync_repo(app, repo_id):
 				# Step 1: downloading metadata files: repodata directory
 				# ------------------------------------------------------------------------------------------------------------------------------
 
+				# calculate repomd.xml signature
+				repomd_sig = ""
+				if os.path.isfile(local + "/repodata/repomd.xml"):
+					repomd_sig = getSigFile(local + "/repodata/repomd.xml")
+
 				app.log.logtask("Downloading metadata files...")
 
 				# download the repodata directory
@@ -349,6 +358,17 @@ def sync_repo(app, repo_id):
 				# check if the pgp signature is valid
 				# gpg --import RPM-GPG-KEY-CentOS-7
 				# gpg --verify repomd.xml.asc repomd.xml
+
+				# calculate the new signature of the file repomd.xml
+				if os.path.isfile(local + "/repodata/repomd.xml"):
+					new_repomd_sig = getSigFile(local + "/repodata/repomd.xml")
+
+				# check if it is the same or not
+				if repomd_sig == new_repomd_sig:
+					app.log.logtask("Up to date.")
+					continue
+
+				new = True
 
 				# ------------------------------------------------------------------------------------------------------------------------------
 				# Step 2: download packages and register them in the database if needed
@@ -367,7 +387,7 @@ def sync_repo(app, repo_id):
 						delta = file
 
 				# rpms
-				app.log.logtask("Checking for new rpms...")
+				app.log.logtask("Checking rpms...")
 				
 				if primary == "":
 					app.log.logtask("Can't find primary file (which contains the rpm list).")
@@ -430,38 +450,42 @@ def sync_repo(app, repo_id):
 						file = rpm.name + "-" + rpm.version + "-" + rpm.release + "." + rpm.architecture + "." + rpm.type 
 						if not tryDownloadFile(app, remote + "/" + path, local + "/" + path, file, rpm.checksum_type, rpm.checksum):
 							app.log.logtask("Couldn't download the RPM: " + rpm.name)
-				
-				# ------------------------------------------------------------------------------------------------------------------------------
-				# Step 3: create the date repository
-				# ------------------------------------------------------------------------------------------------------------------------------
-				
-				daterepo = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
-				datedir = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "-" + daterepo + "/" + comp + "/" + arch
-				
-				# create the directory
-				if not os.path.isdir(datedir):
-					os.makedirs(datedir)
+		
+		# ------------------------------------------------------------------------------------------------------------------------------
+		# Step 3: create the date repository
+		# ------------------------------------------------------------------------------------------------------------------------------
 
-				# copy directory repodata
-				if not os.path.isdir(datedir + "/repodata/"):
-					os.makedirs(datedir + "/repodata/")
+		if new:
+			for comp in comps:
+				for arch in archs:
 
-				for item in os.listdir(local + "/repodata/"):
-					shutil.copy2(local + "/repodata/" + item, datedir + "/repodata/")
+					daterepo = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
+					datedir = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "-" + daterepo + "/" + comp + "/" + arch
+					
+					# create the directory
+					if not os.path.isdir(datedir):
+						os.makedirs(datedir)
 
-				# link all other files
-				for item in os.listdir(local):
-					if item != "repodata":
-						if not os.path.exists(datedir + "/" + item):
-							os.symlink(local + "/" + item, datedir + "/" + item)
+					# copy directory repodata
+					if not os.path.isdir(datedir + "/repodata/"):
+						os.makedirs(datedir + "/repodata/")
 
-				# save it into the database				
-				if not getdaterepository(app, repository.ID, daterepo):
-					dr = Daterepository()
-					dr.ID = getnewid()
-					dr.repository = repository.ID
-					dr.date = daterepo
-					dr.insert(app.database)
+					for item in os.listdir(local + "/repodata/"):
+						shutil.copy2(local + "/repodata/" + item, datedir + "/repodata/")
+
+					# link all other files
+					for item in os.listdir(local):
+						if item != "repodata":
+							if not os.path.exists(datedir + "/" + item):
+								os.symlink(local + "/" + item, datedir + "/" + item)
+
+					# save it into the database				
+					if not getdaterepository(app, repository.ID, daterepo):
+						dr = Daterepository()
+						dr.ID = getnewid()
+						dr.repository = repository.ID
+						dr.date = daterepo
+						dr.insert(app.database)
 									
 		return True
 	
@@ -476,23 +500,23 @@ def sync_repo(app, repo_id):
 	return True
 
 def sync_channel(app, channel_id):
-	return True
 
-	channel = getchannel(app, channel_id)
-
+	# check for the channel
+	channel = getobject(app, 'channel', channel_id)
 	if not channel:
-		app.log.logtask("Error: no channel with ID: " + channel_id + " in the database.")
+		app.log.logtask("No channel found with the given ID (" + rc_id + ").")
 		return False
 
-	links = app.database.get_links(channel.ID)
-
+	# check for links
+	links = getlinks(app, channel_id)
 	if not links:
 		app.log.logtask("This channel has no repository. So there is nothing to sync.")
 		return False
 
-	for repo in links:
-		if not sync_repo(app, repo['ID']):
-			app.log.logtask("An error occured while trying to sync the repository: " + repo.name)
+	# start repository sync for each repository
+	for repository in links:
+		if not sync_repo(app, repository['ID']):
+			app.log.logtask("An error occured while trying to sync the repository: " + repository.name)
 			return False
 
 	channel.setLastSyncDate()
@@ -503,182 +527,187 @@ def sync_channel(app, channel_id):
 # --------------------------------------------------------
 
 def check_client(app, client_id):
-	return True
-	# get client
-	client = getclient(app, client_id)
-
+	
+	# check if client exists
+	client = getobject(app, 'client', client_id)        
 	if not client:
-		app.log.logtask("Client with ID: " + client_id + " not found.")
+		app.log.logtask("Error: no system with ID: " + client_id + " in the database.")
 		return False
 
-	app.log.logtask("Check client on " + client.name + "(" + client.IP + ")")
-
-	result = Ansible().ping(client.IP)
-
-	if result:
-		app.log.logtask("Ansible can connect to the client.")
-		return True
-	else:
-		app.log.logtask("Ansible can not connect to the client.")
+	app.log.logtask("Ansible will check connection with the system " + client.name + "(" + client.IP + ").")
+	
+	ansible = Ansible()
+	try:
+		app.log.logtask("Generating playbook...")
+		ansible.generate_playbook_check_client(client)
+		ansible.showplaybook(app)
+		app.log.logtask("Executing playbook...")
+		result = ansible.executeplaybook()
+		app.log.logtask("Cleaning temporary files linked to the task...")
+		ansible.clean()
+	except IOError as error:
+		app.log.logtask(error)
 		return False
+
+	if not result:
+		app.log.logtask("Ansible can not connect to the client!")
+		return False
+
+	app.log.logtask("Ansible can connect to the client.")
+	return True
 
 def config_client(app, client_id):
-	return True
-
-	# get client
-	client = getclient(app, client_id)
-
+	
+	# check if client exists
+	client = getobject(app, 'client', client_id)        
 	if not client:
+		app.log.logtask("Error: no system with ID: " + client_id + " in the database.")
 		return False
 
 	app.log.logtask("Generating configuration file for client " + client.name + "(" + client.IP + ")")
 
-	linkedrc = getbinds(app, client.ID)
-
-	if not linkedrc:
-		app.log.logtask("No channels or repositories linked to this client.")
+	links = getbinds(app, client.ID)
+	if not links:
+		app.log.logtask("The client " + client.name + " isn't linked with any repository or channel.")
 		return False
 
-	linkedr = []
-	for item in linkedrc:
+	# list of repositories linked
+	linked_repositories = []
+	# we add all repository inside, including repositories inside linked channels
+	for item in links:
 		if item['type'] == 'c':
-			links = app.database.get_links(item['ID'])
-			if links:
-				for repository in links:
-					linkedr.append({'ID': repository['ID']})
+			tmp_links = getlinks(item['ID'])
+			if tmp_links:
+				for repository in tmp_links:
+					linked_repositories.append(item['ID'])
 		elif item['type'] == 'r':
-			linkedr.append({'ID': item['ID']})
+			linked_repositories.append(item['ID'])
 
+	done = []
 	if client.type == 'YUM':
-
 		repo_file = "/var/lib/yarus/yarus.repo"
-		config_file = open(repo_file, 'w')
-		
-		for repository in linkedr:
-			repo = getrepo(app, repository['ID'])
+	elif client.type == 'APT':
+		repo_file = "/var/lib/yarus/sources.list"
+	config_file = open(repo_file, 'w')
+	
+	for repo_id in linked_repositories:
 
-			if not repo:
-				return False
+		# check if repo isn't duplicate
+		if repo_id in done:
+			continue
+		else:
+			done.append(repo_id)
 
-			if repo.type != client.type:
-				app.log.logtask("The repository " + repo.name + " (" + repo.type + ") isn't compatible with the client " + client.name + " (" + client.type + ")")
-				continue
+		# check if repository exist
+		repository = getobject(app, 'repository', repo_id)        
+		if not repository:
+			app.log.logtask("The repository with ID " + repo_id + " doesn't exist.")
+			return False
 
-			for comp in repo.components.split(","):
+		if repository.type != client.type:
+			app.log.logtask("The repository " + repository.name + " (" + repository.type + ") isn't compatible with the client " + client.name + " (" + client.type + ").")
+			continue
+
+		if client.type == 'YUM':
+			for comp in repository.components.split(","):
 				config_file.write("[" + comp + "]\n")
-				config_file.write("name=Yarus - " + repo.name + " - " + comp + "\n")
-				baseurl = "baseurl=http://155.6.102.161/repos/" + repo.distribution + "/" + repo.release + "/" + comp + "/" + repo.architectures
+				config_file.write("name=Yarus - " + repository.name + " - " + comp + "\n")
+				baseurl = "baseurl=http://" + app.config.sv_address + "/repos/" + repository.distribution + "/" + repository.release + "/" + comp + "/$basearch/"
 				config_file.write(baseurl + "\n")
 				config_file.write("gpgcheck=1\n")
 				config_file.write("gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7\n\n")
-
-		config_file.close()
-
-		ansible = Ansible()
-		playbook = ansible.generate_playbook_config_yum_client(client, repo_file)
-		if  not playbook:
-			return False
-
-		show_playbook(app, playbook)
-
-		if ansible.executeplaybook(playbook):
-			os.remove(playbook)
-			os.remove(repo_file)
-			return True
-
-	elif client.type == 'APT':
-		done = []
-		repo_file = "/var/lib/yarus/sources.list"
-		config_file = open(repo_file, 'w')
-
-		for repository in linkedr:
-			if repository['ID'] in done:
-				continue
-			else:
-				done.append(repository['ID'])
-
-			repo = getrepo(app, repository['ID'])
-
-			if not repo:
-				return False
-
-			if repo.type != client.type:
-				app.log.logtask("The repository " + repo.name + " (" + repo.type + ") isn't compatible with the client " + client.name + " (" + client.type + ")")
-				continue
-
+			
+		elif client.type == 'APT':
 			components = ""
-
-			for comp in repo.components.split(","):
+			for comp in repository.components.split(","):
 				components += comp + " "
+			config_file.write("deb http://" + app.config.sv_address + "/repos/" + repository.distribution + " " + repository.path + " " + components + "\n")		
 
-			config_file.write("deb http://155.6.102.161/repos/" + repo.distribution + " " + repo.path + " " + components + "\n")
+	config_file.close()
 
-		config_file.close()
+	app.log.logtask("Ansible will check connection with the system " + client.name + "(" + client.IP + ").")
+	
+	ansible = Ansible()
+	try:
+		app.log.logtask("Generating playbook...")
+		ansible.generate_playbook_config_client(client, repo_file)
+		ansible.showplaybook(app)
+		app.log.logtask("Executing playbook...")
+		result = ansible.executeplaybook()
+		app.log.logtask("Cleaning temporary files linked to the task...")
+		ansible.clean()
+		os.remove(repo_file)
+	except IOError as error:
+		app.log.logtask(error)
+		return False
 
-		ansible = Ansible()
-		playbook = ansible.generate_playbook_config_apt_client(client, repo_file)
-		if  not playbook:
-			return False
+	if not result:
+		app.log.logtask("The client couldn't be configured.")
+		return False
 
-		show_playbook(app, playbook)
-
-		if ansible.executeplaybook(playbook):
-			os.remove(playbook)
-			os.remove(repo_file)
-			return True
-
-		else:
-			app.log.logtask("The repository " + repo.name + "  is not compatible with the client " + client.name)
-			return False
-
-	return False
-
-def upgradable_client(app, client_id):
+	app.log.logtask("The client is configured with the linked repositories.")
 	return True
 
-	# get client
-	client = getclient(app, client_id)
+def upgradable_client(app, client_id):
 
+	# check if client exists
+	client = getobject(app, 'client', client_id)        
 	if not client:
+		app.log.logtask("Error: no system with ID: " + client_id + " in the database.")
 		return False
 
-	app.log.logtask("Retrieving the list of upgradable packages for client " + client.name + "(" + client.IP + ")")
+	app.log.logtask("Retrieving the list of upgradable packages for client " + client.name + "(" + client.IP + ").")
 
 	ansible = Ansible()
-
-	if client.type == 'YUM':
-		playbook = ansible.generate_playbook_upgradable_yum_client(client)
-	elif client.type == 'APT':
-		playbook = ansible.generate_playbook_upgradable_apt_client(client)
-
-	if  not playbook:
+	try:
+		app.log.logtask("Generating playbook...")
+		ansible.generate_playbook_upgradable_client(client)
+		ansible.showplaybook(app)
+		app.log.logtask("Executing playbook...")
+		result = ansible.executeplaybook()
+		app.log.logtask("Cleaning temporary files linked to the task...")
+		ansible.clean()
+	except IOError as error:
+		app.log.logtask(error)
 		return False
 
-	show_playbook(app, playbook)
-
-	response = ansible.executeplaybook(playbook)
-	if not response:
-		app.log.logtask("No response from Ansible playbook execution.")
+	if not result:
+		app.log.logtask("No valid response from Ansible playbook execution.")
 		return False
 
-	response = json.loads(response)
-	print(response)
+	response = json.loads(result)
 	lines = getAnsibleOutput(response, client.IP, 'upgradable')
 
 	if not lines:
 		app.log.logtask("Error parsing Ansible response.")
 		return False
 
-	if len(lines) <= 0:
-		app.log.logtask("No packages need to be updated.")
-		return True
+	app.log.logtask("Ansible playbook response:")
+	for line in lines:
+		app.log.logtask(line)
 
-	removeupgradables(app, client_id)
+	list_upgradable = parse_upgradable(app, client, lines)
 
-	add_upgradable(app, client, lines)
+	for upg in list_upgradable:
 
-	os.remove(playbook)
+		# get the package from the db
+		pkg = getpackagebyinfo(app, upg['name'], upg['arch'], upg['version'], upg['release'])
+		if not pkg:
+			app.log.logtask("ERROR: the package " + upg['name'] + "-" + upg['version'] + "-" + upg['release'] + " doesn't come from a repository handled by YARUS.")
+			continue
+
+		# check if this upgradable is already register
+		if getupgradablebyinfo(app, 'client', client.ID, pkg.ID):
+			app.log.logtask("Already registered")
+			continue
+
+		upgradable = Upgradable(object_id=client.ID, obj="client", approved=0, ID=upg['upgradable_id'], package_id=pkg.ID)
+		upgradable.insert(app.database)
+
+	app.log.logtask("The client is configured with the linked repositories.")
 	return True
+
+
 
 def all_update_client(app, client_id):
 	return True

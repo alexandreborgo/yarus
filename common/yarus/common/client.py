@@ -1,6 +1,7 @@
 
 from yarus.common.yarusobject import YarusObject
 from yarus.common.exceptions import *
+from yarus.common.check_functions import *
 
 class Client(YarusObject):
 

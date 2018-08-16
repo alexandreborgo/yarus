@@ -62,9 +62,9 @@
   </div>
   <div class="form-group">
     <label for="type">System type</label>
-    <select class="form-control" value="{% if data %}{{ data.client.type }}{% endif %}" id="type" name="type">
-      <option>APT</option>
-      <option>YUM</option>
+    <select class="form-control" value="" id="type" name="type">
+      <option {% if data %}{% if data.client.type == 'APT' %}selected{% endif %}{% endif %}>APT</option>
+      <option {% if data %}{% if data.client.type == 'YUM'  %}selected{% endif %}{% endif %}>YUM</option>
     </select>
     <div class="invalid-feedback">
         Must not be empty.

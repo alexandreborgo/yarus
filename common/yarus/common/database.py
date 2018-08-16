@@ -82,12 +82,11 @@ class Mysql:
 		request = "DELETE FROM yarus_upgradable WHERE client_id='" + client_id + "'"
 		return self.execute(request)
 		
-	def get_upgradable_by_info(self, client_id, name, release, type):
-		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND name='" + name + "' AND `release`='" + release + "' AND type='" + type + "'"
-		return self.get_all(request)
+
 	def get_upgradables(self, client_id):
-		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' "
-		return self.get_all(request)
+		request = "SELECT * FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s"
+		data = (client_id,)
+		return self.get_all(request, data)
 	def get_approved_upgradables(self, client_id):
 		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
 		return self.get_all(request)
@@ -201,34 +200,34 @@ class Mysql:
 		return self.get_one(request, data)
 
 	def get_client_by_ip(self, IP):
-		request = "SELECT * FROM yarus_client WHERE IP='%s'"
+		request = "SELECT * FROM yarus_client WHERE IP=%s"
 		data = (IP,)
 		return self.get_one(request, data)
 	
 	def get_bind(self, client_id, repo_id, channel_id):
-		request = "SELECT * FROM yarus_bind WHERE client_id='%s' AND repo_id='%s' AND channel_id='%s'"
+		request = "SELECT * FROM yarus_bind WHERE client_id=%s AND repo_id=%s AND channel_id=%s"
 		data = (client_id, repo_id, channel_id)
 		return self.get_one(request, data)
 	def delete_bind(self, client_id, repo_id, channel_id):
-		request = "DELETE FROM yarus_bind WHERE client_id='%s' AND repo_id='%s' AND channel_id='%s'"
+		request = "DELETE FROM yarus_bind WHERE client_id=%s AND repo_id=%s AND channel_id=%s"
 		data = (client_id, repo_id, channel_id)
 		return self.execute(request, data)
 	
 	def get_link(self, channel_id, repo_id):
-		request = "SELECT * FROM yarus_link WHERE channel_id='%s' AND repo_id='%s'"
+		request = "SELECT * FROM yarus_link WHERE channel_id=%s AND repo_id=%s"
 		data = (channel_id, repo_id)
 		return self.get_one(request, data)
 	def delete_link(self, channel_id, repo_id):
-		request = "DELETE FROM yarus_link WHERE channel_id='%s' AND repo_id='%s'"
+		request = "DELETE FROM yarus_link WHERE channel_id=%s AND repo_id=%s"
 		data = (channel_id, repo_id)
 		return self.execute(request, data)
 
 	def get_grouped(self, client_id, group_id):
-		request = "SELECT * FROM yarus_grouped WHERE client_id='%s' AND group_id='%s'"
+		request = "SELECT * FROM yarus_grouped WHERE client_id=%s AND group_id=%s"
 		data = (client_id, group_id)
 		return self.get_one(request, data)
 	def delete_grouped(self, client_id, group_id):
-		request = "DELETE FROM yarus_grouped WHERE client_id='%s' AND group_id='%s'"
+		request = "DELETE FROM yarus_grouped WHERE client_id=%s AND group_id=%s"
 		data = (client_id, group_id)
 		return self.execute(request, data)
 
@@ -240,4 +239,14 @@ class Mysql:
 	def get_package(self, repository, comp, name, version, arch, rel):
 		request = "SELECT * FROM yarus_package WHERE repository=%s AND component=%s AND name=%s AND version=%s AND architecture=%s AND `release`=%s"
 		data = (repository, comp, name, version, arch, rel)
+		return self.get_one(request, data)
+
+	def get_upgradable_by_info(self, obj, object_id, package_id):
+		request = "SELECT * FROM yarus_upgradable WHERE object=%s AND object_id=%s AND package_id=%s"
+		data = (obj, object_id, package_id)
+		return self.get_one(request, data)
+
+	def get_package_by_info(self, name, arch, version, release):
+		request = "SELECT * FROM yarus_package WHERE name=%s AND architecture=%s AND version=%s AND `release`=%s"
+		data = (name, arch, version, release)
 		return self.get_one(request, data)

@@ -24,3 +24,11 @@ class Package(YarusObject):
         for key, value in vars(self).items():
             setattr(self, key, object_tmp[key])
         return self
+        
+    def load_package_by_info(self, database, name, arch, version, release):
+        object_tmp = database.get_package_by_info(name, arch, version, release)
+        if not object_tmp:
+            return None
+        for key, value in vars(self).items():
+            setattr(self, key, object_tmp[key])
+        return self

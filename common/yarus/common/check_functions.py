@@ -39,11 +39,8 @@ def check_name(name):
         return False
 
 def check_description(description):
-    if description:
-        if re.match("^[a-zA-z0-9-_. @!:,?]*$", description):
-            return True
-        else:
-            return False
+    if description:        
+        return True
     else:
         return False
 

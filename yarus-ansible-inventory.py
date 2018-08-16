@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from yarus.tasksmanager.apptasksmanager import AppTasksManager
+from yarus.common.app import App
 
 parser = argparse.ArgumentParser()
 
@@ -15,7 +15,7 @@ args = parser.parse_args()
 if args.list:
 
 	# start the app context
-	app = AppTasksManager()
+	app = App()
 
 	if not app.start():
 		print("{}")
