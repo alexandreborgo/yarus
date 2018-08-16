@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from yarus.tasksmanager.apptasksmanager import AppTasksManager
+from yarus.common.app import App
 from yarus.common.functions import *
 from yarus.common.task import Task
 
@@ -15,7 +15,7 @@ parser.add_argument('--scheduled-task-id', action='store')
 args = parser.parse_args()
 
  # start the app context
-app = AppTasksManager()
+app = App()
 
 if not app.start():
     app.log.error("Can't start AppTaskManager.")
