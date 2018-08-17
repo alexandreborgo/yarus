@@ -1120,31 +1120,31 @@ def unlink(object_name, object_id, lk_obj_id):
 
 # not up to date code
 
-@APP.route('/client/<string:client_id>/approve/<string:packages_id>', methods=['GET'])
-def approveupgradables(client_id, packages_id):
+@APP.route('/client/<string:client_id>/approve/<string:upgradable_id>', methods=['GET'])
+def approveupgradables(client_id, upgradable_id):
     """ set package as approved for the given list """
     data = {}
-    packages = []
-    for package in packages_id.split(','):
+    upgradable = []
+    for package in upgradable_id.split(','):
         if package != "":
-            packages.append(package)
-    data['data'] = packages
+            upgradable.append(package)
+    data['data'] = upgradable
     result = callapi("put", "/client/" + client_id + "/approve", data)
 
-    return seeclient(client_id, result['status'], result['message'])
+    return see_object("client", client_id, result['status'], result['message'])
 
-@APP.route('/client/<string:client_id>/disapprove/<string:packages_id>', methods=['GET'])
-def disapproveupgradables(client_id, packages_id):
+@APP.route('/client/<string:client_id>/disapprove/<string:upgradable_id>', methods=['GET'])
+def disapproveupgradables(client_id, upgradable_id):
     """ set package as disapproved for the given list """
     data = {}
-    packages = []
-    for package in packages_id.split(','):
+    upgradable = []
+    for package in upgradable_id.split(','):
         if package != "":
-            packages.append(package)
-    data['data'] = packages
+            upgradable.append(package)
+    data['data'] = upgradable
     result = callapi("put", "/client/" + client_id + "/disapprove", data)
 
-    return seeclient(client_id, result['status'], result['message'])
+    return see_object("client", client_id, result['status'], result['message'])
 
 @APP.route('/group/<string:group_id>/unlink/<string:clients_id>', methods=['GET'])
 def unlinkgroup(group_id, clients_id):

@@ -199,9 +199,9 @@ def getlinks(app, channel_id):
 		app.log.debug(str(error))
 		return None
 
-def getupgradable(app, client_id, package_id):
+def getupgradable(app, upgradable_id):
 	try:
-		return Upgradable().load_upgradable(app.database, client_id, package_id)
+		return Upgradable().load(app.database, upgradable_id)
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None

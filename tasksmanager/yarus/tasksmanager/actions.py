@@ -22,15 +22,36 @@ def getAnsibleOutput(response, host, taskname):
 				for task in play['tasks']:
 					if task['task']['name'] == taskname:
 						if host in task['hosts']:
-							return task['hosts'][host]['stdout_lines']
+							if 'stdout_lines' in task['hosts'][host]:
+								return task['hosts'][host]['stdout_lines']
+							elif 'results' in task['hosts'][host]:
+								for result in task['hosts'][host]['results']:
+									if 'results' in result:
+										return result['results']
 
-def taskFailed(response, host):
+def getAnsibleError(response, host, taskname):
+	if 'plays' in response:
+		for play in response['plays']:
+			if 'tasks' in play:
+				for task in play['tasks']:
+					if task['task']['name'] == taskname:
+						if host in task['hosts']:
+							if 'results' in task['hosts'][host]:					
+								for result in task['hosts'][host]['results']:
+									if 'msg' in result:
+										return result['msg']
+							elif 'msg' in task['hosts'][host]:
+								return task['hosts'][host]['msg']
+
+def failure(response, host):
 	if 'stats' in response:
 		if host in response['stats']:
-			if response['stats'][host]['failures'] == 0:
-				return False
+			if response['stats'][host]['failures'] > 0:
+				return response['stats'][host]['failures']
+			elif response['stats'][host]['unreachable'] > 0:
+				return response['stats'][host]['unreachable']
 			else:
-				return True
+				return 0
 	return True
 
 def parse_upgradable(app, client, lines):
@@ -69,9 +90,27 @@ def parse_upgradable(app, client, lines):
 			
 
 	return list_upgradable
+
+def ansibleparseresponse(app, response):
+	try:
+		response_lines = response.split('{', 1)[-1]
+		response_lines = "{\n" + response_lines
+
+		print("Ansible output:")
+		print(response_lines)
+		
+		response = json.loads(response_lines)
+
+		return response
+
+	except json.decoder.JSONDecodeError as error:
+		app.log.logtask("Couldn't parse Ansible output.")
+		app.log.logtask(error)
+		return None
+
 # --------------------------------------------------------
 
-def sync_repo(app, repo_id):
+def sync_repo(app, task, repo_id):
 	
 	# check if repo exists
 	repository = getobject(app, 'repository', repo_id)        
@@ -102,6 +141,11 @@ def sync_repo(app, repo_id):
 		# Step 1: downloading metadata files
 		# ------------------------------------------------------------------------------------------------------------------------------
 
+		# calculate metadata file signature
+		release_sig = ""
+		if os.path.isfile(dlocal + "/Release"):
+			release_sig = getSigFile(dlocal + "/Release")
+
 		app.log.logtask("Downloading metadata files...")
 
 		release = getFile_rsync(app, dremote, dlocal, "/Release")
@@ -117,6 +161,15 @@ def sync_repo(app, repo_id):
 				app.log.logtask("Unable to find metadata files on the remote repository.")
 				return False
 
+		# calculate the new signature of the metadata files
+		if os.path.isfile(dlocal + "/Release"):
+			new_release_sig = getSigFile(dlocal + "/Release")
+
+		# check if it is the same or not
+		if release_sig == new_release_sig:
+			app.log.logtask("The repository " + repository.name + " is already up to date.")
+			return True
+
 		# check if the pgp signature is valid
 		# gpg --import RPM-GPG-KEY-CentOS-7
 		# gpg --verify repomd.xml.asc repomd.xml
@@ -128,6 +181,8 @@ def sync_repo(app, repo_id):
 				app.log.logtask("Can't open local Release file.")
 				app.log.logtask(error)
 				return False
+
+		todo
 
 		# we don't need the "header" of the file
 		# so go to next line until we see sha256
@@ -178,6 +233,7 @@ def sync_repo(app, repo_id):
 		# ------------------------------------------------------------------------------------------------------------------------------
 		
 		for comp in comps:
+			
 			for arch in archs:
 				
 				# extract content (list of packages) of archives
@@ -287,7 +343,7 @@ def sync_repo(app, repo_id):
 				else:
 					app.log.logtask("Can't find local file Packages")
 					return False			
-
+			
 			# ------------------------------------------------------------------------------------------------------------------------------
 			# Step 3: create the date repository
 			# ------------------------------------------------------------------------------------------------------------------------------
@@ -300,10 +356,11 @@ def sync_repo(app, repo_id):
 				os.makedirs(datedir)
 
 			for item in os.listdir(dlocal):
-				if os.path.isdir(dlocal + "/" + item):
-					shutil.copytree(dlocal + "/" + item, datedir + item)
-				else:
-					shutil.copy2(dlocal + "/" + item, datedir)
+				if not os.path.exists(datedir + item):
+					if os.path.isdir(dlocal + "/" + item):
+						shutil.copytree(dlocal + "/" + item, datedir + item)
+					else:
+						shutil.copy2(dlocal + "/" + item, datedir)
 
 			# save it into the database				
 			if not getdaterepository(app, repository.ID, daterepo):
@@ -365,7 +422,7 @@ def sync_repo(app, repo_id):
 
 				# check if it is the same or not
 				if repomd_sig == new_repomd_sig:
-					app.log.logtask("Up to date.")
+					app.log.logtask("The repository " + repository.name + " is already up to date.")
 					continue
 
 				new = True
@@ -499,7 +556,7 @@ def sync_repo(app, repo_id):
 
 	return True
 
-def sync_channel(app, channel_id):
+def sync_channel(app, task, channel_id):
 
 	# check for the channel
 	channel = getobject(app, 'channel', channel_id)
@@ -526,7 +583,7 @@ def sync_channel(app, channel_id):
 
 # --------------------------------------------------------
 
-def check_client(app, client_id):
+def check_client(app, task, client_id):
 	
 	# check if client exists
 	client = getobject(app, 'client', client_id)        
@@ -539,7 +596,7 @@ def check_client(app, client_id):
 	ansible = Ansible()
 	try:
 		app.log.logtask("Generating playbook...")
-		ansible.generate_playbook_check_client(client)
+		ansible.generate_playbook_check_client(task.ID, client)
 		ansible.showplaybook(app)
 		app.log.logtask("Executing playbook...")
 		result = ansible.executeplaybook()
@@ -547,16 +604,19 @@ def check_client(app, client_id):
 		ansible.clean()
 	except IOError as error:
 		app.log.logtask(error)
-		return False
+		return False	
 
-	if not result:
+	response = ansibleparseresponse(app, result)
+
+	if failure(response, client.IP) != 0:
 		app.log.logtask("Ansible can not connect to the client!")
+		app.log.logtask(getAnsibleError(response, client.IP, 'check'))
 		return False
 
 	app.log.logtask("Ansible can connect to the client.")
 	return True
 
-def config_client(app, client_id):
+def config_client(app, task, client_id):
 	
 	# check if client exists
 	client = getobject(app, 'client', client_id)        
@@ -630,7 +690,7 @@ def config_client(app, client_id):
 	ansible = Ansible()
 	try:
 		app.log.logtask("Generating playbook...")
-		ansible.generate_playbook_config_client(client, repo_file)
+		ansible.generate_playbook_config_client(task.ID, client, repo_file)
 		ansible.showplaybook(app)
 		app.log.logtask("Executing playbook...")
 		result = ansible.executeplaybook()
@@ -641,14 +701,17 @@ def config_client(app, client_id):
 		app.log.logtask(error)
 		return False
 
-	if not result:
-		app.log.logtask("The client couldn't be configured.")
+	response = ansibleparseresponse(app, result)
+
+	if failure(response, client.IP) != 0:
+		app.log.logtask("The client could not be configured.")
+		app.log.logtask(getAnsibleError(response, client.IP, 'config'))
 		return False
 
 	app.log.logtask("The client is configured with the linked repositories.")
 	return True
 
-def upgradable_client(app, client_id):
+def upgradable_client(app, task, client_id):
 
 	# check if client exists
 	client = getobject(app, 'client', client_id)        
@@ -661,7 +724,7 @@ def upgradable_client(app, client_id):
 	ansible = Ansible()
 	try:
 		app.log.logtask("Generating playbook...")
-		ansible.generate_playbook_upgradable_client(client)
+		ansible.generate_playbook_upgradable_client(task.ID, client)
 		ansible.showplaybook(app)
 		app.log.logtask("Executing playbook...")
 		result = ansible.executeplaybook()
@@ -671,18 +734,23 @@ def upgradable_client(app, client_id):
 		app.log.logtask(error)
 		return False
 
-	if not result:
-		app.log.logtask("No valid response from Ansible playbook execution.")
+	response = ansibleparseresponse(app, result)
+
+	if failure(response, client.IP) != 0:
+		app.log.logtask("The list of upgradable packages could not be retrieved.")
+		app.log.logtask(getAnsibleError(response, client.IP, 'upgradable'))
 		return False
 
-	response = json.loads(result)
+	# first remove all upgradable linked to the client
+	removeupgradables(app, client.ID)
+
 	lines = getAnsibleOutput(response, client.IP, 'upgradable')
 
 	if not lines:
-		app.log.logtask("Error parsing Ansible response.")
-		return False
+		app.log.logtask("No package to update.")
+		return True
 
-	app.log.logtask("Ansible playbook response:")
+	app.log.logtask("Output:")
 	for line in lines:
 		app.log.logtask(line)
 
@@ -698,146 +766,140 @@ def upgradable_client(app, client_id):
 
 		# check if this upgradable is already register
 		if getupgradablebyinfo(app, 'client', client.ID, pkg.ID):
-			app.log.logtask("Already registered")
 			continue
 
 		upgradable = Upgradable(object_id=client.ID, obj="client", approved=0, ID=upg['upgradable_id'], package_id=pkg.ID)
 		upgradable.insert(app.database)
 
-	app.log.logtask("The client is configured with the linked repositories.")
+	app.log.logtask("The list of upgradable packages has been retrieved.")
 	return True
 
-
-
-def all_update_client(app, client_id):
-	return True
-	# get client
-	client = getclient(app, client_id)
+def approved_update_client(app, task, client_id):
+	
+	# check if client exists
+	client = getobject(app, 'client', client_id)        
 	if not client:
-		app.log.logtask("No client with the ID: " + cliend_id)
-		return False
-
-	app.log.logtask("Updating all packages of client " + client.name + " (" + client.IP + ")")
-
-	ansible = Ansible()
-
-	# get list of approved packages
-	upgradables = getupgradables(app, client_id)
-
-	# generating package names list
-	package_list = []
-	for package in upgradables:
-		package_list.append(package['name'])
-
-	# if there's not package in the list 
-	if len(package_list) == 0:
-		app.log.logtask("Client is already up to date.")
-		return True
-
-	# generating playbook
-	playbook = ansible.generate_playbook_update_client(client, package_list)
-
-	if  not playbook:
-		app.log.logtask("Error during the generation of the playbook.")
-		return False
-
-	# log the playbook
-	show_playbook(app, playbook)
-
-	# execute the playbook
-	response = ansible.executeplaybook(playbook)
-
-	if not response:
-		app.log.logtask("No response from Ansible playbook execution.")
-		return False
-
-	# load the response
-	response = json.loads(response)
-	
-	# check for failure
-	if taskFailed(response, client.IP):
-		app.log.logtask("Task failed.")
-		return False
-	
-	# update upgradables in the database
-
-	# remove all current upgradables
-	removeupgradables(app, client_id)
-
-	# extract new upgradables from the playbook's answer
-	lines = getAnsibleOutput(response, client.IP, 'upgradable')
-
-	# add them into the database
-	add_upgradable(app, client, lines)
-	
-	# remove the playbook file
-	os.remove(playbook)
-
-	return True
-
-def approved_update_client(app, client_id):
-	return True
-	# get client
-	client = getclient(app, client_id)
-	if not client:
-		app.log.logtask("No client with the ID: " + cliend_id)
+		app.log.logtask("Error: no system with ID: " + client_id + " in the database.")
 		return False
 
 	app.log.logtask("Updating approved packages of client " + client.name + " (" + client.IP + ")")
 
-	ansible = Ansible()
-
 	# get list of approved packages
-	upgradables = getapprovedupgradables(app, client_id)
+	upgradables = getapprovedupgradables(app, client.ID)
 
-	# generating package names list
+	# generating package names list which will be gave to ansible
 	package_list = []
 	for package in upgradables:
 		package_list.append(package['name'])
 
 	# if there's not package in the list 
-	if len(package_list) == 0:
-		app.log.logtask("Client is already up to date.")
+	if not package_list:
+		app.log.logtask("the system " + client.name + " is already up to date.")
 		return True
-
-	# generating playbook
-	playbook = ansible.generate_playbook_update_client(client, package_list)
-
-	if  not playbook:
-		app.log.logtask("Error during the generation of the playbook.")
-		return False
-
-	# log the playbook
-	show_playbook(app, playbook)
-
-	# execute the playbook
-	response = ansible.executeplaybook(playbook)
-
-	if not response:
-		app.log.logtask("No response from Ansible playbook execution.")
-		return False
-
-	# load the response
-	response = json.loads(response)
 	
-	# check for failure
-	if taskFailed(response, client.IP):
-		app.log.logtask("Task failed.")
+	ansible = Ansible()
+	try:
+		app.log.logtask("Generating playbook...")
+		ansible.generate_playbook_update_client(task.ID, client, package_list)
+		ansible.showplaybook(app)
+		app.log.logtask("Executing playbook...")
+		result = ansible.executeplaybook()
+		app.log.logtask("Cleaning temporary files linked to the task...")
+		ansible.clean()
+	except IOError as error:
+		app.log.logtask(error)
 		return False
+
+	response = ansibleparseresponse(app, result)
 	
-	# update upgradables in the database
+	if failure(response, client.IP) != 0:
+		app.log.logtask("Ansible could not run the update.")
+		app.log.logtask(getAnsibleError(response, client.IP, 'upgrade'))
+		return False
 
-	# remove all current upgradables
-	removeupgradables(app, client_id)
+	result = getAnsibleOutput(response, client.IP, 'upgrade')
 
-	# extract new upgradables from the playbook's answer
+	app.log.logtask("Output:")
+	for line in result:
+		app.log.logtask(line)
+
+	# update the database (delete all upgradables that are up to date now)
+	
+	# first remove all upgradable linked to the client
+	removeupgradables(app, client.ID)
+
+	# then add the new
 	lines = getAnsibleOutput(response, client.IP, 'upgradable')
 
-	# add them into the database
-	add_upgradable(app, client, lines)
+	if not lines:
+		app.log.logtask("Could not get the list list of upgradable packages.")
+		return False
+
+	list_upgradable = parse_upgradable(app, client, lines)
+
+	for upg in list_upgradable:
+
+		# get the package from the db
+		pkg = getpackagebyinfo(app, upg['name'], upg['arch'], upg['version'], upg['release'])
+		if not pkg:
+			app.log.logtask("ERROR: the package " + upg['name'] + "-" + upg['version'] + "-" + upg['release'] + " doesn't come from a repository handled by YARUS.")
+			continue
+
+		# check if this upgradable is already register
+		if getupgradablebyinfo(app, 'client', client.ID, pkg.ID):
+			continue
+
+		upgradable = Upgradable(object_id=client.ID, obj="client", approved=0, ID=upg['upgradable_id'], package_id=pkg.ID)
+		upgradable.insert(app.database)
+
+	app.log.logtask("Approved packages have been updated.")	
+	return True
+
+def all_update_client(app, task, client_id):
 	
-	# remove the playbook file
-	os.remove(playbook)
+	# check if client exists
+	client = getobject(app, 'client', client_id)        
+	if not client:
+		app.log.logtask("Error: no system with ID: " + client_id + " in the database.")
+		return False
+
+	app.log.logtask("Updating all packages of client " + client.name + " (" + client.IP + ")")
+
+	# get all packages
+	upgradables = getupgradables(app, client_id)
+
+	# generating package names list which will be gave to ansible
+	package_list = []
+	for package in upgradables:
+		package_list.append(package['name'])
+
+	# if there's not package in the list 
+	if not package_list:
+		app.log.logtask("the system " + client.name + " is already up to date.")
+		return True
+
+	ansible = Ansible()
+	try:
+		app.log.logtask("Generating playbook...")
+		ansible.generate_playbook_update_client(task.ID, client, package_list)
+		ansible.showplaybook(app)
+		app.log.logtask("Executing playbook...")
+		result = ansible.executeplaybook()
+		app.log.logtask("Cleaning temporary files linked to the task...")
+		ansible.clean()
+	except IOError as error:
+		app.log.logtask(error)
+		return False
+
+	response = ansibleparseresponse(app, result)
+	
+	if failure(response, client.IP) != 0:
+		app.log.logtask("Ansible could not run the update.")
+		app.log.logtask(getAnsibleError(response, client.IP, 'upgrade'))
+		return False
+
+	# update the database (delete all upgradables that are up to date now)
+	removeupgradables(app, client.ID)
 
 	return True
 
@@ -863,7 +925,7 @@ def check_group(app, group_id):
 	ansible = Ansible()
 
 	# generating playbook
-	playbook = ansible.generate_playbook_check_group(group, groupeds)
+	playbook = ansible.generate_playbook_check_group(task.ID, group, groupeds)
 
 	if  not playbook:
 		app.log.logtask("Error during the generation of the playbook.")

@@ -17,13 +17,13 @@ def parseReleaseLine(line, comps, archs):
 				return line
 
 			if re.match("^" + comp + "\/i18n\/[a-zA-Z-_]*\.[a-zA-Z0-9]*", line[2]):
-				return None
+				return line
 
 			if re.match("^" + comp + "\/dep11\/Components-" + arch + "\.yml\.[a-zA-Z0-9]*", line[2]):
-				return None
+				return line
 
 			if re.match("^" + comp + "\/dep11\/icons-[x0-9@]*\.tar\.gz", line[2]):
-				return None
+				return line
 	return None
 
 def getDir_rsync(app, url, local):

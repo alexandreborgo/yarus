@@ -793,18 +793,15 @@ def approveupgradable(client_id):
         if not data:
             return jsonify({"status": 101, "message": "The content must be JSON format."})
 
-        message = ""
-        for package_id in data['data']:
-            upgradable = getupgradable(APP_ENGINE, client.ID, package_id)
+        for upgradable_id in data['data']:
+            upgradable = getupgradable(APP_ENGINE, upgradable_id)
             if not upgradable:
-                message += "The package " + upgradable.name + " doesn't exist in the list of upgradable packages of " + client.name + ". "
                 continue
             upgradable.approved = 1
             upgradable.update(APP_ENGINE.database)
-            message += "The package " + upgradable.name + " is approved for update."
             continue
 
-        return jsonify({"status": 0, "message": message})
+        return jsonify({"status": 0, "message": "Packages have been approved."})
 
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})
@@ -832,18 +829,15 @@ def disapproveupgradable(client_id):
         if not data:
             return jsonify({"status": 101, "message": "The content must be JSON format."})
 
-        message = ""
-        for package_id in data['data']:
-            upgradable = getupgradable(APP_ENGINE, client_id, package_id)
+        for upgradable_id in data['data']:
+            upgradable = getupgradable(APP_ENGINE, upgradable_id)
             if not upgradable:
-                message += "The package " + upgradable.name + " doesn't exist in the list of upgradable packages of " + client.name + ". "
                 continue
             upgradable.approved = 0
             upgradable.update(APP_ENGINE.database)
-            message += "The package " + upgradable.name + " is approved for update."
             continue
 
-        return jsonify({"status": 0, "message": message})
+        return jsonify({"status": 0, "message": "Packages have been disapproved."})
 
     except DatabaseError:
         return jsonify({"status": 1, "message": "Database error. If this error persist please contact the administrator.", "data": ""})

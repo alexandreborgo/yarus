@@ -78,18 +78,7 @@ class Mysql:
 	def get_upgradable(self, client_id, package_id):
 			request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND ID='" + package_id + "'"
 			return self.get_one(request)
-	def remove_upgradables(self, client_id):
-		request = "DELETE FROM yarus_upgradable WHERE client_id='" + client_id + "'"
-		return self.execute(request)
 		
-
-	def get_upgradables(self, client_id):
-		request = "SELECT * FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s"
-		data = (client_id,)
-		return self.get_all(request, data)
-	def get_approved_upgradables(self, client_id):
-		request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND approved=1"
-		return self.get_all(request)
 
 	def get_pending_task(self):
 		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC LIMIT 1"
@@ -241,12 +230,26 @@ class Mysql:
 		data = (repository, comp, name, version, arch, rel)
 		return self.get_one(request, data)
 
-	def get_upgradable_by_info(self, obj, object_id, package_id):
-		request = "SELECT * FROM yarus_upgradable WHERE object=%s AND object_id=%s AND package_id=%s"
-		data = (obj, object_id, package_id)
-		return self.get_one(request, data)
-
 	def get_package_by_info(self, name, arch, version, release):
 		request = "SELECT * FROM yarus_package WHERE name=%s AND architecture=%s AND version=%s AND `release`=%s"
 		data = (name, arch, version, release)
 		return self.get_one(request, data)
+
+	
+	def get_upgradables(self, client_id):
+		select = "yarus_upgradable.ID, yarus_upgradable.approved, yarus_package.name, yarus_package.release, yarus_package.version, yarus_package.summary, yarus_package.component"
+		request = "SELECT " + select + " FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s"
+		data = (client_id,)
+		return self.get_all(request, data)
+	def get_approved_upgradables(self, client_id):
+		request = "SELECT * FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE yarus_upgradable.object_id=%s AND yarus_upgradable.approved=1"
+		data = (client_id,)
+		return self.get_all(request, data)
+	def get_upgradable_by_info(self, obj, object_id, package_id):
+		request = "SELECT * FROM yarus_upgradable WHERE object=%s AND object_id=%s AND package_id=%s"
+		data = (obj, object_id, package_id)
+		return self.get_one(request, data)
+	def remove_upgradables(self, client_id):
+		request = "DELETE FROM yarus_upgradable WHERE object_id=%s"
+		data = (client_id,)
+		return self.execute(request, data)

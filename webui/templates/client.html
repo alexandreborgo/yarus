@@ -138,8 +138,8 @@
             <tr>
               <td></td>
               <td>ID</td>
-              <td>Name</td>
-              <td>Release</td>
+              <td>Package</td>
+              <td>Summary</td>
               <td>From</td>
               <td>Approved</td>
             </tr>
@@ -149,9 +149,9 @@
               <tr>
                 <td></td>
                 <td>{{ package.ID }}</td>
-                <td>{{ package.name }}</td>
-                <td>{{ package.release }}</td>
-                <td>{{ package.type }}</td>
+                <td>{{ package.name }} {{ package.version }} {{ package.release }}</td>
+                <td>{{ package.summary }}</td>
+                <td>{{ package.component }}</td>
                 <td>
                   {% if package.approved == 0 %}
                     <span class="label label-danger">No</span>
@@ -376,7 +376,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('approveupgradables', client_id=result.data.ID, packages_id='') }}" + id
+            url = "{{ url_for('approveupgradables', client_id=result.data.ID, upgradable_id='') }}" + id
             $(location).attr('href', url);
           }
         },
@@ -390,7 +390,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('disapproveupgradables', client_id=result.data.ID, packages_id='') }}" + id
+            url = "{{ url_for('disapproveupgradables', client_id=result.data.ID, upgradable_id='') }}" + id
             $(location).attr('href', url);
           }
         },

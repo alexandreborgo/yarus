@@ -25,7 +25,7 @@ class LogSystem:
 		print(str(message))
 		try:
 			file = open(self.log_file, 'a')
-			file.write(str(datetime.datetime.now()) + ": " + message + "\n")
+			file.write(str(datetime.datetime.now()) + ": " + str(message) + "\n")
 			file.close()
 		except IOError as error:
 			print("Unable to write the error into the log file: " + self.log_file)
