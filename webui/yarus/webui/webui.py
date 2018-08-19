@@ -45,7 +45,7 @@ if SV_ADDRESS and SV_PORT:
 else:
     sys.exit(1)
 
-APP = Flask("Yarus Engine")
+APP = Flask("Yarus Engine", template_folder='/var/lib/yarus/env/lib/python3.6/site-packages/yarus/webui/templates')
 APP.secret_key = "=kdRfVYg!Xgst-vV?bys6&Z@28s7FJXy4hwFtNHfnb#myFxwf+BgHYzwt+uaaMBN"
 
 def callapi(method, path, more_data=None):

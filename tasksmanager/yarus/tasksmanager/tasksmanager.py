@@ -60,16 +60,15 @@ class YarusTasksManager():
 			if task.action in TASK_ACTIONS:
 
 				# get the function of the action and execute it
-				#try:
-				action = getattr(actions, task.action)
-				result = action(app, task, task.object_id)
-				"""
+				try:
+					action = getattr(actions, task.action)
+					result = action(app, task, task.object_id)
 				except Exception as error:
 					self.alterTaskStatus(app, task, 'failed')
 					app.log.logtask("The following error occured during the task :")
 					app.log.logtask(error)
 					result = False
-				"""
+				
 				
 				# check the result
 				if result:

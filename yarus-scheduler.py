@@ -1,4 +1,4 @@
-#!/home/env/bin/python
+#!/var/lib/yarus/env/bin/python
 
 import argparse
 import sys
