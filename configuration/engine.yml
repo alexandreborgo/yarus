@@ -5,8 +5,8 @@ database:
   database: yarus
 
 proxy:
-  host: 
-  port: 
+  host: proxy.reseau.ratp
+  port: 80
   username: 
   password: 
 

@@ -1,0 +1,16 @@
+[Unit]
+Description=YARUS Tasks Manager
+After=syslog.target
+
+[Service]
+Type=simple
+User=yarus
+Group=yarus
+WorkingDirectory=/opt/yarus
+ExecStart=/opt/yarus/env/bin/yarus-tasks-manager
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

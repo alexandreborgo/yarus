@@ -5,7 +5,7 @@ import os
 class Ansible:
 
 	def generate_playbook_check_client(self, task_id, client):
-		playbook = open('/var/lib/yarus/playbooks/' + task_id + '_' + client.name + '.yml', "w")
+		playbook = open('/opt/yarus/playbooks/' + task_id + '_' + client.name + '.yml', "w")
 		playbook.write("---\n")
 		playbook.write("- hosts: " + client.IP + "\n")
 		playbook.write("  remote_user: root\n")
@@ -14,9 +14,9 @@ class Ansible:
 		playbook.write("  - name: check\n")
 		playbook.write("    ping:\n")
 		playbook.close()
-		self.playbook = '/var/lib/yarus/playbooks/' + task_id + '_' + client.name + '.yml'
+		self.playbook = '/opt/yarus/playbooks/' + task_id + '_' + client.name + '.yml'
 	def generate_playbook_config_client(self, task_id, client, file):
-		playbook = open('/var/lib/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
+		playbook = open('/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
 		playbook.write("---\n")
 		playbook.write("- hosts: " + client.IP + "\n")
 		playbook.write("  remote_user: root\n")
@@ -49,9 +49,9 @@ class Ansible:
 			playbook.write("      owner: root\n")
 			playbook.write("      group: root\n")
 		playbook.close()
-		self.playbook = '/var/lib/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
+		self.playbook = '/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
 	def generate_playbook_upgradable_client(self, task_id, client):
-		playbook = open('/var/lib/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
+		playbook = open('/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
 		playbook.write("---\n")
 		playbook.write("- hosts: " + client.IP + "\n")
 		playbook.write("  remote_user: root\n")
@@ -63,9 +63,9 @@ class Ansible:
 		elif client.type == 'APT':
 			playbook.write("    command: apt list  --upgradable\n")
 		playbook.close()
-		self.playbook =  '/var/lib/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
+		self.playbook =  '/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
 	def generate_playbook_update_client(self, task_id, client, package_list):
-		playbook = open('/var/lib/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
+		playbook = open('/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
 		playbook.write("---\n")
 		playbook.write("- hosts: " + client.IP + "\n")
 		playbook.write("  remote_user: root\n")
@@ -87,7 +87,28 @@ class Ansible:
 		elif client.type == 'APT':
 			playbook.write("    command: apt list  --upgradable\n")
 		playbook.close()
-		self.playbook =  '/var/lib/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
+		self.playbook =  '/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
+	def generate_playbook_update_all_client(self, task_id, client):
+		playbook = open('/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml', "w")
+		playbook.write("---\n")
+		playbook.write("- hosts: " + client.IP + "\n")
+		playbook.write("  remote_user: root\n")
+		playbook.write("  gather_facts: no\n")
+		playbook.write("  tasks:\n")
+		playbook.write("  - name: upgrade\n")
+		if client.type == 'YUM':
+			playbook.write("    yum:\n")			
+		elif client.type == 'APT':
+			playbook.write("    apt:\n")			
+		playbook.write("     name: \"*\"\n")
+		playbook.write("     state: latest\n")
+		playbook.write("  - name: upgradable\n")
+		if client.type == 'YUM':
+			playbook.write("    command: yum list updates -q\n")
+		elif client.type == 'APT':
+			playbook.write("    command: apt list  --upgradable\n")
+		playbook.close()
+		self.playbook =  '/opt/yarus/playbooks/' + task_id + '_' + client.ID + '.yml'
 
 
 	def showplaybook(self, app):
@@ -97,7 +118,7 @@ class Ansible:
 
 	def executeplaybook(self):
 		if self.playbook:
-			ansible_cmd = "ansible-playbook " + self.playbook + "  -i /var/lib/yarus/yarus-ansible-inventory.py"
+			ansible_cmd = "ansible-playbook " + self.playbook + "  -i /opt/yarus/scripts/yarus-ansible-inventory.py"
 			process = subprocess.Popen(ansible_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			(output, error) = process.communicate()
 			result = process.wait()
@@ -114,7 +135,7 @@ class Ansible:
 	
 
 	def generate_playbook_check_group(self, group, grouped):
-		playbook = open('/var/lib/yarus/playbooks/' + group.ID + '.yml', "w")
+		playbook = open('/opt/yarus/playbooks/' + group.ID + '.yml', "w")
 		playbook.write("---\n")
 		playbook.write("- hosts:\n")
 		for client in grouped:
@@ -125,5 +146,5 @@ class Ansible:
 		playbook.write("  - name: check\n")
 		playbook.write("    ping:\n")		
 		playbook.close()
-		return '/var/lib/yarus/playbooks/' + group.ID + '.yml'
+		return '/opt/yarus/playbooks/' + group.ID + '.yml'
 	

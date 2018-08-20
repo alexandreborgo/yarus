@@ -9,7 +9,7 @@ from yarus.common.task import Task
 from yarus.common.exceptions import *
 from yarus.common.const import TASK_ACTIONS
 
-WAIT = 20
+WAIT = 10
 
 class YarusTasksManager():
 
@@ -22,10 +22,19 @@ class YarusTasksManager():
 			sys.exit(1)
 
 	def checkForTasks(self):
-		info = self.app.database.get_pending_task()
-		if info:
-			return Task().load(self.app.database, info["ID"])
-		else:
+		try:
+			tasks = self.app.database.get_pending_task()
+			pending_tasks = []
+			if tasks:
+				for task_id in tasks:
+					try:
+						pending_tasks.append(Task().load(self.app.database, task_id["ID"]))
+					except Exception as error:
+						print("Can't find task ID : " + task_id["ID"])
+						print(str(error))
+						continue
+			return pending_tasks
+		except Exception:
 			return None
 
 	def alterTaskStatus(self, app, task, new_status):
@@ -43,19 +52,22 @@ class YarusTasksManager():
 		app = App()
 
 		if not app.start():
+			print("Erro while init App context.")
 			return False
-
-		app.log.settasklogfile(task.ID)
 		
 		try:
 			app.database.connect()
 
+			# set the status of the task to running 
+			self.alterTaskStatus(app, task, 'running')
+
+			print("Starting task " + task.ID + " (" + task.action + ") on object " + task.object_id + " in the thread " + str(threading.current_thread()))
+
+			app.log.settasklogfile(task.ID)
+
 			# set the start date
 			task.setStartTime()
 			task.update(app.database)
-
-			# set the status of the task to running 
-			self.alterTaskStatus(app, task, 'running')
 
 			if task.action in TASK_ACTIONS:
 
@@ -67,8 +79,7 @@ class YarusTasksManager():
 					self.alterTaskStatus(app, task, 'failed')
 					app.log.logtask("The following error occured during the task :")
 					app.log.logtask(error)
-					result = False
-				
+					result = False				
 				
 				# check the result
 				if result:
@@ -92,6 +103,8 @@ class YarusTasksManager():
 
 		finally:
 			app.database.close()
+		
+		print("Leaving task " + task.ID + " (" + task.action + ") on thread " + str(threading.current_thread()))
 
 	def run(self):
 
@@ -101,24 +114,36 @@ class YarusTasksManager():
 
 			sync_task = False
 			tasks_running = []
+			object_running = []
 
 			# check running task
-			for thread in pool:
-				if not thread.is_alive():
-					pool.remove(thread)
+			for item in pool:
+				if not item[0].is_alive():
+					pool.remove(item)
 					continue
-				tasks_running.append(thread.name)
+				tasks_running.append(item[1].ID)
+				object_running.append(item[1].object_id)
 
 			# check for pending task
 			self.app.database.connect()
-			task = self.checkForTasks()
+			pending_tasks = self.checkForTasks()			
 			self.app.database.close()
 			
-			if task:
-				# we check if the task isn't already running
-				if not task.ID in tasks_running:
-					thread = threading.Thread(target=self.execute, name=task.ID, args=(task,))
-					pool.append(thread)
-					thread.start()			
-			else:
+			if pending_tasks:
+				for task in pending_tasks:
+					# we check if the task isn't already running
+					if not task.ID in tasks_running:
+						# and if an other task isn't already running on the object
+						if not task.object_id in object_running:
+							thread = threading.Thread(target=self.execute, name=task.ID, args=(task,))	
+							pool.append([thread, task])
+							tasks_running.append(task.ID)
+							object_running.append(task.object_id)
+							thread.start()
+			else:				
+				if tasks_running:
+					print("Task running: ", end='')
+					for task in tasks_running:
+						print(task + ", ", end='')
+					print("")
 				time.sleep(WAIT)

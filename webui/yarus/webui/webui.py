@@ -13,9 +13,9 @@ from flask import Flask, json, request, session, render_template, redirect, url_
 
 # open the configuration file
 try:
-    CONFIG_FILE = open('/etc/yarus/webui.yml', 'r')
+    CONFIG_FILE = open('/opt/yarus/etc/webui.yml', 'r')
 except IOError as error:
-    print("Unable to read configuration file: /etc/yarus/webui.yml.")
+    print("Unable to read configuration file: /opt/yarus/etc/webui.yml.")
     print(error)
     sys.exit(1)
 
@@ -23,7 +23,7 @@ except IOError as error:
 try:
     CONFIG = yaml.load(CONFIG_FILE)
 except yaml.YAMLError as error:
-    print("Configuration file is malformed, it is not good YAML format: /etc/yarus/webui.yml.")
+    print("Configuration file is malformed, it is not good YAML format: /opt/yarus/etc/webui.yml.")
     print(error)
     sys.exit(1)
 
@@ -45,7 +45,7 @@ if SV_ADDRESS and SV_PORT:
 else:
     sys.exit(1)
 
-APP = Flask("Yarus Engine", template_folder='/var/lib/yarus/env/lib/python3.6/site-packages/yarus/webui/templates')
+APP = Flask("Yarus Engine", template_folder='/opt/yarus/env/lib/python3.6/site-packages/yarus/webui/templates')
 APP.secret_key = "=kdRfVYg!Xgst-vV?bys6&Z@28s7FJXy4hwFtNHfnb#myFxwf+BgHYzwt+uaaMBN"
 
 def callapi(method, path, more_data=None):
@@ -881,7 +881,7 @@ def see_object(object_name, object_id, status=0, message=""):
 
     elif object_name == 'task':
         try:
-            logsfile = '/var/log/yarus/tasks/' + object_id + '.log'
+            logsfile = '/opt/yarus/log/tasks/' + object_id + '.log'
             if os.path.isfile(logsfile):
                 logs = open(logsfile, 'r')
                 result['data']['logs'] = logs.read()

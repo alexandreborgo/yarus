@@ -96,8 +96,8 @@ def ansibleparseresponse(app, response):
 		response_lines = response.split('{', 1)[-1]
 		response_lines = "{\n" + response_lines
 
-		print("Ansible output:")
-		print(response_lines)
+		app.log.logtask("Ansible output:")
+		app.log.logtask(response_lines)
 		
 		response = json.loads(response_lines)
 
@@ -145,6 +145,7 @@ def sync_repo(app, task, repo_id):
 		release_sig = ""
 		if os.path.isfile(dlocal + "/Release"):
 			release_sig = getSigFile(dlocal + "/Release")
+			print("Signature Release: " + release_sig)
 
 		app.log.logtask("Downloading metadata files...")
 
@@ -164,6 +165,7 @@ def sync_repo(app, task, repo_id):
 		# calculate the new signature of the metadata files
 		if os.path.isfile(dlocal + "/Release"):
 			new_release_sig = getSigFile(dlocal + "/Release")
+			print("Signature new Release: " + new_release_sig)
 
 		# check if it is the same or not
 		if release_sig == new_release_sig:
@@ -181,8 +183,6 @@ def sync_repo(app, task, repo_id):
 				app.log.logtask("Can't open local Release file.")
 				app.log.logtask(error)
 				return False
-
-		todo
 
 		# we don't need the "header" of the file
 		# so go to next line until we see sha256
@@ -507,7 +507,7 @@ def sync_repo(app, task, repo_id):
 						file = rpm.name + "-" + rpm.version + "-" + rpm.release + "." + rpm.architecture + "." + rpm.type 
 						if not tryDownloadFile(app, remote + "/" + path, local + "/" + path, file, rpm.checksum_type, rpm.checksum):
 							app.log.logtask("Couldn't download the RPM: " + rpm.name)
-		
+				
 		# ------------------------------------------------------------------------------------------------------------------------------
 		# Step 3: create the date repository
 		# ------------------------------------------------------------------------------------------------------------------------------
@@ -518,7 +518,8 @@ def sync_repo(app, task, repo_id):
 
 					daterepo = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
 					datedir = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "-" + daterepo + "/" + comp + "/" + arch
-					
+					local = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "/" + comp + "/" + arch
+
 					# create the directory
 					if not os.path.isdir(datedir):
 						os.makedirs(datedir)
@@ -645,9 +646,9 @@ def config_client(app, task, client_id):
 
 	done = []
 	if client.type == 'YUM':
-		repo_file = "/var/lib/yarus/yarus.repo"
+		repo_file = "/var/lib/yarus/tmp/yarus_" + client.name + ".repo"
 	elif client.type == 'APT':
-		repo_file = "/var/lib/yarus/sources.list"
+		repo_file = "/var/lib/yarus/tmp/sources_" + client.name + ".list"
 	config_file = open(repo_file, 'w')
 	
 	for repo_id in linked_repositories:
@@ -794,7 +795,7 @@ def approved_update_client(app, task, client_id):
 
 	# if there's not package in the list 
 	if not package_list:
-		app.log.logtask("the system " + client.name + " is already up to date.")
+		app.log.logtask("The system " + client.name + " is already up to date.")
 		return True
 	
 	ansible = Ansible()
@@ -865,28 +866,15 @@ def all_update_client(app, task, client_id):
 
 	app.log.logtask("Updating all packages of client " + client.name + " (" + client.IP + ")")
 
-	# get all packages
-	upgradables = getupgradables(app, client_id)
-
-	# generating package names list which will be gave to ansible
-	package_list = []
-	for package in upgradables:
-		package_list.append(package['name'])
-
-	# if there's not package in the list 
-	if not package_list:
-		app.log.logtask("the system " + client.name + " is already up to date.")
-		return True
-
 	ansible = Ansible()
 	try:
 		app.log.logtask("Generating playbook...")
-		ansible.generate_playbook_update_client(task.ID, client, package_list)
+		ansible.generate_playbook_update_all_client(task.ID, client)
 		ansible.showplaybook(app)
 		app.log.logtask("Executing playbook...")
 		result = ansible.executeplaybook()
 		app.log.logtask("Cleaning temporary files linked to the task...")
-		ansible.clean()
+		#ansible.clean()
 	except IOError as error:
 		app.log.logtask(error)
 		return False

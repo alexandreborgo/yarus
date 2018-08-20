@@ -14,7 +14,7 @@ class Config:
 	def start(self):
 		# open the configuration file
 		try:
-			config_file = open('/etc/yarus/engine.yml', 'r')
+			config_file = open('/opt/yarus/etc/engine.yml', 'r')
 		except IOError as error:
 			self.app.log.error("Unable to read configuration file: " + config_file_name)
 			self.app.log.error(error)
@@ -52,7 +52,7 @@ class Config:
 				raise(InvalidValueException("Missing database information."))
 
 			# local repository information: folder
-			self.rp_folder = "/var/www/html/repos"
+			self.rp_folder = "/opt/yarus/repositories"
 
 			# proxy
 			if 'proxy' in config:

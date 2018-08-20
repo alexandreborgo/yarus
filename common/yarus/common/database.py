@@ -78,11 +78,10 @@ class Mysql:
 	def get_upgradable(self, client_id, package_id):
 			request = "SELECT * FROM yarus_upgradable WHERE client_id='" + client_id + "' AND ID='" + package_id + "'"
 			return self.get_one(request)
-		
 
 	def get_pending_task(self):
-		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC LIMIT 1"
-		return self.get_one(request)
+		request = "SELECT ID FROM yarus_task WHERE status='pending' ORDER BY creation_date ASC"
+		return self.get_all(request)
 
 	
 	def get_groupeds(self, group_id):

@@ -9,8 +9,8 @@ import subprocess
 class Crontab():
     """ crontab interface for scheduled tasks """
 
-    tmp_cron_file = "/tmp/crontab"
-    scheduler_script = "/var/lib/yarus/yarus-scheduler.py"
+    tmp_cron_file = "/opt/yarus/tmp/crontab"
+    scheduler_script = "/opt/yarus/scripts/yarus-scheduler.py"
 
     def __init__(self):
         """ init """
@@ -46,7 +46,7 @@ class Crontab():
                 cronline += "[ `date +\%d` -gt 29 ] && "
 
             # command
-            cronline += self.scheduler_script + " --scheduled-task-id " + cron['ID'] + " >> /var/log/yarus/scheduler.log"
+            cronline += self.scheduler_script + " --scheduled-task-id " + cron['ID'] + " >> /opt/yarus/log/scheduler.log"
 
             # comment on the task
             cronfile.write("# Scheduled task " + cron['name'] + ", " + cron['description'] + "\n")
