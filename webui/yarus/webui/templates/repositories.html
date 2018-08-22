@@ -26,12 +26,8 @@
               <th>ID</th>
               <th>Name</th>
               <th>Type</th>
-              <th>Distribution</th>
-              <th>Release</th>
-              <th>Components</th>
-              <th>Architectures</th>
+              <th>Description</th>
               <th>Last sync</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -39,16 +35,10 @@
               <tr>
                 <td></td>
                 <td>{{ repository.ID }}</td>
-                <td>{{ repository.name }}</td>
+                <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='repository', object_id=repository.ID) }}">{{ repository.name }}</a></td>
                 <td>{{ repository.type }}</td>
-                <td>{{ repository.distribution }}</td>
-                <td>{{ repository.release }}</td>
-                <td>{{ repository.components }}</td>
-                <td>{{ repository.architectures }}</td>
+                <td>{{ repository.description }}</td>
                 <td>{{ repository.last_sync }}</td>
-                <td>
-                  <a href="{{ url_for('see_object', object_name='repository', object_id=repository.ID) }}"><span class="fas fa-eye actions"></span></a>
-                </td>
               </tr>
             {% endfor %}
           </tbody>

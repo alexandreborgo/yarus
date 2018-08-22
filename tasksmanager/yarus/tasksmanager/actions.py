@@ -130,10 +130,18 @@ def sync_repo(app, task, repo_id):
 		comps = repository.components.split(',')
 		archs = repository.architectures.split(',')
 
-		dremote = repository.URL + "dists/" + repository.path
-		dlocal = app.config.rp_folder + "/" + repository.distribution + "/dists/" + repository.path
+		rlocal = app.config.rp_folder + "/" + repository.distribution + "/"
+		dlocal = app.config.rp_folder + "/" + repository.distribution + "/dists/" + repository.path + "/"
+		
+		rremote = repository.URL
+		dremote = repository.URL + "dists/" + repository.path + "/"
 
-		# check if local root exists, if not create it
+		app.log.logtask("Repo URL: " + rremote)
+		app.log.logtask("Repo dist URL: " + dremote)
+		app.log.logtask("Root local: " + rlocal)
+		app.log.logtask("Dist local: " + dlocal)
+
+		# check if local exists, if not create it
 		if not os.path.isdir(dlocal):
 			os.makedirs(dlocal)
 		 
@@ -145,13 +153,12 @@ def sync_repo(app, task, repo_id):
 		release_sig = ""
 		if os.path.isfile(dlocal + "/Release"):
 			release_sig = getSigFile(dlocal + "/Release")
-			print("Signature Release: " + release_sig)
 
 		app.log.logtask("Downloading metadata files...")
 
-		release = getFile_rsync(app, dremote, dlocal, "/Release")
-		releasegpg = getFile_rsync(app, dremote, dlocal, "/Release.gpg")
-		inrelease = getFile_rsync(app, dremote, dlocal, "/InRelease")
+		release = getFile_rsync(app, dremote, dlocal, "Release")
+		releasegpg = getFile_rsync(app, dremote, dlocal, "Release.gpg")
+		inrelease = getFile_rsync(app, dremote, dlocal, "InRelease")
 
 		if release and releasegpg:
 			metafile = "release"
@@ -235,6 +242,11 @@ def sync_repo(app, task, repo_id):
 		for comp in comps:
 			
 			for arch in archs:
+
+				app.log.logtask("")
+				app.log.logtask("")
+				app.log.logtask(comp + "/" + arch)
+				app.log.logtask("")
 				
 				# extract content (list of packages) of archives
 				if os.path.isfile(dlocal + "/" + comp + "/binary-" + arch + "/Packages.gz"):
@@ -308,7 +320,7 @@ def sync_repo(app, task, repo_id):
 								dl = True
 							else:
 								# need to check if the deb is present, if not we add it to the dl list
-								if not os.path.isfile(app.config.rp_folder + "/" + repository.distribution + "/" + deb.location):
+								if not os.path.isfile(rlocal + deb.location):
 									dl = True
 
 							if dl:
@@ -318,9 +330,9 @@ def sync_repo(app, task, repo_id):
 									if x != deb_in_db.location.split("/")[-1]:
 										path += x + "/"
 								# create directories if needed
-								if not os.path.isdir(app.config.rp_folder + "/" + repository.distribution + "/" + path):
-									os.makedirs(app.config.rp_folder + "/" + repository.distribution + "/" + path)
-								if not tryDownloadFile(app, repository.URL + path, app.config.rp_folder + "/" + repository.distribution + "/" + path, filename, deb_in_db.checksum_type, deb_in_db.checksum):
+								if not os.path.isdir(rlocal + path):
+									os.makedirs(rlocal + path)
+								if not tryDownloadFile(app, rremote + path, rlocal + path, filename, deb_in_db.checksum_type, deb_in_db.checksum):
 									app.log.logtask("Couldn't download the RPM: " + deb_in_db.name)
 								
 						else:
@@ -333,9 +345,9 @@ def sync_repo(app, task, repo_id):
 								if x != deb.location.split("/")[-1]:
 									path += x + "/"
 							# create directories if needed
-							if not os.path.isdir(app.config.rp_folder + "/" + repository.distribution + "/" + path):
-								os.makedirs(app.config.rp_folder + "/" + repository.distribution + "/" + path)
-							if not tryDownloadFile(app, repository.URL + path, app.config.rp_folder + "/" + repository.distribution + "/" + path, filename, deb.checksum_type, deb.checksum):
+							if not os.path.isdir(rlocal + path):
+								os.makedirs(rlocal + path)
+							if not tryDownloadFile(app, rremote + path, rlocal + path, filename, deb.checksum_type, deb.checksum):
 								app.log.logtask("Couldn't download the RPM: " + deb.name)
 
 						line = packages.readline()
@@ -349,8 +361,10 @@ def sync_repo(app, task, repo_id):
 			# ------------------------------------------------------------------------------------------------------------------------------
 			
 			daterepo = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
-			datedir = app.config.rp_folder + "/" + repository.distribution + "/dists/" + repository.path + "-" + daterepo + "/"
+			datedir = rlocal + "dists/" + repository.path + "-" + daterepo + "/"
 			
+			app.log.logtask("Creating date repo " + datedir + ".")
+
 			# create the directory
 			if not os.path.isdir(datedir):
 				os.makedirs(datedir)
@@ -372,180 +386,171 @@ def sync_repo(app, task, repo_id):
 
 	elif repository.type == 'YUM':
 
-		# transform comps and arch into a list
-		comps = repository.components.split(',')
-		archs = repository.architectures.split(',')
-
 		# this variable is here to check if there's something new in the repository
 		# we will use it to determine if we need to create a dateversion repository or not
 		new = False
+
+		# set remote root url and local root
+		remote = repository.URL
+
+		repo_dir_name = repository.name.replace(' ', '_').replace('/', '_').lower()
+		if repo_dir_name[0] == '.':
+			repo_dir_name = repo_dir_name[1:]
+		local = app.config.rp_folder + "/" + repo_dir_name + "/" + repo_dir_name + "/"
+
+		app.log.logtask("Remote root URL: " + remote)
+		app.log.logtask("Local root directory: " + local)		
+
+		# check if local root exists, if not create it
+		if not os.path.isdir(local):
+			os.makedirs(local)
 		
-		for comp in comps:
-			for arch in archs:
+		# ------------------------------------------------------------------------------------------------------------------------------
+		# Step 1: downloading metadata files: repodata directory
+		# ------------------------------------------------------------------------------------------------------------------------------
 
-				# display current comp/arch
-				app.log.logtask("========== " + comp + "/" + arch + " ==========")
+		# calculate repomd.xml signature
+		repomd_sig = ""
+		if os.path.isfile(local + "repodata/repomd.xml"):
+			repomd_sig = getSigFile(local + "repodata/repomd.xml")
 
-				# set remote root url and local root
-				remote = repository.URL + repository.release + "/" + comp + "/" + arch
-				local = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "/" + comp + "/" + arch
+		app.log.logtask("Downloading metadata files...")
 
-				# check if local root exists, if not create it
-				if not os.path.isdir(local):
-					os.makedirs(local)
+		# download the repodata directory
+		result = getDir_rsync(app, remote + "repodata/", local + "repodata/")
 
-				# ------------------------------------------------------------------------------------------------------------------------------
-				# Step 1: downloading metadata files: repodata directory
-				# ------------------------------------------------------------------------------------------------------------------------------
+		if not result:
+			app.log.logtask("RSYNC failed to sync repodata directory.")
+			return False
 
-				# calculate repomd.xml signature
-				repomd_sig = ""
-				if os.path.isfile(local + "/repodata/repomd.xml"):
-					repomd_sig = getSigFile(local + "/repodata/repomd.xml")
+		# check if the pgp signature is valid
+		# gpg --import RPM-GPG-KEY-CentOS-7
+		# gpg --verify repomd.xml.asc repomd.xml
 
-				app.log.logtask("Downloading metadata files...")
+		# calculate the new signature of the file repomd.xml
+		if os.path.isfile(local + "repodata/repomd.xml"):
+			new_repomd_sig = getSigFile(local + "repodata/repomd.xml")
 
-				# download the repodata directory
-				result = getDir_rsync(app, remote + "/repodata/", local + "/repodata/")
+		# check if it is the same or not
+		if repomd_sig == new_repomd_sig:
+			app.log.logtask("The repository " + repository.name + " is already up to date.")
+			return True
 
-				if not result:
-					app.log.logtask("RSYNC failed to sync repodata directory for " + comp + "/" + arch + " are you sure this combination of component/architecture exists?")
-					return False
+		new = True
+		
+		# ------------------------------------------------------------------------------------------------------------------------------
+		# Step 2: download packages and register them in the database if needed
+		# ------------------------------------------------------------------------------------------------------------------------------
+		
+		# package list is in -primary.xml.gz file
+		listfile = os.listdir(local + "repodata/")
 
-				# check if the pgp signature is valid
-				# gpg --import RPM-GPG-KEY-CentOS-7
-				# gpg --verify repomd.xml.asc repomd.xml
+		primaries = []
+		
+		for primaryfile in listfile:
+			if re.match(".*-primary.xml.gz", primaryfile):
+				primaries.append(primaryfile)
+				app.log.logtask(primaryfile)
 
-				# calculate the new signature of the file repomd.xml
-				if os.path.isfile(local + "/repodata/repomd.xml"):
-					new_repomd_sig = getSigFile(local + "/repodata/repomd.xml")
+		# rpms
+		app.log.logtask("Checking rpms...")
+		
+		if primaries == "":
+			app.log.logtask("Can't find primary file (which contains the rpm list).")
+			return False
 
-				# check if it is the same or not
-				if repomd_sig == new_repomd_sig:
-					app.log.logtask("The repository " + repository.name + " is already up to date.")
-					continue
-
-				new = True
-
-				# ------------------------------------------------------------------------------------------------------------------------------
-				# Step 2: download packages and register them in the database if needed
-				# ------------------------------------------------------------------------------------------------------------------------------
+		for primary in primaries:
+			tree = etree.parse(local + "repodata/" + primary)
+			root = tree.getroot()
+			for pkg in root.iter('{http://linux.duke.edu/metadata/common}package'):
 				
-				# package list is in -primary.xml.gz file
-				listfile = os.listdir(local + "/repodata/")
+				rpm = Package()
 
-				primary = ""
-				delta = ""
+				rpm.ID = getnewid()
+				rpm.repository = repository.ID
+				rpm.component = ""
+
+				rpm.type = "rpm"
+
+				rpm.name = pkg.findtext('{http://linux.duke.edu/metadata/common}name', default = 'none')
+				rpm.architecture = pkg.findtext('{http://linux.duke.edu/metadata/common}arch', default = 'none')
+
+				rpm.version = pkg.find('{http://linux.duke.edu/metadata/common}version').get('ver')
+				rpm.release = pkg.find('{http://linux.duke.edu/metadata/common}version').get('rel')
+
+				rpm.location = pkg.find('{http://linux.duke.edu/metadata/common}location').get('href')
+
+				rpm.checksum_type = pkg.find('{http://linux.duke.edu/metadata/common}checksum').get('type')
+				rpm.checksum = pkg.findtext('{http://linux.duke.edu/metadata/common}checksum', default = 'none')
+
+				rpm.summary = pkg.findtext('{http://linux.duke.edu/metadata/common}summary', default = 'none')
 				
-				for file in listfile:
-					if re.match(".*-primary.xml.gz", file):
-						primary = file
-					elif re.match(".*-prestodelta.xml.gz", file):
-						delta = file
-
-				# rpms
-				app.log.logtask("Checking rpms...")
-				
-				if primary == "":
-					app.log.logtask("Can't find primary file (which contains the rpm list).")
-					return False
-					
-				tree = etree.parse(local + "/repodata/" + primary)
-				root = tree.getroot()
-				for pkg in root.iter('{http://linux.duke.edu/metadata/common}package'):
-					
-					rpm = Package()
-
-					rpm.ID = getnewid()
-					rpm.repository = repository.ID
-					rpm.component = comp
-
-					rpm.type = "rpm"
-
-					rpm.name = pkg.findtext('{http://linux.duke.edu/metadata/common}name', default = 'none')
-					rpm.architecture = pkg.findtext('{http://linux.duke.edu/metadata/common}arch', default = 'none')
-
-					rpm.version = pkg.find('{http://linux.duke.edu/metadata/common}version').get('ver')
-					rpm.release = pkg.find('{http://linux.duke.edu/metadata/common}version').get('rel')
-
-					rpm.location = pkg.find('{http://linux.duke.edu/metadata/common}location').get('href')
-
-					rpm.checksum_type = pkg.find('{http://linux.duke.edu/metadata/common}checksum').get('type')
-					rpm.checksum = pkg.findtext('{http://linux.duke.edu/metadata/common}checksum', default = 'none')
-
-					rpm.summary = pkg.findtext('{http://linux.duke.edu/metadata/common}summary', default = 'none')
-					
-					rpm_in_db = getpackage(app, rpm.repository, rpm.component, rpm.name, rpm.version, rpm.architecture, rpm.release)
-					if rpm_in_db:
-						dl = False
-						# rpm in database so we check if the checksum is the same to see if the file changed (unlikely to happen)
-						if rpm_in_db.checksum != rpm.checksum:
-							# the file has changed so we add it to the list and we update it in the db
-							rpm_in_db.checksum_type = rpm.checksum_type
-							rpm_in_db.checksum = rpm.checksum
-							rpm_in_db.summary = rpm.summary
-							rpm_in_db.location = rpm.location
-							rpm_in_db.update(app.database)
-							dl = True
-						else:
-							# need to check if the rpm is present, if not we add it to the dl list
-							if not os.path.isfile(local + "/" + rpm_in_db.location):
-								dl = True
-
-						if dl:
-							# download the package
-							path = rpm_in_db.location.split(rpm_in_db.name)[0]
-							file = rpm_in_db.name + "-" + rpm_in_db.version + "-" + rpm_in_db.release + "." + rpm_in_db.architecture + "." + rpm_in_db.type  
-							if not tryDownloadFile(app, remote + "/" + path, local + "/" + path, file, rpm_in_db.checksum_type, rpm_in_db.checksum):
-								app.log.logtask("Couldn't download the RPM: " + rpm_in_db.name)
+				rpm_in_db = getpackage(app, rpm.repository, rpm.component, rpm.name, rpm.version, rpm.architecture, rpm.release)
+				if rpm_in_db:
+					dl = False
+					# rpm in database so we check if the checksum is the same to see if the file changed (unlikely to happen)
+					if rpm_in_db.checksum != rpm.checksum:
+						# the file has changed so we add it to the list and we update it in the db
+						rpm_in_db.checksum_type = rpm.checksum_type
+						rpm_in_db.checksum = rpm.checksum
+						rpm_in_db.summary = rpm.summary
+						rpm_in_db.location = rpm.location
+						rpm_in_db.update(app.database)
+						dl = True
 					else:
-						# rpm not in database so we add it and add it to the dl list
-						rpm.insert(app.database)
-						
+						# need to check if the rpm is present, if not we add it to the dl list
+						if not os.path.isfile(local + rpm_in_db.location):
+							dl = True
+
+					if dl:
 						# download the package
-						path = rpm.location.split(rpm.name)[0]
-						file = rpm.name + "-" + rpm.version + "-" + rpm.release + "." + rpm.architecture + "." + rpm.type 
-						if not tryDownloadFile(app, remote + "/" + path, local + "/" + path, file, rpm.checksum_type, rpm.checksum):
-							app.log.logtask("Couldn't download the RPM: " + rpm.name)
-				
+						path = rpm_in_db.location.split(rpm_in_db.name)[0]
+						file = rpm_in_db.name + "-" + rpm_in_db.version + "-" + rpm_in_db.release + "." + rpm_in_db.architecture + "." + rpm_in_db.type  
+						if not tryDownloadFile(app, remote + path, local + path, file, rpm_in_db.checksum_type, rpm_in_db.checksum):
+							app.log.logtask("Couldn't download the RPM: " + rpm_in_db.name)
+				else:
+					# rpm not in database so we add it and add it to the dl list
+					rpm.insert(app.database)
+					
+					# download the package
+					path = rpm.location.split(rpm.name)[0]
+					file = rpm.name + "-" + rpm.version + "-" + rpm.release + "." + rpm.architecture + "." + rpm.type 
+					if not tryDownloadFile(app, remote + path, local + path, file, rpm.checksum_type, rpm.checksum):
+						app.log.logtask("Couldn't download the RPM: " + rpm.name)
+		
 		# ------------------------------------------------------------------------------------------------------------------------------
 		# Step 3: create the date repository
 		# ------------------------------------------------------------------------------------------------------------------------------
 
 		if new:
-			for comp in comps:
-				for arch in archs:
+			daterepo = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
+			datedir = local[:-1] + "-" + daterepo + "/"		
 
-					daterepo = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
-					datedir = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "-" + daterepo + "/" + comp + "/" + arch
-					local = app.config.rp_folder + "/" + repository.distribution + "/" + repository.release + "/" + comp + "/" + arch
+			# create the directory
+			if not os.path.isdir(datedir):
+				os.makedirs(datedir)
 
-					# create the directory
-					if not os.path.isdir(datedir):
-						os.makedirs(datedir)
+			# copy directory repodata
+			if not os.path.isdir(datedir + "repodata/"):
+				os.makedirs(datedir + "repodata/")
 
-					# copy directory repodata
-					if not os.path.isdir(datedir + "/repodata/"):
-						os.makedirs(datedir + "/repodata/")
+			for item in os.listdir(local + "repodata/"):
+				shutil.copy2(local + "repodata/" + item, datedir + "repodata/")
 
-					for item in os.listdir(local + "/repodata/"):
-						shutil.copy2(local + "/repodata/" + item, datedir + "/repodata/")
+			# link all other files
+			if os.path.isdir(local):
+				for item in os.listdir(local):
+					if item != "repodata":
+						if not os.path.exists(datedir + item):
+							os.symlink(local + item, datedir + item)
 
-					# link all other files
-					for item in os.listdir(local):
-						if item != "repodata":
-							if not os.path.exists(datedir + "/" + item):
-								os.symlink(local + "/" + item, datedir + "/" + item)
-
-					# save it into the database				
-					if not getdaterepository(app, repository.ID, daterepo):
-						dr = Daterepository()
-						dr.ID = getnewid()
-						dr.repository = repository.ID
-						dr.date = daterepo
-						dr.insert(app.database)
-									
-		return True
+			# save it into the database				
+			if not getdaterepository(app, repository.ID, daterepo):
+				dr = Daterepository()
+				dr.ID = getnewid()
+				dr.repository = repository.ID
+				dr.date = daterepo
+				dr.insert(app.database)
 	
 	else:
 		app.log.logtask("The repository type " + repository.type + " isn't implemented yet.")

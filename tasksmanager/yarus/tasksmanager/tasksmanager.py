@@ -2,6 +2,7 @@
 import sys
 import time
 import threading
+import traceback
 
 from yarus.common.app import App
 from yarus.tasksmanager import actions
@@ -79,7 +80,8 @@ class YarusTasksManager():
 					self.alterTaskStatus(app, task, 'failed')
 					app.log.logtask("The following error occured during the task :")
 					app.log.logtask(error)
-					result = False				
+					app.log.logtask(traceback.format_exc())
+					result = False
 				
 				# check the result
 				if result:

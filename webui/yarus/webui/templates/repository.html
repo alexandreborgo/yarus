@@ -35,28 +35,30 @@
         <td style="font-weight: bold;">Remote root URL of the repository</td>
         <td><i class="fas fa-external-link-alt"></i> <a href="{{ result.data.URL }}">{{ result.data.URL }}</a></td>
       </tr>
+      {% if result.data.distribution %}
       <tr>
-        <td style="font-weight: bold;">Distribution</td>
+        <td style="font-weight: bold;">Distribution/Software name</td>
         <td>{{ result.data.distribution }}</td>
       </tr>
-      <tr>
-        <td style="font-weight: bold;">Release</td>
-        <td>{{ result.data.release }}</td>
-      </tr>
+      {% endif %}
       {% if result.data.path %}
       <tr>
         <td style="font-weight: bold;">Path</td>
         <td>{{ result.data.path }}</td>
       </tr>
       {% endif %}
+      {% if result.data.components %}
       <tr>
         <td style="font-weight: bold;">Components</td>
         <td>{{ result.data.components }}</td>
       </tr>
+      {% endif %}
+      {% if result.data.architectures %}
       <tr>
         <td style="font-weight: bold;">Architectures</td>
         <td>{{ result.data.architectures }}</td>
       </tr>
+      {% endif %}
       <tr>
         <td style="font-weight: bold;">Type</td>
         <td>{{ result.data.type }}</td>

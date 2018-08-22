@@ -14,11 +14,11 @@ Content
 =======
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   installation
-   user
-   developer
+    installation/installation
+    user
+    developer
 
 
 

@@ -197,13 +197,13 @@ def list_object(object_name, status=0, message=""):
                     item['creation_date'] = str(datetime.datetime.fromtimestamp(int(item['creation_date'])))
 
                 if 'last_sync' in item:
-                    if item['last_sync'] != "0":
+                    if item['last_sync'] != 0:
                         item['last_sync'] = str(datetime.datetime.fromtimestamp(int(item['last_sync'])))
                     else:
                         item['last_sync'] = "Never synced"
 
                 if 'last_check' in item:
-                    if item['last_check'] != "0":
+                    if item['last_check'] != 0:
                         item['last_check'] = str(datetime.datetime.fromtimestamp(int(item['last_check'])))
                     else:
                         item['last_check'] = "Never checked"
@@ -904,15 +904,14 @@ def add_object(object_name):
         if request.method == 'POST':
             data = {}
             data['repository'] = {}
-            data['repository']['URL'] = request.form['URL']
-            data['repository']['type'] = request.form['type']
-            data['repository']['distribution'] = request.form['distribution']
-            data['repository']['release'] = request.form['release']
-            data['repository']['path'] = request.form['path']
-            data['repository']['components'] = request.form['components']
-            data['repository']['architectures'] = request.form['architectures']
-            data['repository']['name'] = request.form['name']
-            data['repository']['description'] = request.form['description']
+            data['repository']['URL'] = request.form.get('URL', "")
+            data['repository']['path'] = request.form.get('path', "")
+            data['repository']['distribution'] = request.form.get('distribution', "")
+            data['repository']['type'] = request.form.get('type', "")
+            data['repository']['components'] = request.form.get('components', "")
+            data['repository']['architectures'] = request.form.get('architectures', "")
+            data['repository']['name'] = request.form.get('name', "")
+            data['repository']['description'] = request.form.get('description', "")
             result = callapi("post", "/create/repository", data)
             return render_template('addrepository.html', result=result, connected='1', data=data)
 
@@ -965,15 +964,14 @@ def edit_object(object_name, object_id):
         if request.method == 'POST':
             data = {}
             data['repository'] = {}
-            data['repository']['URL'] = request.form['URL']
-            data['repository']['type'] = request.form['type']
-            data['repository']['distribution'] = request.form['distribution']
-            data['repository']['release'] = request.form['release']
-            data['repository']['path'] = request.form['path']
-            data['repository']['components'] = request.form['components']
-            data['repository']['architectures'] = request.form['architectures']
-            data['repository']['name'] = request.form['name']
-            data['repository']['description'] = request.form['description']
+            data['repository']['URL'] = request.form.get('URL', "")
+            data['repository']['path'] = request.form.get('path', "")
+            data['repository']['type'] = request.form.get('type', "")
+            data['repository']['distribution'] = request.form.get('distribution', "")
+            data['repository']['components'] = request.form.get('components', "")
+            data['repository']['architectures'] = request.form.get('architectures', "")
+            data['repository']['name'] = request.form.get('name', "")
+            data['repository']['description'] = request.form.get('description', "")
             result = callapi("put", "/update/repository/" + object_id, data)
             return render_template('addrepository.html', result=result, connected='1', data=data)
 

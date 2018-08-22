@@ -28,9 +28,9 @@ def parseReleaseLine(line, comps, archs):
 
 def getDir_rsync(app, url, local):
 	try:
-		new_url = url.replace('http', 'rsync')
+		new_url = url.replace('http://', 'rsync://')
 
-		rsync_cmd = "rsync -zvrt " + new_url + " " + local
+		rsync_cmd = "rsync -zvrtL " + new_url + " " + local
 		
 		# if proxy set in the config file
 		if app.config.px_host != "":
@@ -50,6 +50,11 @@ def getDir_rsync(app, url, local):
 
 		# check rsync result
 		if result != 0:
+			app.log.logtask("Command executed: " + rsync_cmd)
+			app.log.logtask("Return status: " + str(result))
+			output, error = process.communicate()
+			app.log.logtask("Error: " + str(error))
+			app.log.logtask("RSYNC Output: " + str(output))
 			return False
 		return True
 
@@ -60,9 +65,9 @@ def getDir_rsync(app, url, local):
 
 def getFile_rsync(app, url, local, file):
 	try:
-		new_url = url.replace('http', 'rsync')
+		new_url = url.replace('http://', 'rsync://')
 
-		rsync_cmd = "rsync -zvrt " + new_url + file + " " + local
+		rsync_cmd = "rsync -zvrtL " + new_url + file + " " + local
 		
 		# if proxy set in the config file
 		if app.config.px_host != "":
@@ -79,10 +84,10 @@ def getFile_rsync(app, url, local, file):
 		# check rsync result
 		if result != 0:
 			output, error = process.communicate()
-			app.log.logtask(output)
-			app.log.logtask(error)
+			app.log.logtask("Command executed: " + rsync_cmd)
+			app.log.logtask("Error: " + str(error))
 			return False
-		return local + "/" + file
+		return local + file
 
 	except Exception as exception:
 		return None

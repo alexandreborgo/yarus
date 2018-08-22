@@ -31,7 +31,7 @@ def check_version(version):
 
 def check_name(name):
     if name:
-        if re.match("^[a-zA-z0-9-_. ]*$", name):
+        if re.match("^[a-zA-z0-9-_. /]*$", name):
             return True
         else:
             return False
@@ -97,16 +97,7 @@ def check_release(release):
             return False
     else:
         return False
-
-def check_path(path):
-    if path:
-        if re.match("^[a-zA-z0-9\-\_\.\/]*$", path):
-            return True
-        else:
-            return False
-    else:
-        return False
-
+        
 def check_components(components):
     if components:
         if re.match("^[a-zA-z0-9\-\_\.,]*$", components):

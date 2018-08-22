@@ -218,17 +218,17 @@ def create_object(object_name):
                 new_object = Repository()
                 new_object.setID(getnewid())
                 new_object.setName(data['repository']['name'])
-                new_object.setURL(data['repository']['URL'])
                 new_object.setDescription(data['repository']['description'])
+                new_object.setURL(data['repository']['URL'])
                 new_object.setType(data['repository']['type'])
-                new_object.setRelease(data['repository']['release'])
                 if new_object.type == 'APT':
                     new_object.setPath(data['repository']['path'])
-                new_object.setDistribution(data['repository']['distribution'])
-                new_object.setComponents(data['repository']['components'])
-                new_object.setArchitectures(data['repository']['architectures'])
+                    new_object.setDistribution(data['repository']['distribution'])
+                    new_object.setComponents(data['repository']['components'])
+                    new_object.setArchitectures(data['repository']['architectures'])
                 new_object.setManagerID(user.ID)
                 new_object.setCreationDate()
+                new_object.last_sync = 0
 
                 # check if the repository already exist in the database
                 if getrepobyname(APP_ENGINE, new_object.name):
@@ -365,15 +365,14 @@ def update_object(object_name, object_id):
             if object_name == 'repository':
 
                 object_inst.setName(data['repository']['name'])
-                object_inst.setURL(data['repository']['URL'])
                 object_inst.setDescription(data['repository']['description'])
+                object_inst.setURL(data['repository']['URL'])
                 object_inst.setType(data['repository']['type'])
-                object_inst.setRelease(data['repository']['release'])
                 if object_inst.type == 'APT':
                     object_inst.setPath(data['repository']['path'])
-                object_inst.setDistribution(data['repository']['distribution'])
-                object_inst.setComponents(data['repository']['components'])
-                object_inst.setArchitectures(data['repository']['architectures'])
+                    new_object.setDistribution(data['repository']['distribution'])
+                    object_inst.setComponents(data['repository']['components'])
+                    object_inst.setArchitectures(data['repository']['architectures'])
 
                 # check if we can reach the remote url
                 try:

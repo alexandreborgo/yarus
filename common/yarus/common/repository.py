@@ -31,10 +31,10 @@ class Repository(YarusObject):
 		else:
 			raise(InvalidValueException("The release is missing or invalid."))
 	def setPath(self, path):
-		if check_path(path):
+		if check_name(path):
 			self.path = path
 		else:
-			raise(InvalidValueException("The path is missing or invalid."))
+			raise(InvalidValueException("The root URL is missing or invalid."))
 	def setComponents(self, components):
 		if check_components(components):
 			self.components = components

@@ -36,56 +36,49 @@
         <div id="aptform">
               <div class="form-group">
                 <label for="name">Name</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.name }}{% endif %}" id="name" name="name" placeholder="Repository name">
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.name }}{% endif %}" id="name" name="name" placeholder="exemples: CentOS 7.5 OS, Ubuntu Bionic Base...">
                 <div class="invalid-feedback">
                     Must not be empty.
                 </div>
               </div>
               <div class="form-group">
                 <label for="description">Description</label>
-                <textarea class="form-control" id="description" name="description" placeholder="Description of the repository">{% if data %}{{ data.repository.description }}{% endif %}</textarea>
+                <textarea class="form-control" id="description" name="description" placeholder="exemples: Repository for CentOS 7.5, Repository for Ubuntu Bionic Base...">{% if data %}{{ data.repository.description }}{% endif %}</textarea>
                 <div class="invalid-feedback">
                     Must not be empty.
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="root">
                 <label for="URL">Remote root URL of the repository</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.URL }}{% endif %}" id="URL" name="URL" placeholder="http://www.repositories.com/pub/linux/">
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.URL }}{% endif %}" id="URL" name="URL" placeholder="exemples: http://mirror.centos.org/centos/7.5.1804/os/x86_64/, http://www.repositories.com/pub/linux/debian/...">
                 <div class="invalid-feedback">
                     Must not be empty.
                 </div>
               </div>
-              <div class="form-group">
-                <label for="distribution">Distribution</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.distribution }}{% endif %}" id="distribution" name="distribution" placeholder="exemple: ubuntu">
-                <div class="invalid-feedback">
-                    Must not be empty.
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="release">Release</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.release }}{% endif %}" id="release" name="release" placeholder="exemple: bionic">
+              <div class="form-group" id="distribution">
+                <label for="distribution">Distribution / Software name</label>
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.distribution }}{% endif %}" id="distribution" name="distribution" placeholder="exemples: ubuntu, debian, mysql, postgresql...">
                 <div class="invalid-feedback">
                     Must not be empty.
                 </div>
               </div>
               <div class="form-group" id="path">
                 <label for="path">Path</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.path }}{% endif %}" id="path" name="path" placeholder="exemple: bionic-update, stretch/security">
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.path }}{% endif %}" id="path" name="path" placeholder="exemples: stretch, stretch-updates, stretch/security, bionic-security...">
                 <div class="invalid-feedback">
                     Must not be empty.
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="components">
                 <label for="components">Components</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.components }}{% endif %}" id="components" name="components" placeholder="exemple: os,main,restricted">
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.components }}{% endif %}" id="components" name="components" placeholder="exemples: main,restricted,universe,multiverse,non-free,contrib...">
                 <div class="invalid-feedback">
                     Must not be empty. Multiple components must be seperated by a comma.
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="architectures">
                 <label for="architectures">Architectures</label>
-                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.architectures }}{% endif %}" id="architectures" name="architectures" placeholder="exemple: amd64,i386">
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.architectures }}{% endif %}" id="architectures" name="architectures" placeholder="exemples: amd64,i386...">
                 <div class="invalid-feedback">
                     Must not be empty. Multiple architectures must be seperated by a comma.
                 </div>
@@ -102,21 +95,36 @@
 {% block pagejs %}
 <script>
   {% if data %}
-    {% if data.repository.type == 'APT' %} 
-      $('#path').show(); 
+    {% if data.repository.type == 'APT' %}
+      $('#path').show();
+      $('#distribution').show();
+      $('#components').show();
+      $('#architectures').show();
     {% else %}
       $('#path').hide();
+      $('#distribution').hide();
+      $('#components').hide();
+      $('#architectures').hide();
     {% endif %}
   {% else %}
-    $('#path').hide();
+      $('#path').hide();
+      $('#distribution').hide();
+      $('#components').hide();
+      $('#architectures').hide();
   {% endif %}      
     
     $('#type').on('change', function() {
       if(this.value == 'YUM') {
         $('#path').hide();
+        $('#distribution').hide();
+        $('#components').hide();
+        $('#architectures').hide();
       }
       else if(this.value == 'APT') {
         $('#path').show();
+        $('#distribution').show();
+        $('#components').show();
+        $('#architectures').show();
       }
     })  
 </script>
