@@ -164,7 +164,7 @@ def tryDownloadFile(app, remote, local, file, algo, signature):
 		path = getFile_rsync(app, remote, local, file)
 
 		if not path:
-			app.log.logtask("The file: " + file + " couldn't be downloaded.")
+			app.log.logtask("The file: " + file + " couldn't be downloaded (" + str(try_dl) + " try)")
 			continue
 
 		if algo == 'sha256':

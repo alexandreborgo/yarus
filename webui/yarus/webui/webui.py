@@ -8,6 +8,7 @@ import os
 import sys
 import requests
 import yaml
+import json.decoder
 
 from flask import Flask, json, request, session, render_template, redirect, url_for
 
@@ -75,7 +76,10 @@ def callapi(method, path, more_data=None):
         return False
 
     # extract content
-    return json.loads(response.content)
+    try:
+        return json.loads(response.content)
+    except:
+        return None
 
 def checksession():
     """ check if the session token is still valid """
@@ -123,6 +127,10 @@ def page_not_found(error):
     if not checksession():
         return redirect(url_for('home'))
     return render_template('404.html', connected='1'), 404
+
+@APP.route("/errorengine", methods=['GET'])
+def error_engine():
+    return render_template('error_engine.html', connected='1'), 404
 
 @APP.before_request
 def before_request():
@@ -462,6 +470,8 @@ def list_object(object_name, status=0, message=""):
         return render_template('tasks.html', result=result, connected='1')
     elif object_name == 'scheduled':
         return render_template('scheduler.html', result=result, connected='1')
+    elif object_name == 'linkrcs':
+        return render_template('linkrcs.html', result=result, connected='1')
 
     return render_template('404.html', connected='1'), 404
 
@@ -894,6 +904,16 @@ def see_object(object_name, object_id, status=0, message=""):
     elif object_name == 'scheduled':
         return render_template('scheduled.html', result=result, connected='1')
 
+    elif object_name == 'linkrcs':
+        if result['status'] == 0:
+            result2 = callapi("get", "/list/channel")
+            result['data']['channelsall'] = result2['data']
+
+            result2 = callapi("get", "/linkrcs/" + object_id + "/list/channels")
+            result['data']['channels'] = result2['data']
+
+        return render_template('linkrcs_one.html', result=result, connected='1')
+
     return render_template('404.html', connected='1'), 404
 
 @APP.route('/add/<string:object_name>', methods=['GET', 'POST'])
@@ -953,6 +973,31 @@ def add_object(object_name):
             return render_template('addgroup.html', result=result, connected='1', data=data)
 
         return render_template('addgroup.html', connected='1')
+
+    elif object_name == 'linkrcs':
+
+        result2 = callapi("get", "/list/channel")
+
+        if request.method == 'POST':
+            data = {}
+            data['linkrcs'] = {}
+            data['linkrcs']['distribution'] = request.form.get('distribution', "")
+            data['linkrcs']['release'] = request.form.get('release', "")
+            channels = request.form.getlist('channels')
+            chans = ""
+            for item in channels:
+                chans += item+";"
+            chans = chans[:-1]
+            data['linkrcs']['channels'] = chans
+            result = callapi("post", "/create/linkrcs", data)
+            result['data'] = {}
+            result['data']['channels'] = result2['data']
+            return render_template('addlinkrcs.html', result=result, connected='1', data=data)
+
+        res = {}
+        res['data'] = {}
+        res['data']['channels'] = result2['data']
+        return render_template('addlinkrcs.html', result=res, connected='1')
 
     return render_template('404.html', connected='1'), 404
 
@@ -1060,9 +1105,9 @@ def delete_object(object_name, objects_id, return_object, return_id):
     for obj in objects_id.split(','):
         if obj != "":
             objects.append(obj)
-    data['data'] = objects
+    data['data'] = objects    
     result = callapi("delete", "/delete/" + object_name, data)
-
+    
     if return_id != 'none':
         return see_object(return_object, return_id, result['status'], result['message'])
 
@@ -1100,6 +1145,16 @@ def link(object_name, object_id, lk_obj_id):
                 repositories.append(repo)
         data['data'] = repositories
         result = callapi("post", "/link/channel/" + object_id, data)
+        return see_object(object_name, object_id, result['status'], result['message'])
+
+    elif object_name == 'linkrcs':
+        data = {}
+        channels = []
+        for channel in lk_obj_id.split(','):
+            if channel != "":
+                channels.append(channel)
+        data['data'] = channels
+        result = callapi("post", "/link/linkrcs/" + object_id, data)
         return see_object(object_name, object_id, result['status'], result['message'])
 
     return render_template('404.html', connected='1'), 404

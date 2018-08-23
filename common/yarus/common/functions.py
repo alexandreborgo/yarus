@@ -10,6 +10,7 @@ from yarus.common.user import User
 from yarus.common.link import Link
 from yarus.common.client import Client
 from yarus.common.bind import Bind
+from yarus.common.linkrcs import Linkrcs
 from yarus.common.task import Task
 from yarus.common.group import Group
 from yarus.common.upgradable import Upgradable
@@ -53,6 +54,8 @@ def getobject(app, object_name, object_id):
 			return Scheduled().load(app.database, object_id)
 		elif object_name == 'user':
 			return User().load(app.database, object_id)
+		elif object_name == 'linkrcs':
+			return Linkrcs().load(app.database, object_id)
 
 	except InvalidValueException as error:
 		app.log.debug(str(error))
@@ -64,6 +67,15 @@ def getobject(app, object_name, object_id):
 def getobjecttasks(app, object_id):
 	try:
 		return app.database.get_object_tasks(object_id)
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getlinkrcschannels(app, channels_id):
+	try:
+		return app.database.get_linkrcs_channels(channels_id)
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
@@ -91,6 +103,15 @@ def getpackage(app, repository, comp, name, version, arch, rel):
 def getpackagebyinfo(app, name, arch, version, release):
 	try:
 		return Package().load_package_by_info(app.database, name, arch, version, release)
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getlinkrcsbyinfo(app, distribution, release):
+	try:
+		return Linkrcs().load_linkrcs_by_info(app.database, distribution, release)
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None

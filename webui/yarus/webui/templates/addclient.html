@@ -7,9 +7,13 @@
 {% block content %}
 
 {% if data %}
-{% if data.client.ID %}
-<a href="{{ url_for('see_object', object_name='client', object_id=data.client.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
+{% if data.channel.ID %}
+<a href="{{ url_for('see_object', object_name='client', object_id=data.channel.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
+{% else %}
+<a href="{{ url_for('list_object', object_name='client') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the systems list</a>.<br/><br />
 {% endif %}
+{% else %}
+<a href="{{ url_for('list_object', object_name='client') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the systems list</a>.<br/><br />
 {% endif %}
 
 <div class="panel panel-default">

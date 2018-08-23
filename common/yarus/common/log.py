@@ -10,7 +10,7 @@ class LogSystem:
 		if self.app.debug:
 			print("DEBUG: " + str(message))
 			try:
-				file = open("/opt/yarus/log/debug.log", 'a')
+				file = open(self.log_file, 'a')
 				file.write("ERROR " + str(datetime.datetime.now()) + ": " + str(message) + "\n")
 				file.close()
 			except IOError as error:
@@ -31,6 +31,7 @@ class LogSystem:
 			return False
 
 	def log(self, message):
+		self.debug(message)
 		try:
 			file = open(self.log_file, 'a')
 			file.write(str(datetime.datetime.now()) + ": " + str(message) + "\n")

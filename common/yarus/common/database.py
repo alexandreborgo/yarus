@@ -100,7 +100,7 @@ class Mysql:
 # approved
 
 	def execute(self, request, data=""):
-		try:			
+		try:
 			if data != "":
 				self.cursor.execute(request, data)
 			else:
@@ -138,6 +138,10 @@ class Mysql:
 	def get_object(self, object_table, ID):
 		request = "SELECT * FROM " + object_table + " WHERE ID=%s"
 		data = (ID,)
+		return self.get_one(request, data)
+	def get_objects(self, object_table, IDs):
+		request = "SELECT * FROM " + object_table + " WHERE ID in (%s)"
+		data = tuple(IDs)
 		return self.get_one(request, data)
 	def get_all_object(self, object_table):
 		request = "SELECT * FROM " + object_table + " ORDER BY creation_date ASC"
@@ -233,8 +237,15 @@ class Mysql:
 		request = "SELECT * FROM yarus_package WHERE name=%s AND architecture=%s AND version=%s AND `release`=%s"
 		data = (name, arch, version, release)
 		return self.get_one(request, data)
+	def get_linkrcs_by_info(self, distribution, release):
+		request = "SELECT * FROM yarus_linkrcs WHERE `distribution`=%s AND `release`=%s"
+		data = (distribution, release)
+		return self.get_one(request, data)
+	def get_linkrcs_channels(self, channels_id):
+		t = str(tuple(channels_id)) if len(channels_id) > 1 else str(tuple(channels_id)).replace(',', '')
+		request = "SELECT * FROM yarus_channel WHERE `ID` IN " + t
+		return self.get_all(request)
 
-	
 	def get_upgradables(self, client_id):
 		select = "yarus_upgradable.ID, yarus_upgradable.approved, yarus_package.name, yarus_package.release, yarus_package.version, yarus_package.summary, yarus_package.component"
 		request = "SELECT " + select + " FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s"

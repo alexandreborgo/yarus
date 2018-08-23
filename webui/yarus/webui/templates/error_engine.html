@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}YARUS Engine error{% endblock %}
+{% block pagetitle %}<i class="fas fa-do-not-enter"></i> YARUS Engine error{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+    <div class="panel-heading">
+            YARUS Engine error
+    </div>
+    <div class="panel-body">
+        <div class="row" style="padding:15px;">
+            <p>An error occured during the communication with YARUS Engine.</p>
+            <p>The Engine response isn't proper JSON data.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

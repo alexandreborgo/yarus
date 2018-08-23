@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration{% endblock %}
+{% block pagetitle %}<i class="fas fa-cog"></i> Configuration{% endblock %}
+
+{% block content %}
+
+{% if result.data %}
+
+<a href="{{ url_for('list_object', object_name='linkrcs') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the configuration list</a><br/>
+<a href="{{ url_for('see_object', object_name='linkrcs', object_id=result.data.ID) }}"><i class="fas fa-sync-alt"></i> Actualize the page</a>.<br/><br />
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Configuration's information
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+  <table class="table">
+      <tr>
+        <td style="font-weight: bold;">ID</td>
+        <td>{{ result.data.ID }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Name</td>
+        <td>{{ result.data.distribution }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Description</td>
+        <td>{{ result.data.release }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Creation date</td>
+        <td>{{ result.data.creation_date }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Manager</td>
+        <td>{{ result.data.manager_id }}</td>
+      </tr>
+  </table>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+      Actions
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">      
+        Action:
+        <a href="{{ url_for('delete_object', object_name='channel', return_object='channel', return_id='none', objects_id='') }}" type="button" class="btn btn-default btn-xs">
+            Delete
+        </a>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Channels linked
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+      <table id="repositoriesin-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Distribution</th>
+            <th>Release</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for channel in result.data.channels %}
+            <tr>
+                <td></td>
+                <td>{{ channel.ID }}</td>
+                <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='channel', object_id=channel.ID) }}">{{ channel.name }}</a></td>
+                <td>{{ channel.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Link new channels
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+      <table id="repositories-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Distribution</th>
+            <th>Release</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for channel in result.data.channelsall %}
+            <tr>
+              <td></td>
+              <td>{{ channel.ID }}</td>
+              <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='channel', object_id=channel.ID) }}">{{ channel.name }}</a></td>
+              <td>{{ channel.description }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+      </table>
+
+  </div>
+</div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block pagejs %}
+{% if result.data %}
+<script>
+  $(document).ready( function () {
+    var table = $('#repositories-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Add',
+          action: function () {
+            var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('link', object_name='linkrcs', object_id=result.data.ID, lk_obj_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+    table.column( 1 ).visible( false );
+    
+    var table2 = $('#repositoriesin-table').DataTable({
+      dom: 'Bfrtip',
+      "iDisplayLength": 25,
+      buttons: [  
+        'selectAll',
+        {
+          text: 'Remove',
+          action: function () {
+            var rows = $.map(table2.rows( { selected: true } ).data(), function (item) {
+                return item[1]
+            });
+            var id = ""
+            $.each(rows, function(key, value) {
+              id += value + ",";
+            });
+            url = "{{ url_for('unlink', object_name='linkrcs', object_id=result.data.ID, lk_obj_id='') }}" + id
+            $(location).attr('href', url);
+          }
+        },
+      ],
+      columnDefs: [ {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+      } ],
+      select: {
+          style: 'multi',
+          selector: 'td:first-child'
+      },
+      order: [[ 1, 'asc' ]]
+    });
+    table2.column( 1 ).visible( false );
+  });
+</script>
+{% endif %}
+{% endblock %}

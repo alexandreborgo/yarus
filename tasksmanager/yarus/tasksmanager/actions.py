@@ -172,7 +172,6 @@ def sync_repo(app, task, repo_id):
 		# calculate the new signature of the metadata files
 		if os.path.isfile(dlocal + "/Release"):
 			new_release_sig = getSigFile(dlocal + "/Release")
-			print("Signature new Release: " + new_release_sig)
 
 		# check if it is the same or not
 		if release_sig == new_release_sig:
@@ -442,82 +441,86 @@ def sync_repo(app, task, repo_id):
 		# Step 2: download packages and register them in the database if needed
 		# ------------------------------------------------------------------------------------------------------------------------------
 		
-		# package list is in -primary.xml.gz file
-		listfile = os.listdir(local + "repodata/")
+		# package list is in -primary.xml.gz file		
+		mdtree = etree.parse(local + "repodata/repomd.xml")
+		root = mdtree.getroot()
 
-		primaries = []
-		
-		for primaryfile in listfile:
-			if re.match(".*-primary.xml.gz", primaryfile):
-				primaries.append(primaryfile)
-				app.log.logtask(primaryfile)
+		primary = ""
+		for pkg in root.iter('{http://linux.duke.edu/metadata/repo}data'):
+			if pkg.get('type') == 'primary':
+				primary = pkg.find('{http://linux.duke.edu/metadata/repo}location').get('href')
+				break
+
+		if not primary:
+			app.log.logtask("No primary file could be find (primary is the file where YARUS check the list of packages).")
+			return False
 
 		# rpms
 		app.log.logtask("Checking rpms...")
+				
+		tree = etree.parse(local + primary)
+		root = tree.getroot()
+		app.log.logtask("Parsing primary file over.")
 		
-		if primaries == "":
-			app.log.logtask("Can't find primary file (which contains the rpm list).")
-			return False
+		for pkg in root.iter('{http://linux.duke.edu/metadata/common}package'):
+			rpm = Package()
 
-		for primary in primaries:
-			tree = etree.parse(local + "repodata/" + primary)
-			root = tree.getroot()
-			for pkg in root.iter('{http://linux.duke.edu/metadata/common}package'):
-				
-				rpm = Package()
+			rpm.ID = getnewid()
+			rpm.repository = repository.ID
+			rpm.component = ""
 
-				rpm.ID = getnewid()
-				rpm.repository = repository.ID
-				rpm.component = ""
+			rpm.type = "rpm"
 
-				rpm.type = "rpm"
+			rpm.name = pkg.findtext('{http://linux.duke.edu/metadata/common}name', default = 'none')
 
-				rpm.name = pkg.findtext('{http://linux.duke.edu/metadata/common}name', default = 'none')
-				rpm.architecture = pkg.findtext('{http://linux.duke.edu/metadata/common}arch', default = 'none')
+			rpm.architecture = pkg.findtext('{http://linux.duke.edu/metadata/common}arch', default = 'none')
 
-				rpm.version = pkg.find('{http://linux.duke.edu/metadata/common}version').get('ver')
-				rpm.release = pkg.find('{http://linux.duke.edu/metadata/common}version').get('rel')
+			rpm.version = pkg.find('{http://linux.duke.edu/metadata/common}version').get('ver')
+			rpm.release = pkg.find('{http://linux.duke.edu/metadata/common}version').get('rel')
 
-				rpm.location = pkg.find('{http://linux.duke.edu/metadata/common}location').get('href')
+			rpm.location = pkg.find('{http://linux.duke.edu/metadata/common}location').get('href')
 
-				rpm.checksum_type = pkg.find('{http://linux.duke.edu/metadata/common}checksum').get('type')
-				rpm.checksum = pkg.findtext('{http://linux.duke.edu/metadata/common}checksum', default = 'none')
+			rpm.checksum_type = pkg.find('{http://linux.duke.edu/metadata/common}checksum').get('type')
+			rpm.checksum = pkg.findtext('{http://linux.duke.edu/metadata/common}checksum', default = 'none')
 
-				rpm.summary = pkg.findtext('{http://linux.duke.edu/metadata/common}summary', default = 'none')
-				
-				rpm_in_db = getpackage(app, rpm.repository, rpm.component, rpm.name, rpm.version, rpm.architecture, rpm.release)
-				if rpm_in_db:
-					dl = False
-					# rpm in database so we check if the checksum is the same to see if the file changed (unlikely to happen)
-					if rpm_in_db.checksum != rpm.checksum:
-						# the file has changed so we add it to the list and we update it in the db
-						rpm_in_db.checksum_type = rpm.checksum_type
-						rpm_in_db.checksum = rpm.checksum
-						rpm_in_db.summary = rpm.summary
-						rpm_in_db.location = rpm.location
-						rpm_in_db.update(app.database)
-						dl = True
-					else:
-						# need to check if the rpm is present, if not we add it to the dl list
-						if not os.path.isfile(local + rpm_in_db.location):
-							dl = True
+			rpm.summary = pkg.findtext('{http://linux.duke.edu/metadata/common}summary', default = 'none')
 
-					if dl:
-						# download the package
-						path = rpm_in_db.location.split(rpm_in_db.name)[0]
-						file = rpm_in_db.name + "-" + rpm_in_db.version + "-" + rpm_in_db.release + "." + rpm_in_db.architecture + "." + rpm_in_db.type  
-						if not tryDownloadFile(app, remote + path, local + path, file, rpm_in_db.checksum_type, rpm_in_db.checksum):
-							app.log.logtask("Couldn't download the RPM: " + rpm_in_db.name)
+			rpm_in_db = getpackage(app, rpm.repository, rpm.component, rpm.name, rpm.version, rpm.architecture, rpm.release)
+			if rpm_in_db:
+				dl = False
+				# rpm in database so we check if the checksum is the same to see if the file changed (unlikely to happen)
+				if rpm_in_db.checksum != rpm.checksum:
+					# the file has changed so we add it to the list and we update it in the db
+					rpm_in_db.checksum_type = rpm.checksum_type
+					rpm_in_db.checksum = rpm.checksum
+					rpm_in_db.summary = rpm.summary
+					rpm_in_db.location = rpm.location
+					rpm_in_db.update(app.database)
+					app.log.logtask("Old RPM found changed: " + rpm_in_db.name)
+					dl = True
 				else:
-					# rpm not in database so we add it and add it to the dl list
-					rpm.insert(app.database)
-					
+					# need to check if the rpm is present, if not we add it to the dl list
+					if not os.path.isfile(local + rpm_in_db.location):
+						app.log.logtask("Old RPM found but not present on the disk: " + rpm_in_db.name)
+						dl = True
+
+				if dl:
 					# download the package
-					path = rpm.location.split(rpm.name)[0]
-					file = rpm.name + "-" + rpm.version + "-" + rpm.release + "." + rpm.architecture + "." + rpm.type 
-					if not tryDownloadFile(app, remote + path, local + path, file, rpm.checksum_type, rpm.checksum):
-						app.log.logtask("Couldn't download the RPM: " + rpm.name)
-		
+					path = rpm_in_db.location.split(rpm_in_db.name)[0]
+					file = rpm_in_db.name + "-" + rpm_in_db.version + "-" + rpm_in_db.release + "." + rpm_in_db.architecture + "." + rpm_in_db.type  
+					if not tryDownloadFile(app, remote + path, local + path, file, rpm_in_db.checksum_type, rpm_in_db.checksum):
+						app.log.logtask("Couldn't download the RPM: " + rpm_in_db.name)
+			else:
+				app.log.logtask("New RPM found: " + rpm_in_db.name)
+				# rpm not in database so we add it and add it to the dl list
+				rpm.insert(app.database)
+				
+				# download the package
+				path = rpm.location.split(rpm.name)[0]
+				file = rpm.name + "-" + rpm.version + "-" + rpm.release + "." + rpm.architecture + "." + rpm.type 
+				if not tryDownloadFile(app, remote + path, local + path, file, rpm.checksum_type, rpm.checksum):
+					app.log.logtask("Couldn't download the RPM: " + rpm.name)
+	
 		# ------------------------------------------------------------------------------------------------------------------------------
 		# Step 3: create the date repository
 		# ------------------------------------------------------------------------------------------------------------------------------
@@ -578,9 +581,8 @@ def sync_channel(app, task, channel_id):
 
 	# start repository sync for each repository
 	for repository in links:
-		if not sync_repo(app, repository['ID']):
+		if not sync_repo(app, task, repository['ID']):
 			app.log.logtask("An error occured while trying to sync the repository: " + repository.name)
-			return False
 
 	channel.setLastSyncDate()
 	channel.update(app.database)

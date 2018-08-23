@@ -113,4 +113,14 @@ class YarusObject:
 			self.action = action
 		else:
 			raise(InvalidValueException("The action is missing or invalid."))
+	def setRelease(self, release):
+		if check_release(release):
+			self.release = release
+		else:
+			raise(InvalidValueException("The release is missing or invalid."))
+	def setChannels(self, channels):
+		if check_channels(channels):
+			self.channels = channels
+		else:
+			raise(InvalidValueException("The channels are missing or invalid."))
 	

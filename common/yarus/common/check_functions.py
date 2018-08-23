@@ -116,4 +116,13 @@ def check_architectures(architectures):
     else:
         return False
 
+def check_channels(channels):
+    if channels:
+        if re.match("^[a-zA-z0-9;]*$", channels):
+            return True
+        else:
+            return False
+    else:
+        return False
+
         

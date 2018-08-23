@@ -100,8 +100,7 @@ class YarusTasksManager():
 			app.log.logtask("Executed in " + str(task.end_time - task.start_time) + " seconds.")
 		
 		except DatabaseError as error:
-			app.log.log(error)
-			sys.exit()
+			app.log.error(error)
 
 		finally:
 			app.database.close()
@@ -109,43 +108,47 @@ class YarusTasksManager():
 		print("Leaving task " + task.ID + " (" + task.action + ") on thread " + str(threading.current_thread()))
 
 	def run(self):
-
-		pool = []
-
-		while True:
-
-			sync_task = False
-			tasks_running = []
-			object_running = []
-
-			# check running task
-			for item in pool:
-				if not item[0].is_alive():
-					pool.remove(item)
-					continue
-				tasks_running.append(item[1].ID)
-				object_running.append(item[1].object_id)
-
-			# check for pending task
-			self.app.database.connect()
-			pending_tasks = self.checkForTasks()			
-			self.app.database.close()
+		try:		
+			pool = []
 			
-			if pending_tasks:
-				for task in pending_tasks:
-					# we check if the task isn't already running
-					if not task.ID in tasks_running:
-						# and if an other task isn't already running on the object
-						if not task.object_id in object_running:
-							thread = threading.Thread(target=self.execute, name=task.ID, args=(task,))	
-							pool.append([thread, task])
-							tasks_running.append(task.ID)
-							object_running.append(task.object_id)
-							thread.start()
-			else:				
-				if tasks_running:
-					print("Task running: ", end='')
-					for task in tasks_running:
-						print(task + ", ", end='')
-					print("")
-				time.sleep(WAIT)
+			while True:
+				sync_task = False
+				tasks_running = []
+				object_running = []
+
+				# check running task
+				for item in pool:
+					if not item[0].is_alive():
+						# the thread is over so we remove it from the pool
+						pool.remove(item)
+						continue
+					tasks_running.append(item[1].ID)
+					object_running.append(item[1].object_id)
+
+				# check for pending task
+				self.app.database.connect()
+				pending_tasks = self.checkForTasks()
+				self.app.database.close()
+				
+				if pending_tasks:
+					for task in pending_tasks:
+						# we check if the task isn't already running
+						if not task.ID in tasks_running:
+							# and if an other task isn't already running on the object
+							if not task.object_id in object_running:
+								thread = threading.Thread(target=self.execute, name=task.ID, args=(task,))	
+								pool.append([thread, task])
+								tasks_running.append(task.ID)
+								object_running.append(task.object_id)
+								thread.start()
+				else:				
+					if tasks_running:
+						print("Task running: ", end='')
+						for task in tasks_running:
+							print(task + ", ", end='')
+						print("")
+					time.sleep(WAIT)
+
+		except Exception as error:
+			self.app.log.error(error)
+			self.app.log.error(traceback.format_exc())

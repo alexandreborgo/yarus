@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}System auto-configuration{% endblock %}
+{% block pagetitle %}<i class="fas fa-cog"></i> System auto-configuration{% endblock %}
+
+{% block content %}
+
+{% if data %}
+{% if data.linkrcs.ID %}
+<a href="{{ url_for('see_object', object_name='linkrcs', object_id=data.linkrcs.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the configuration view</a>.<br/><br />
+{% else %}
+<a href="{{ url_for('list_object', object_name='linkrcs') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the systems auto-configuration list</a>.<br/><br />
+{% endif %}
+{% else %}
+<a href="{{ url_for('list_object', object_name='linkrcs') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the systems auto-configuration list</a>.<br/><br />
+{% endif %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Add a configuration
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+        <form method="post" action="#">
+            <div class="form-group">
+              <label for="distribution">Distribution</label>
+              <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.linkrcs.distribution }}{% endif %}" id="distribution" name="distribution" placeholder="exemples: centos, debian, ubuntu...">
+              <div class="invalid-feedback">
+                  Must not be empty.
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="release">Release</label>
+              <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.linkrcs.release }}{% endif %}" id="release" name="release" placeholder="exemple: bionic, stretch, 7.5, 10...">
+              <div class="invalid-feedback">
+                  Must not be empty.
+              </div>
+            </div>
+            <div class="form-group">      
+              <label for="channels">Linked channels</label>
+              <select class="form-control" id="channels" name="channels" multiple>
+                {% for channel in result.data.channels %}
+                <option value="{{ channel.ID }}">{{ channel.name }} {{ channel.description }}</option>
+                {% endfor %}
+              </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -19,6 +19,7 @@ from yarus.common.scheduled import Scheduled
 from yarus.common.bind import Bind
 from yarus.common.link import Link
 from yarus.common.grouped import Grouped
+from yarus.common.linkrcs import Linkrcs
 from yarus.common.exceptions import InvalidValueException, DatabaseError
 from yarus.common.functions import getnewid
 from yarus.common.functions import connectuser
@@ -28,8 +29,10 @@ from yarus.common.functions import getobjectscheduled
 from yarus.common.functions import getrepobyname
 from yarus.common.functions import getclientbyip
 from yarus.common.functions import getgroupbyname
+from yarus.common.functions import getlinkrcschannels
 from yarus.common.functions import getgrouped
 from yarus.common.functions import getbind
+from yarus.common.functions import getlinkrcsbyinfo
 from yarus.common.functions import getlink
 from yarus.common.functions import getbinds
 from yarus.common.functions import getchannelbyname
@@ -95,7 +98,7 @@ def getconnecteduser():
         return user
 
     except DatabaseError as error:
-        print(error)
+        app.log.error(error)
         return False
 
 @APP.route('/api/login', methods=['GET'])
@@ -156,6 +159,8 @@ def list_object(object_name):
             data = APP_ENGINE.database.get_all_object('yarus_task')
         elif object_name == 'scheduled':
             data = APP_ENGINE.database.get_all_object('yarus_scheduled')
+        elif object_name == 'linkrcs':
+            data = APP_ENGINE.database.get_all_object('yarus_linkrcs')
 
         if data:
             return jsonify({"status": 0, "message": "", 'data': data})
@@ -313,6 +318,19 @@ def create_object(object_name):
                 new_object.setDayofplace(data['scheduledtask']['day_place'])
                 new_object.setManagerID(user.ID)
 
+            elif object_name == 'linkrcs':
+                new_object = Linkrcs()
+                new_object.setID(getnewid())
+                new_object.setDistribution(data['linkrcs']['distribution'])
+                new_object.setRelease(data['linkrcs']['release'])
+                new_object.setChannels(data['linkrcs']['channels'])
+                new_object.setManagerID(user.ID)
+                new_object.setCreationDate()
+
+                 # check if the linkrcs already exist in the database
+                if getlinkrcsbyinfo(APP_ENGINE, new_object.distribution, new_object.release):
+                    return jsonify({"status": 102, "message": "Configuration for the system " + new_object.distribution + " " + new_object.release + " already exists in the database."})
+
         except InvalidValueException as error:
             APP_ENGINE.log.debug(str(error))
             return jsonify({"status": 100, "message": str(error)})
@@ -370,7 +388,7 @@ def update_object(object_name, object_id):
                 object_inst.setType(data['repository']['type'])
                 if object_inst.type == 'APT':
                     object_inst.setPath(data['repository']['path'])
-                    new_object.setDistribution(data['repository']['distribution'])
+                    object_inst.setDistribution(data['repository']['distribution'])
                     object_inst.setComponents(data['repository']['components'])
                     object_inst.setArchitectures(data['repository']['architectures'])
 
@@ -469,7 +487,6 @@ def delete_object(object_name):
 
             # if scheduled we need to add the cronjob to the cron file
             if object_name == 'scheduled':
-                print("toto")
                 crontab = Crontab()
                 crontab.generate_cron_file(APP_ENGINE.database)
                 crontab.set_cron_file()
@@ -534,6 +551,14 @@ def object_list(object_name, object_id, info_list):
                 data = getobjecttasks(APP_ENGINE, object_data.ID)
             elif info_list == 'scheduled':
                 data = getobjectscheduled(APP_ENGINE, object_data.ID)
+        elif object_name == 'linkrcs':
+            if info_list == 'channels':
+                linkrcs = getobject(APP_ENGINE, 'linkrcs', object_id)
+                channels_id = []
+                for chan_id in linkrcs.channels.split(";"):
+                    if chan_id != "":
+                        channels_id.append(chan_id)
+                data = getlinkrcschannels(APP_ENGINE, channels_id)
 
         if data:
             return jsonify({"status": 0, "message": "", 'data': data})
@@ -654,6 +679,36 @@ def link(object_name, object_id):
 
                 message += "The repository " + repository.name + " was successfully added to the channel " + object_data.name + ". "
 
+        elif object_name == 'linkrcs':
+            linked_channels = object_data.channels.split(";")
+            for channel_id in data['data']:
+                # check if channel exists
+                channel = getobject(APP_ENGINE, 'channel', channel_id)
+                if not channel:
+                    print("no existerino")
+                    continue
+
+                 # check if they are already linked
+                if channel.ID in linked_channels:
+                    print("already in")
+                    continue
+
+                # create the link
+                linked_channels.append(channel.ID)
+                print("added one")
+                continue
+
+            new_channels = ""
+            for chan_id in linked_channels:
+                print(chan_id)
+                new_channels += chan_id + ";"
+            new_channels = new_channels[:-1]
+            object_data.channels = new_channels
+            print(new_channels)
+            print(object_data.channels)
+            object_data.update(APP_ENGINE.database)
+            message = "Channels have been added to this configuration."
+
         return jsonify({"status": 0, "message": message})
 
     except DatabaseError:
@@ -763,6 +818,31 @@ def unlink(object_name, object_id):
                 olink.delete_link(APP_ENGINE.database)
                 message += "The repository " + repository.name + " has been removed from the channel " + object_data.name + ". "
                 continue
+
+        elif object_name == 'linkrcs':
+            linked_channels = object_data.channels.split(";")
+            for channel_id in data['data']:
+
+                # check if channel exists
+                channel = getobject(APP_ENGINE, 'channel', channel_id)
+                if not channel:
+                    continue
+
+                # check if they are already linked
+                if channel.ID not in linked_channels:
+                    continue
+
+                # delete the link
+                linked_channels.remove(channel.ID)
+                continue
+            
+            new_channels = ""
+            for chan_id in linked_channels:
+                new_channels += chan_id + ";"
+            new_channels = new_channels[:-1]
+            object_data.channels = new_channels
+            object_data.update(APP_ENGINE.database)
+            message = "Channels have been removed from this configuration."
 
         return jsonify({"status": 0, "message": message})
 

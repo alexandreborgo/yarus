@@ -45,28 +45,6 @@
             </div>
             <!-- /.navbar-header -->
 
-            <ul class="nav navbar-top-links navbar-right">
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
-                    </a>
-                    {% if connected %}
-                    <ul class="dropdown-menu dropdown-user">
-                        <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-                        </li>
-                        <li><a href="#"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                        <li class="divider"></li>
-                        <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                        </li>
-                    </ul>
-                    {% endif %}
-                    <!-- /.dropdown-user -->
-                </li>
-                <!-- /.dropdown -->
-            </ul>
-            <!-- /.navbar-top-links -->
-
             <div class="navbar-default sidebar" role="navigation">
                 <div class="sidebar-nav navbar-collapse">
                     <ul class="nav" id="side-menu">
@@ -82,6 +60,12 @@
                                 </li>
                                 <li>
                                     <a href="{{ url_for('list_object', object_name='channel') }}">Channels</a>
+                                </li>                                
+                                <li>
+                                    <a href="{{ url_for('add_object', object_name='repository') }}">Add a repository</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('add_object', object_name='channel') }}">Add a channel</a>
                                 </li>
                             </ul>
                         </li>
@@ -94,6 +78,20 @@
                                 <li>
                                     <a href="{{ url_for('list_object', object_name='group') }}">Groups</a>
                                 </li>
+                                <li>
+                                    <a href="{{ url_for('add_object', object_name='client') }}">Add a system</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('add_object', object_name='group') }}">Add a group</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fas fa-cog"></i> Settings<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="{{ url_for('list_object', object_name='linkrcs') }}">Systems auto-configuration</a>
+                                </li>
                             </ul>
                         </li>
                         <li>
@@ -104,6 +102,12 @@
                         </li>
                         <li>
                             <a href="{{ url_for('home') }}"><i class="fas fa-users"></i> Users</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('home') }}"><i class="fas fa-book"></i> Documentation</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
                         </li>
                       {% endif %}
                     </ul>
