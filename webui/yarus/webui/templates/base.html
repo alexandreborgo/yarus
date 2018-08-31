@@ -41,7 +41,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.html">YARUS</a>
+                <a class="navbar-brand" href="{{ url_for('home') }}">YARUS</a>
             </div>
             <!-- /.navbar-header -->
 
@@ -60,12 +60,6 @@
                                 </li>
                                 <li>
                                     <a href="{{ url_for('list_object', object_name='channel') }}">Channels</a>
-                                </li>                                
-                                <li>
-                                    <a href="{{ url_for('add_object', object_name='repository') }}">Add a repository</a>
-                                </li>
-                                <li>
-                                    <a href="{{ url_for('add_object', object_name='channel') }}">Add a channel</a>
                                 </li>
                             </ul>
                         </li>
@@ -78,21 +72,10 @@
                                 <li>
                                     <a href="{{ url_for('list_object', object_name='group') }}">Groups</a>
                                 </li>
-                                <li>
-                                    <a href="{{ url_for('add_object', object_name='client') }}">Add a system</a>
-                                </li>
-                                <li>
-                                    <a href="{{ url_for('add_object', object_name='group') }}">Add a group</a>
-                                </li>
                             </ul>
                         </li>
                         <li>
-                            <a href="#"><i class="fas fa-cog"></i> Settings<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="{{ url_for('list_object', object_name='linkrcs') }}">Systems auto-configuration</a>
-                                </li>
-                            </ul>
+                            <a href="{{ url_for('list_object', object_name='linkrcs') }}"><i class="fas fa-cogs"></i> Systems auto-configuration</a>
                         </li>
                         <li>
                             <a href="{{ url_for('list_object', object_name='task') }}"><i class="fas fa-tasks"></i> Tasks</a>
@@ -101,10 +84,10 @@
                             <a href="{{ url_for('list_object', object_name='scheduled') }}"><i class="fas fa-clock"></i> Scheduler</a>
                         </li>
                         <li>
-                            <a href="{{ url_for('home') }}"><i class="fas fa-users"></i> Users</a>
+                            <a href="{{ url_for('list_object', object_name='user') }}"><i class="fas fa-users"></i> Users</a>
                         </li>
                         <li>
-                            <a href="{{ url_for('home') }}"><i class="fas fa-book"></i> Documentation</a>
+                            <a target="_blank" href="/doc/index.html"><i class="fas fa-book"></i> Documentation</a>
                         </li>
                         <li>
                             <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>

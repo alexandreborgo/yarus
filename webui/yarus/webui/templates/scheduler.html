@@ -21,7 +21,6 @@
         <td>Action</td>
         <td>Object</td>
         <td>Creation date</td>
-        <td>Actions</td>
       </tr>
     </thead>
     <tbody>
@@ -29,14 +28,11 @@
         <tr>
           <td></td>
           <td>{{ scheduledtask.ID }}</td>
-          <td>{{ scheduledtask.name }}</td>
+          <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='scheduled', object_id=scheduledtask.ID) }}">{{ scheduledtask.name }}</a></td>
           <td>{{ scheduledtask.description }}</td>
           <td>{{ scheduledtask.action }}</td>
           <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name=scheduledtask.object_type, object_id=scheduledtask.object_id) }}">{{ scheduledtask.object_name }}</a></td>
           <td>{{ scheduledtask.creation_date }}</td>
-          <td>
-            <a href="{{ url_for('see_object', object_name='scheduled', object_id=scheduledtask.ID) }}"><span class="fas fa-eye actions"></span></a>
-          </td>
         </tr>
       {% endfor %}
     </tbody>

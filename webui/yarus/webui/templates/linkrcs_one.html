@@ -23,12 +23,16 @@
         <td>{{ result.data.ID }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Name</td>
+        <td style="font-weight: bold;">Distribution</td>
         <td>{{ result.data.distribution }}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Description</td>
+        <td style="font-weight: bold;">Release</td>
         <td>{{ result.data.release }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Architecture</td>
+        <td>{{ result.data.architecture }}</td>
       </tr>
       <tr>
         <td style="font-weight: bold;">Creation date</td>
@@ -68,8 +72,8 @@
           <tr>
             <th></th>
             <th>ID</th>
-            <th>Distribution</th>
-            <th>Release</th>
+            <th>Channel</th>
+            <th>Description</th>
           </tr>
         </thead>
         <tbody>
@@ -99,8 +103,8 @@
           <tr>
             <th></th>
             <th>ID</th>
-            <th>Distribution</th>
-            <th>Release</th>
+            <th>Channel</th>
+            <th>Description</th>
           </tr>
         </thead>
         <tbody>
@@ -134,6 +138,7 @@
         'selectAll',
         {
           text: 'Add',
+          enabled: false,
           action: function () {
             var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -159,6 +164,10 @@
       order: [[ 1, 'asc' ]]
     });
     table.column( 1 ).visible( false );
+    table.on( 'select deselect', function () {
+        var selectedRows = table.rows( { selected: true } ).count();
+        table.button( 1 ).enable( selectedRows > 0 );
+    } );
     
     var table2 = $('#repositoriesin-table').DataTable({
       dom: 'Bfrtip',
@@ -167,6 +176,7 @@
         'selectAll',
         {
           text: 'Remove',
+          enabled: false,
           action: function () {
             var rows = $.map(table2.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -192,6 +202,10 @@
       order: [[ 1, 'asc' ]]
     });
     table2.column( 1 ).visible( false );
+    table2.on( 'select deselect', function () {
+        var selectedRows = table2.rows( { selected: true } ).count();
+        table2.button( 1 ).enable( selectedRows > 0 );
+    } );
   });
 </script>
 {% endif %}

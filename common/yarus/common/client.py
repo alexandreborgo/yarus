@@ -16,6 +16,7 @@ class Client(YarusObject):
 		self.distribution = ""
 		self.version = ""
 		self.type = ""
+		self.architecture = ""
 
 		self.manager_id = 0
 

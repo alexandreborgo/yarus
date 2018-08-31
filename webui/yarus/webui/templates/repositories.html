@@ -26,7 +26,9 @@
               <th>ID</th>
               <th>Name</th>
               <th>Type</th>
-              <th>Description</th>
+              <th>Distribution</th>
+              <th>Release</th>
+              <th>Architecture</th>
               <th>Last sync</th>
             </tr>
           </thead>
@@ -37,7 +39,9 @@
                 <td>{{ repository.ID }}</td>
                 <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='repository', object_id=repository.ID) }}">{{ repository.name }}</a></td>
                 <td>{{ repository.type }}</td>
-                <td>{{ repository.description }}</td>
+                <td>{{ repository.distribution }}</td>
+                <td>{{ repository.release }}</td>
+                <td>{{ repository.architectures }}</td>
                 <td>{{ repository.last_sync }}</td>
               </tr>
             {% endfor %}
@@ -60,6 +64,7 @@
         'selectNone',
         {
           text: 'Delete',
+          enabled: false,
           action: function () {
             var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -85,6 +90,10 @@
       order: [[ 1, 'asc' ]]
     });
     table.column( 1 ).visible( false );
+    table.on( 'select deselect', function () {
+        var selectedRows = table.rows( { selected: true } ).count();
+        table.button( 2 ).enable( selectedRows > 0 );
+    } );
   } );
 </script>
 {% endblock %}

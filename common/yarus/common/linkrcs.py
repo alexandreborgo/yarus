@@ -8,12 +8,13 @@ class Linkrcs(YarusObject):
 		self.ID = ""
 		self.distribution = ""
 		self.release = ""
+		self.architecture = ""
 		self.channels = ""
 		self.creation_date = 0
 		self.manager_id = 0
 		
-	def load_linkrcs_by_info(self, database, distribution, release):
-		object_tmp = database.get_linkrcs_by_info(distribution, release)
+	def load_linkrcs_by_info(self, database, distribution, release, architecture):
+		object_tmp = database.get_linkrcs_by_info(distribution, release, architecture)
 		if not object_tmp:
 			return None
 		for key, value in vars(self).items():

@@ -62,6 +62,13 @@
                     Must not be empty.
                 </div>
               </div>
+              <div class="form-group" id="release">
+                <label for="distribution">Release / version</label>
+                <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.release }}{% endif %}" id="release" name="release" placeholder="exemples: 10, 7.5, bionic, 16.04...">
+                <div class="invalid-feedback">
+                    Must not be empty.
+                </div>
+              </div>
               <div class="form-group" id="path">
                 <label for="path">Path</label>
                 <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.path }}{% endif %}" id="path" name="path" placeholder="exemples: stretch, stretch-updates, stretch/security, bionic-security...">
@@ -80,7 +87,7 @@
                 <label for="architectures">Architectures</label>
                 <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.repository.architectures }}{% endif %}" id="architectures" name="architectures" placeholder="exemples: amd64,i386...">
                 <div class="invalid-feedback">
-                    Must not be empty. Multiple architectures must be seperated by a comma.
+                    Must not be empty.
                 </div>
               </div>
               <button type="submit" class="btn btn-primary">Submit</button>
@@ -97,34 +104,24 @@
   {% if data %}
     {% if data.repository.type == 'APT' %}
       $('#path').show();
-      $('#distribution').show();
       $('#components').show();
-      $('#architectures').show();
     {% else %}
       $('#path').hide();
-      $('#distribution').hide();
       $('#components').hide();
-      $('#architectures').hide();
     {% endif %}
   {% else %}
       $('#path').hide();
-      $('#distribution').hide();
       $('#components').hide();
-      $('#architectures').hide();
   {% endif %}      
     
     $('#type').on('change', function() {
       if(this.value == 'YUM') {
         $('#path').hide();
-        $('#distribution').hide();
         $('#components').hide();
-        $('#architectures').hide();
       }
       else if(this.value == 'APT') {
         $('#path').show();
-        $('#distribution').show();
         $('#components').show();
-        $('#architectures').show();
       }
     })  
 </script>

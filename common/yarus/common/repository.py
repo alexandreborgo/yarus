@@ -25,11 +25,6 @@ class Repository(YarusObject):
 			self.URL = URL
 		else:
 			raise(InvalidValueException("The URL is missing or invalid."))
-	def setRelease(self, release):
-		if check_release(release):
-			self.release = release
-		else:
-			raise(InvalidValueException("The release is missing or invalid."))
 	def setPath(self, path):
 		if check_name(path):
 			self.path = path
@@ -40,8 +35,3 @@ class Repository(YarusObject):
 			self.components = components
 		else:
 			raise(InvalidValueException("The components is missing or invalid."))
-	def setArchitectures(self, architectures):
-		if check_architectures(architectures):
-			self.architectures = architectures
-		else:
-			raise(InvalidValueException("The architectures is missing or invalid."))

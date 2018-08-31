@@ -36,16 +36,23 @@ class Mysql:
 		except Exception as error:
 			raise(DatabaseError("Unable to close the connection to the database correctly."))
 
+	def get_object_what(self, what, object_id, object_type):
+		request = "SELECT * FROM yarus_" + what + " WHERE object_id=%s AND object_type=%s"
+		data = (object_id, object_type)
+		return self.get_all(request, data)	
+	
 
-	
-	
-	def get_object_tasks(self, object_id):
-		request = "SELECT * FROM yarus_task WHERE object_id='" + object_id + "'"
-		return self.get_all(request)
-	
-	def get_object_scheduled(self, object_id):
-		request = "SELECT * FROM yarus_scheduled WHERE object_id='" + object_id + "'"
-		return self.get_all(request)
+	def get_upgradables(self, object_id, object_type):
+		select = "yarus_upgradable.ID, yarus_upgradable.approved, yarus_package.name, yarus_package.release, yarus_package.version, yarus_package.summary, yarus_package.component, yarus_package.type"
+		request = "SELECT " + select + " FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s AND object_type=%s"
+		data = (object_id, object_type)
+		return self.get_all(request, data)
+
+
+
+
+
+
 
 
 	def get_user_t(self, token):
@@ -56,10 +63,13 @@ class Mysql:
 		sha256_hash.update(password.encode('utf-8'))
 		hashed_password = sha256_hash.hexdigest()
 		request = "SELECT ID FROM yarus_user WHERE name='" + name + "' AND password='" + hashed_password + "'"
-		data = (name, hashed_password)
 		return self.get_one(request)
+	def get_user_by_name(self, name):
+		request = "SELECT ID FROM yarus_user WHERE name=%s"
+		data = (name,)
+		return self.get_one(request,data)
 
-	
+
 
 	
 	def get_links(self, channel_id):
@@ -146,7 +156,31 @@ class Mysql:
 	def get_all_object(self, object_table):
 		request = "SELECT * FROM " + object_table + " ORDER BY creation_date ASC"
 		return self.get_all(request)
-	
+	def get_all_object_own(self, object_table, user):
+		request = "SELECT * FROM " + object_table + " WHERE manager_id=%s ORDER BY creation_date ASC"
+		data = (user.ID,)
+		return self.get_all(request, data)
+	def get_all_object_with_manager(self, object_table):
+		request = "SELECT " + object_table + ".*, yarus_user.name AS mname FROM " + object_table + " INNER JOIN yarus_user ON " + object_table + ".manager_id=yarus_user.ID"
+		return self.get_all(request)
+	def get_all_updates(self):
+		request = "SELECT * FROM yarus_update ORDER BY date ASC"
+		result = self.get_all(request)
+		final_result = []
+		for item in result:
+			tmp = {}
+			tmp['info'] = item
+			if item['object_type'] == 'client':
+				request = "SELECT * FROM yarus_client WHERE ID=%s"
+				data = (item['object_id'],)
+			elif item['object_type'] == 'group':
+				request = "SELECT * FROM yarus_group WHERE ID=%s"
+				data = (item['object_id'],)
+			object_ = self.get_one(request,data)
+			tmp['object'] = object_
+			final_result.append(tmp)
+		return final_result	
+
 	def update_object(self, object_table, values):
 		inds = ''
 		vals = ''
@@ -233,33 +267,50 @@ class Mysql:
 		data = (repository, comp, name, version, arch, rel)
 		return self.get_one(request, data)
 
+	def get_channel_by_info(self, distribution, version):
+		request = "SELECT * FROM yarus_channel WHERE distribution=%s AND `release`=%s"
+		data = (distribution, version)
+		return self.get_one(request, data)
 	def get_package_by_info(self, name, arch, version, release):
 		request = "SELECT * FROM yarus_package WHERE name=%s AND architecture=%s AND version=%s AND `release`=%s"
 		data = (name, arch, version, release)
 		return self.get_one(request, data)
-	def get_linkrcs_by_info(self, distribution, release):
-		request = "SELECT * FROM yarus_linkrcs WHERE `distribution`=%s AND `release`=%s"
-		data = (distribution, release)
+	def get_linkrcs_by_info(self, distribution, release, architecture):
+		request = "SELECT * FROM yarus_linkrcs WHERE `distribution`=%s AND `release`=%s AND `architecture`=%s"
+		data = (distribution, release, architecture)
 		return self.get_one(request, data)
 	def get_linkrcs_channels(self, channels_id):
 		t = str(tuple(channels_id)) if len(channels_id) > 1 else str(tuple(channels_id)).replace(',', '')
 		request = "SELECT * FROM yarus_channel WHERE `ID` IN " + t
 		return self.get_all(request)
 
-	def get_upgradables(self, client_id):
-		select = "yarus_upgradable.ID, yarus_upgradable.approved, yarus_package.name, yarus_package.release, yarus_package.version, yarus_package.summary, yarus_package.component"
-		request = "SELECT " + select + " FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s"
-		data = (client_id,)
+	def get_updated_package(self, update_id):
+		request = "SELECT * FROM yarus_upgraded WHERE update_id=%s"
+		data = (update_id,)
 		return self.get_all(request, data)
-	def get_approved_upgradables(self, client_id):
-		request = "SELECT * FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE yarus_upgradable.object_id=%s AND yarus_upgradable.approved=1"
-		data = (client_id,)
+
+	def check_unique_mail(self, info):
+		request = "SELECT * FROM yarus_user WHERE mail=%s"
+		data = (info,)
+		return self.get_one(request, data)
+	def check_unique_username(self, info):
+		request = "SELECT * FROM yarus_user WHERE name=%s"
+		data = (info,)
+		return self.get_one(request, data)
+
+	def get_approved_upgradables(self, object_id, object_type):
+		request = "SELECT * FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE yarus_upgradable.object_id=%s AND yarus_upgradable.approved=1 AND yarus_upgradable.object_type=%s"
+		data = (object_id,object_type)
 		return self.get_all(request, data)
+	def approve_upgradable(self, object_id, object_type, package_id):
+		request = "UPDATE yarus_upgradable SET approved=1 WHERE object_id=%s AND object_type=%s AND package_id=%s"
+		data = (object_id, object_type, package_id)
+		return self.execute(request, data)
 	def get_upgradable_by_info(self, obj, object_id, package_id):
-		request = "SELECT * FROM yarus_upgradable WHERE object=%s AND object_id=%s AND package_id=%s"
+		request = "SELECT * FROM yarus_upgradable WHERE object_type=%s AND object_id=%s AND package_id=%s"
 		data = (obj, object_id, package_id)
 		return self.get_one(request, data)
-	def remove_upgradables(self, client_id):
-		request = "DELETE FROM yarus_upgradable WHERE object_id=%s"
-		data = (client_id,)
+	def remove_upgradables(self, client_id, object_type):
+		request = "DELETE FROM yarus_upgradable WHERE object_id=%s AND object_type=%s"
+		data = (client_id,object_type)
 		return self.execute(request, data)

@@ -81,6 +81,9 @@ class YarusTasksManager():
 					app.log.logtask("The following error occured during the task :")
 					app.log.logtask(error)
 					app.log.logtask(traceback.format_exc())
+					app.log.log("The following error occured during the task " + task.ID)
+					app.log.log(error)
+					app.log.log(traceback.format_exc())
 					result = False
 				
 				# check the result

@@ -51,7 +51,7 @@
     <div class="col-md-2">      
         <label for="minute">Minute</label>
         <select class="form-control" id="minute" name="minute" multiple>
-            <option {% if data %}{% if data.scheduledtask.minute == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.minute == '*' %}selected{% endif %}{% else %}selected{% endif %} value="*">All</option>
             <option {% if data %}{% if data.scheduledtask.minute == '0' %}selected{% endif %}{% endif %}>0</option>
             <option {% if data %}{% if data.scheduledtask.minute == '1' %}selected{% endif %}{% endif %}>1</option>
             <option {% if data %}{% if data.scheduledtask.minute == '2' %}selected{% endif %}{% endif %}>2</option>
@@ -117,7 +117,7 @@
     <div class="col-md-2">      
           <label for="hour">Hour</label>
           <select class="form-control" id="hour" name="hour" multiple>
-            <option {% if data %}{% if data.scheduledtask.hour == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.hour == '*' %}selected{% endif %}{% else %}selected{% endif %} value="*">All</option>
             <option {% if data %}{% if data.scheduledtask.hour == '0' %}selected{% endif %}{% endif %}>0</option>
             <option {% if data %}{% if data.scheduledtask.hour == '1' %}selected{% endif %}{% endif %}>1</option>
             <option {% if data %}{% if data.scheduledtask.hour == '2' %}selected{% endif %}{% endif %}>2</option>
@@ -147,7 +147,7 @@
     <div class="col-md-2">      
         <label for="day_of_month">Day of month</label>
         <select class="form-control" id="day_of_month" name="day_of_month" multiple>
-            <option {% if data %}{% if data.scheduledtask.day_of_month == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_month == '*' %}selected{% endif %}{% else %}selected{% endif %} value="*">All</option>
             <option {% if data %}{% if data.scheduledtask.day_of_month == '1' %}selected{% endif %}{% endif %}>1</option>
             <option {% if data %}{% if data.scheduledtask.day_of_month == '2' %}selected{% endif %}{% endif %}>2</option>
             <option {% if data %}{% if data.scheduledtask.day_of_month == '3' %}selected{% endif %}{% endif %}>3</option>
@@ -184,38 +184,38 @@
     <div class="col-md-2">      
         <label for="month">Month</label>
         <select class="form-control" value="{% if data %}{{ data.scheduledtask.month }}{% endif %}" id="month" name="month" multiple>
-            <option {% if data %}{% if data.scheduledtask.month == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
-            <option {% if data %}{% if data.scheduledtask.month == '1' %}selected{% endif %}{% endif %}>1</option>
-            <option {% if data %}{% if data.scheduledtask.month == '2' %}selected{% endif %}{% endif %}>2</option>
-            <option {% if data %}{% if data.scheduledtask.month == '3' %}selected{% endif %}{% endif %}>3</option>
-            <option {% if data %}{% if data.scheduledtask.month == '4' %}selected{% endif %}{% endif %}>4</option>
-            <option {% if data %}{% if data.scheduledtask.month == '5' %}selected{% endif %}{% endif %}>5</option>
-            <option {% if data %}{% if data.scheduledtask.month == '6' %}selected{% endif %}{% endif %}>6</option>
-            <option {% if data %}{% if data.scheduledtask.month == '7' %}selected{% endif %}{% endif %}>7</option>
-            <option {% if data %}{% if data.scheduledtask.month == '8' %}selected{% endif %}{% endif %}>8</option>
-            <option {% if data %}{% if data.scheduledtask.month == '9' %}selected{% endif %}{% endif %}>9</option>
-            <option {% if data %}{% if data.scheduledtask.month == '10' %}selected{% endif %}{% endif %}>10</option>
-            <option {% if data %}{% if data.scheduledtask.month == '11' %}selected{% endif %}{% endif %}>11</option>
-            <option {% if data %}{% if data.scheduledtask.month == '12' %}selected{% endif %}{% endif %}>12</option>
+            <option {% if data %}{% if data.scheduledtask.month == '*' %}selected{% endif %}{% else %}selected{% endif %} value="*">All</option>
+            <option {% if data %}{% if data.scheduledtask.month == '1' %}selected{% endif %}{% endif %} value="1">January</option>
+            <option {% if data %}{% if data.scheduledtask.month == '2' %}selected{% endif %}{% endif %} value="2">February</option>
+            <option {% if data %}{% if data.scheduledtask.month == '3' %}selected{% endif %}{% endif %} value="3">March</option>
+            <option {% if data %}{% if data.scheduledtask.month == '4' %}selected{% endif %}{% endif %} value="4">April</option>
+            <option {% if data %}{% if data.scheduledtask.month == '5' %}selected{% endif %}{% endif %} value="5">May</option>
+            <option {% if data %}{% if data.scheduledtask.month == '6' %}selected{% endif %}{% endif %} value="6">June</option>
+            <option {% if data %}{% if data.scheduledtask.month == '7' %}selected{% endif %}{% endif %} value="7">July</option>
+            <option {% if data %}{% if data.scheduledtask.month == '8' %}selected{% endif %}{% endif %} value="8">August</option>
+            <option {% if data %}{% if data.scheduledtask.month == '9' %}selected{% endif %}{% endif %} value="9">September</option>
+            <option {% if data %}{% if data.scheduledtask.month == '10' %}selected{% endif %}{% endif %} value="10">October</option>
+            <option {% if data %}{% if data.scheduledtask.month == '11' %}selected{% endif %}{% endif %} value="11">November</option>
+            <option {% if data %}{% if data.scheduledtask.month == '12' %}selected{% endif %}{% endif %} value="12">December</option>
         </select>
     </div>
     <div class="col-md-2">      
         <label for="day_of_week">Day of week</label>
         <select class="form-control" value="{% if data %}{{ data.scheduledtask.day_of_week }}{% endif %}" id="day_of_week" name="day_of_week" multiple>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '1' %}selected{% endif %}{% endif %}>1</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '2' %}selected{% endif %}{% endif %}>2</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '3' %}selected{% endif %}{% endif %}>3</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '4' %}selected{% endif %}{% endif %}>4</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '5' %}selected{% endif %}{% endif %}>5</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '6' %}selected{% endif %}{% endif %}>6</option>
-            <option {% if data %}{% if data.scheduledtask.day_of_week == '7' %}selected{% endif %}{% endif %}>7</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '*' %}selected{% endif %}{% else %}selected{% endif %} value="*">All</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '1' %}selected{% endif %}{% endif %} value="1">Monday</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '2' %}selected{% endif %}{% endif %} value="2">Tuesday</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '3' %}selected{% endif %}{% endif %} value="3">Wednesday</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '4' %}selected{% endif %}{% endif %} value="4">Thursday</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '5' %}selected{% endif %}{% endif %} value="5">Friday</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '6' %}selected{% endif %}{% endif %} value="6">Saturday</option>
+            <option {% if data %}{% if data.scheduledtask.day_of_week == '7' %}selected{% endif %}{% endif %} value="7">Sunday</option>
         </select>
     </div>
     <div class="col-md-2">      
         <label for="day_place">Day of the week in the month</label>
         <select class="form-control" value="" id="day_place" name="day_place" multiple>
-            <option {% if data %}{% if data.scheduledtask.day_place == '*' %}selected{% endif %}{% else %}selected{% endif %}>*</option>
+            <option {% if data %}{% if data.scheduledtask.day_place == '*' %}selected{% endif %}{% else %}selected{% endif %} value="*">All</option>
             <option {% if data %}{% if data.scheduledtask.day_place == 'first' %}selected{% endif %}{% endif %}>first</option>
             <option {% if data %}{% if data.scheduledtask.day_place == 'second' %}selected{% endif %}{% endif %}>second</option>
             <option {% if data %}{% if data.scheduledtask.day_place == 'third' %}selected{% endif %}{% endif %}>third</option>

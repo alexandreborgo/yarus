@@ -8,6 +8,7 @@ from yarus.common.daterepository import Daterepository
 from yarus.common.channel import Channel
 from yarus.common.user import User
 from yarus.common.link import Link
+from yarus.common.update import Update
 from yarus.common.client import Client
 from yarus.common.bind import Bind
 from yarus.common.linkrcs import Linkrcs
@@ -20,8 +21,12 @@ from yarus.common.package import Package
 from yarus.common.exceptions import *
 
 def getnewid():
-	ID = ''.join(random.choices(string.ascii_lowercase + string.digits, k=32))
+	ID = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=32))
 	return ID
+	
+def getnewpassword():
+	passwd = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits + string.punctuation, k=10))
+	return passwd
 
 def connectuser(app, user):
 	if user.name and user.password:
@@ -56,6 +61,8 @@ def getobject(app, object_name, object_id):
 			return User().load(app.database, object_id)
 		elif object_name == 'linkrcs':
 			return Linkrcs().load(app.database, object_id)
+		elif object_name == 'update':
+			return Update().load(app.database, object_id)
 
 	except InvalidValueException as error:
 		app.log.debug(str(error))
@@ -64,15 +71,7 @@ def getobject(app, object_name, object_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-def getobjecttasks(app, object_id):
-	try:
-		return app.database.get_object_tasks(object_id)
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
+
 def getlinkrcschannels(app, channels_id):
 	try:
 		return app.database.get_linkrcs_channels(channels_id)
@@ -84,13 +83,14 @@ def getlinkrcschannels(app, channels_id):
 		return None
 def getobjectscheduled(app, object_id):
 	try:
-		return app.database.get_object_scheduled(object_id)
+		return app.database
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
+
 def getpackage(app, repository, comp, name, version, arch, rel):
 	try:
 		return Package().load_package(app.database, repository, comp, name, version, arch, rel)
@@ -109,9 +109,18 @@ def getpackagebyinfo(app, name, arch, version, release):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-def getlinkrcsbyinfo(app, distribution, release):
+def getlinkrcsbyinfo(app, distribution, release, architecture):
 	try:
-		return Linkrcs().load_linkrcs_by_info(app.database, distribution, release)
+		return Linkrcs().load_linkrcs_by_info(app.database, distribution, release, architecture)
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+def getchannelbyinfo(app, distribution, version):
+	try:
+		return Channel().load_channel_by_info(app.database, distribution, version)
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
@@ -173,24 +182,6 @@ def getbind(app, client_id, repo_id, channel_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-def getbinds(app, client_id):
-	try:
-		bindedr = app.database.get_binded_repository(client_id)
-		bindedc = app.database.get_binded_channel(client_id)
-		linked = []
-		if bindedc:
-			for item in bindedc:
-				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'c'})
-		if bindedr:
-			for item in bindedr:
-				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'r'})
-		return linked
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 
 def getchannelbyname(app, name):
 	try:
@@ -230,16 +221,6 @@ def getupgradable(app, upgradable_id):
 		app.log.debug(str(error))
 		return None
 
-
-def removeupgradables(app, client_id):
-	try:
-		app.database.remove_upgradables(client_id)
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
 def getupgradablebyinfo(app, obj, object_id, package_id):
 	try:
 		return Upgradable().load_upgradable_by_info(app.database, obj, object_id, package_id)
@@ -249,27 +230,37 @@ def getupgradablebyinfo(app, obj, object_id, package_id):
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None
-def getupgradables(app, client_id):
-	try:
-		return app.database.get_upgradables(client_id)
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-def getapprovedupgradables(app, client_id):
-	try:
-		return app.database.get_approved_upgradables(client_id)
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
-	except InvalidValueException as error:
-		app.log.debug(str(error))
-		return None
+
 def getcorrespondingrepositories(app, distribution, release):
 	try:
 		return app.database.get_corresponding_repositories(distribution, release)
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+	except InvalidValueException as error:
+		app.log.debug(str(error))
+		return None
+
+
+
+
+
+
+
+# keep
+
+def getbinds(app, client_id):
+	try:
+		bindedr = app.database.get_binded_repository(client_id)
+		bindedc = app.database.get_binded_channel(client_id)
+		linked = []
+		if bindedc:
+			for item in bindedc:
+				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'c'})
+		if bindedr:
+			for item in bindedr:
+				linked.append({'ID': item['ID'], 'name': item['name'], 'description': item['description'], 'type': 'r'})
+		return linked
 	except InvalidValueException as error:
 		app.log.debug(str(error))
 		return None

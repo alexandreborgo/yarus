@@ -36,6 +36,13 @@
                   Must not be empty.
               </div>
             </div>
+            <div class="form-group">
+              <label for="architecture">Architecture</label>
+              <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.linkrcs.architecture }}{% endif %}" id="architecture" name="architecture" placeholder="exemple: i386, x86_64, amd64...">
+              <div class="invalid-feedback">
+                  Must not be empty.
+              </div>
+            </div>
             <div class="form-group">      
               <label for="channels">Linked channels</label>
               <select class="form-control" id="channels" name="channels" multiple>

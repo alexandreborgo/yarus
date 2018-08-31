@@ -57,6 +57,11 @@ class YarusObject:
 			self.name = name
 		else:
 			raise(InvalidValueException("The name is missing or invalid."))
+	def setObjectName(self, name):
+		if check_name(name):
+			self.object_name = name
+		else:
+			raise(InvalidValueException("The name is missing or invalid."))
 	def setDescription(self, description):
 		if check_description(description):
 			self.description = description
@@ -123,4 +128,19 @@ class YarusObject:
 			self.channels = channels
 		else:
 			raise(InvalidValueException("The channels are missing or invalid."))
+	def setObjectType(self, object_type):
+		if check_objecttype(object_type):
+			self.object_type = object_type
+		else:
+			raise(InvalidValueException("The object type is missing or invalid."))
+	def setArchitectures(self, architectures):
+		if check_architectures(architectures):
+			self.architectures = architectures
+		else:
+			raise(InvalidValueException("The architectures is missing or invalid."))
+	def setArchitecture(self, architecture):
+		if check_architectures(architecture):
+			self.architecture = architecture
+		else:
+			raise(InvalidValueException("The architecture is missing or invalid."))
 	

@@ -7,8 +7,8 @@
 {% block content %}
 
 {% if data %}
-{% if data.channel.ID %}
-<a href="{{ url_for('see_object', object_name='client', object_id=data.channel.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
+{% if data.client.ID %}
+<a href="{{ url_for('see_object', object_name='client', object_id=data.client.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the system view</a>.<br/><br />
 {% else %}
 <a href="{{ url_for('list_object', object_name='client') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the systems list</a>.<br/><br />
 {% endif %}
@@ -60,6 +60,13 @@
   <div class="form-group">
     <label for="version">Version</label>
     <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.version }}{% endif %}" id="version" name="version" placeholder="7.4">
+    <div class="invalid-feedback">
+        Must not be empty.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="architecture">Architecture</label>
+    <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.client.architecture }}{% endif %}" id="architecture" name="architecture" placeholder="exemple: i386, x86_64, amd64...">
     <div class="invalid-feedback">
         Must not be empty.
     </div>

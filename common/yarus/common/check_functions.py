@@ -71,6 +71,15 @@ def check_status(status):
     else:
         return False
 
+def check_objecttype(object_type):
+    if object_type:
+        if object_type == 'repository' or object_type == 'task' or object_type == 'client' or object_type == 'group' or object_type == 'scheduled' or object_type == 'channel':
+            return True
+        else:
+            return False
+    else:
+        return False
+
 def check_action(action):
     if action:
         if action in TASK_ACTIONS:

@@ -21,7 +21,9 @@ Task Manager
 Plateformes supportées
 ----------------------
 
-YARUS peut être installé sur n'importe quel système qui supporte Python 3.6 et supérieur ainsi que ses dépendances : Apache HTTP Server, MySQL Community Server, Ansible, Rsync et systemd.
+YARUS peut être installé sur n'importe quel système qui supporte Python 3.6 et supérieur
+ainsi que les logiciels nécéssaires à son fonctionnement : Apache HTTP Server, MySQL 
+Community Server, Ansible, Rsync et systemd.
 
 YARUS a été développé sur CentOS 7.5 et a été testé avec succès sur CentOS 7.5.
 
@@ -31,7 +33,8 @@ Prérequis
 Partitionnement du système
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-YARUS s'intallera dans le dossier ``/opt/yarus``. C'est dans des sous répertoires de cet emplacement que les dépôts seront clonés et que la base de données sera sauvegardée.
+YARUS s'intallera dans le dossier ``/opt/yarus``. C'est dans des sous répertoires de cet emplacement 
+que les dépôts seront clonés et que la base de données sera sauvegardée.
 
 Quelques exemples sur l'espace nécéssaire pour la copie de dépôts YUM et APT :
 
@@ -48,16 +51,18 @@ Ports nécéssaires
 
 Par défaut les ports utilisés par YARUS Engine et YARUS Webui sont :
 
+* 80 Apache HTTP pour servir les dépôts
 * 443 Apache HTTP Server pour la Webui
 * 6128 Apache HTTP Server pour l'Engine
 
 Il est donc requis d'ouvrir les ports du système. Par exemple pour ``firewalld``::
     
+    $ sudo firewall-cmd --permanent --add-port=80/tcp
     $ sudo firewall-cmd --permanent --add-port=443/tcp
     $ sudo firewall-cmd --permanent --add-port=6128/tcp
     $ sudo firewall-cmd --reload
 
-Et de désactiver SELinux ::
+Il n'y a actuellement pas de politique pour SELinux, donc ce dernier doit être désactiver pour le bon fonctionnement des services ::
 
     $ sudo setenforce 0
 
@@ -67,4 +72,4 @@ Instructions
 .. toctree::
     :maxdepth: 2
 
-    instructionscr7
+    centos7

@@ -39,6 +39,8 @@ if args.scheduled_task_id:
     task.setAction(scheduled_task.action)
     task.setObjectID(scheduled_task.object_id)
     task.setManagerID(scheduled_task.manager_id)
+    task.setObjectType(scheduled_task.object_type)
+    task.setObjectName(scheduled_task.object_name)
 
     # push into the database
     task.insert(app.database)

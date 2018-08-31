@@ -1,41 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}Channels{% endblock %}
-{% block pagetitle %}<i class="fas fa-cubes"></i> Channels{% endblock %}
+{% block title %}Users{% endblock %}
+{% block pagetitle %}<i class="fas fa-users"></i> Users{% endblock %}
 
 {% block content %}
 
 <div class="panel panel-default">
   <div class="panel-heading">
-    List of channels
+    List of users
     <div class="pull-right">
         <div class="btn-group">
-            <a href="{{ url_for('add_object', object_name='channel') }}" type="button" class="btn btn-default btn-xs">
-                Add a channel
+            <a href="{{ url_for('add_object', object_name='user') }}" type="button" class="btn btn-default btn-xs">
+                Add a user
             </a>
         </div>
     </div>
   </div>
   <div class="panel-body">
     <div class="row" style="padding:15px;">
-      <table id="channels-table">
+
+      <table id="repositories-table">
           <thead>
             <tr>
               <th></th>
               <th>ID</th>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Last sync</th>
+              <th>Username</th>
+              <th>Mail address</th>
+              <th>Role</th>
             </tr>
           </thead>
           <tbody>
-            {% for channel in result.data %}
+            {% for user in result.data %}
               <tr>
                 <td></td>
-                <td>{{ channel.ID }}</td>
-                <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='channel', object_id=channel.ID) }}">{{ channel.name }}</a></td>
-                <td>{{ channel.description }}</td>
-                <td>{{ channel.last_sync }}</td>
+                <td>{{ user.ID }}</td>
+                <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='user', object_id=user.ID) }}">{{ user.name }}</a></td>
+                <td>{{ user.mail }}</td>
+                <td>
+                  {% if user.role_id == 1 %}
+                    Admin
+                  {% elif user.role_id == 2 %}
+                    Repositories manager
+                  {% elif user.role_id == 3 %}
+                    Systems manager
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
@@ -43,12 +52,13 @@
       </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block pagejs %}
 <script>
   $(document).ready( function () {
-    var table = $('#channels-table').DataTable({
+    var table = $('#repositories-table').DataTable({
       dom: 'Bfrtip',
       "iDisplayLength": 25,
       buttons: [  
@@ -65,7 +75,7 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('delete_object', object_name='channel', return_object='channel', return_id='none', objects_id='') }}" + id
+            url = "{{ url_for('delete_object', object_name='user', return_object='user', return_id='none', objects_id='') }}" + id
             $(location).attr('href', url);
           }
         },
@@ -81,7 +91,6 @@
       },
       order: [[ 1, 'asc' ]]
     });
-
     table.column( 1 ).visible( false );
     table.on( 'select deselect', function () {
         var selectedRows = table.rows( { selected: true } ).count();

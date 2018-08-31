@@ -21,7 +21,9 @@ class Scheduled(YarusObject):
         self.day_of_week = ""
         self.day_place = ""
         self.object_id = ""
-
+        self.object_type = ""
+        self.object_name = ""
+        
     def setHour(self, info):
         if info:
             if re.match("^([0-9]*)|([*])$", info):

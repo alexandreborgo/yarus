@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}User{% endblock %}
+{% block pagetitle %}<i class="fas fa-users"></i> User{% endblock %}
+
+{% block content %}
+
+{% if result.data %}
+
+<a href="{{ url_for('list_object', object_name='user') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the users list</a><br/>
+<a href="{{ url_for('see_object', object_name='user', object_id=result.data.ID) }}"><i class="fas fa-sync-alt"></i> Actualize the page</a>.<br/><br />
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    User's information
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+  <table class="table">
+      <tr>
+        <td style="font-weight: bold;">ID</td>
+        <td>{{ result.data.ID }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Name</td>
+        <td>{{ result.data.name }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Mail address</td>
+        <td>{{ result.data.mail }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Role</td>
+        <td>
+            {% if result.data.role_id == "1" %}
+              Admin
+            {% elif result.data.role_id == "2" %}
+              Repositories manager
+            {% elif result.data.role_id == "3" %}
+              Systems manager
+            {% else %}
+              {{ result.data.role_id }}
+            {% endif %}
+          </td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Creation date</td>
+        <td>{{ result.data.creation_date }}</td>
+      </tr>
+  </table>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+      Actions / Tasks / Scheduled tasks
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">      
+        Action:
+        <a href="{{ url_for('edit_object', object_name='user', object_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
+            Edit
+        </a>
+        <a type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#modaldelete">
+            Delete
+        </a>  
+        <div class="modal fade" id="modaldelete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title" id="myModalLabel">Confirm to delete the user</h4>
+                  </div>
+                  <div class="modal-body">
+                      Are you sure you want to delete the user {{ result.data.name }} ?
+                  </div>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <a href="{{ url_for('delete_object', object_name='user', return_object='user', return_id='none', objects_id=result.data.ID) }}" class="btn btn-primary">Delete</a>
+                   </div>
+              </div>
+          </div>
+        </div>
+
+        <a type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#modalreset">
+            Reset password
+        </a>  
+        <div class="modal fade" id="modalreset" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title" id="myModalLabel">Confirm to reset the user's password</h4>
+                  </div>
+                  <div class="modal-body">
+                    A new password will be generated and sent to the user's email address.
+                  </div>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <a href="{{ url_for('reset_password', user_id=result.data.ID) }}" class="btn btn-primary">Reset</a>
+                   </div>
+              </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block pagejs %}
+{% endblock %}

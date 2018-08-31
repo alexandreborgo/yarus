@@ -19,7 +19,7 @@ class User(YarusObject):
 
 	def setToken(self, token):
 		if token:
-			if re.match("^[a-z0-9]*$", token):
+			if re.match("^[a-zA-Z0-9]*$", token):
 				self.token = token
 				self.token_expire = int(time.time()+10800)
 				return True
@@ -40,15 +40,9 @@ class User(YarusObject):
 
 	def setRoleID(self, role_id):
 		if role_id:
-			if role_id == 'admin' or role_id == 'manager' or role_id == 'client':
-				self.role_id = 1
-				return 0
-			if role_id == 'manager' or role_id == 'client':
-				self.role_id = 2
-				return 0
-			if role_id == 'client':
-				self.role_id = 3
-				return 0
+			if role_id == '1' or role_id == '2' or role_id == '3':
+				self.role_id = role_id
+				return True
 			else:
 				raise(InvalidValueException("The given role-id is invalid.")) # invalid
 		else:

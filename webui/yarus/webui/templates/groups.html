@@ -26,7 +26,6 @@
             <th>Name</th>
             <th>Description</th>
             <th>Creation date</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -34,12 +33,9 @@
             <tr>
               <td></td>
               <td>{{ group.ID }}</td>
-              <td>{{ group.name }}</td>
-              <td>{{ group.description }}</td>
+              <td><i class="fas fa-link"></i> <a href="{{ url_for('see_object', object_name='group', object_id=group.ID) }}">{{ group.name }}</a></td>
+                <td>{{ group.description }}</td>
               <td>{{ group.creation_date }}</td>
-              <td>
-                <a href="{{ url_for('see_object', object_name='group', object_id=group.ID) }}"><span class="fas fa-eye actions"></span></a>
-              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -62,6 +58,7 @@
         'selectNone',
         {
           text: 'Delete',
+          enabled: false,
           action: function () {
             var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -88,6 +85,10 @@
     });
 
     table.column( 1 ).visible( false );
+    table.on( 'select deselect', function () {
+        var selectedRows = table.rows( { selected: true } ).count();
+        table.button( 2 ).enable( selectedRows > 0 );
+    } );
 
   });
 </script>

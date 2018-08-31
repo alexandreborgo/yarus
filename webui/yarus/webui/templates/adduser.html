@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}User{% endblock %}
+{% block pagetitle %}<i class="fas fa-users"></i> User{% endblock %}
+
+
+{% block content %}
+
+{% if data %}
+{% if data.nuser.ID %}
+<a href="{{ url_for('see_object', object_name='user', object_id=data.nuser.ID) }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the user view</a>.<br/><br />
+{% else %}
+<a href="{{ url_for('list_object', object_name='user') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the users list</a>.<br/><br />
+{% endif %}
+{% else %}
+<a href="{{ url_for('list_object', object_name='user') }}"><i class="fas fa-long-arrow-alt-left"></i> Go back to the users list</a>.<br/><br />
+{% endif %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Add a user
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+        A password will be generated and sent to the user's email address. The user will then be able to change the password in his setting after login to YARUS.<br /><br />
+      <form method="post" action="#">
+        <div class="form-group">
+            <label for="name">Username</label>
+            <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.nuser.name }}{% endif %}" id="name" name="name" placeholder="exemples: CentOS 7.5 OS, Ubuntu Bionic Base...">
+            <div class="invalid-feedback">Must not be empty.</div>
+        </div>
+        <div class="form-group" id="mail">
+            <label for="mail">Email address</label>
+            <input type="text" class="form-control {% if invalid %} is-invalid {% endif %}" value="{% if data %}{{ data.nuser.mail }}{% endif %}" id="mail" name="mail" placeholder="exemples: alexandre.borgo@ratp.fr...">
+            <div class="invalid-feedback">Must not be empty.</div>
+        </div>
+        <div class="form-group">
+            <label for="role_id">Role</label>
+            <select class="form-control" id="role_id" name="role_id">
+                <option {% if data %}{% if data.nuser.role_id == '1' %}selected{% endif %}{% endif %} value="1" >Administrator</option>
+                <option {% if data %}{% if data.nuser.role_id == '2' %}selected{% endif %}{% endif %} value="2" >Repository manager</option>
+                <option {% if data %}{% if data.nuser.role_id == '3' %}selected{% endif %}{% endif %} value="3" >Systems manager</option>
+            </select>
+            <div class="invalid-feedback">
+                Must not be empty.
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>        
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block pagejs %}
+{% endblock %}

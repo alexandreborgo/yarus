@@ -14,7 +14,9 @@ class Task(YarusObject):
 		self.manager_id = ""
 		self.creation_date = 0
 		self.end_time = 0
-
+		self.object_type = ""
+		self.object_name = ""
+		
 	"""
 		Setters
 	"""

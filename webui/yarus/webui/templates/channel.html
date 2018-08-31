@@ -31,6 +31,14 @@
         <td>{{ result.data.description }}</td>
       </tr>
       <tr>
+        <td style="font-weight: bold;">Distribution</td>
+        <td>{{ result.data.distribution }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Release</td>
+        <td>{{ result.data.release }}</td>
+      </tr>
+      <tr>
         <td style="font-weight: bold;">Creation date</td>
         <td>{{ result.data.creation_date }}</td>
       </tr>
@@ -57,9 +65,26 @@
         <a href="{{ url_for('edit_object', object_name='channel', object_id=result.data.ID) }}" type="button" class="btn btn-default btn-xs">
             Edit
         </a>
-        <a href="{{ url_for('delete_object', object_name='channel', return_object='channel', return_id='none', objects_id='') }}" type="button" class="btn btn-default btn-xs">
+        <a type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#modaldelete">
             Delete
-        </a>
+        </a>  
+        <div class="modal fade" id="modaldelete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title" id="myModalLabel">Confirm to delete the channel</h4>
+                  </div>
+                  <div class="modal-body">
+                      Are you sure you want to delete the channel {{ result.data.name }} ?
+                  </div>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <a href="{{ url_for('delete_object', object_name='channel', return_object='channel', return_id='none', objects_id=result.data.ID) }}" class="btn btn-primary">Delete</a>
+                   </div>
+              </div>
+          </div>
+        </div>
         <br />
         <br />
         Task: 
@@ -266,6 +291,7 @@
         'selectAll',
         {
           text: 'Add',
+          enabled: false,
           action: function () {
             var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -291,6 +317,10 @@
       order: [[ 1, 'asc' ]]
     });
     table.column( 1 ).visible( false );
+    table.on( 'select deselect', function () {
+        var selectedRows = table.rows( { selected: true } ).count();
+        table.button( 1 ).enable( selectedRows > 0 );
+    } );
     
     var table2 = $('#repositoriesin-table').DataTable({
       dom: 'Bfrtip',
@@ -299,6 +329,7 @@
         'selectAll',
         {
           text: 'Remove',
+          enabled: false,
           action: function () {
             var rows = $.map(table2.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -324,6 +355,10 @@
       order: [[ 1, 'asc' ]]
     });
     table2.column( 1 ).visible( false );
+    table2.on( 'select deselect', function () {
+        var selectedRows = table2.rows( { selected: true } ).count();
+        table2.button( 1 ).enable( selectedRows > 0 );
+    } );
 
     var table4 = $('#tasks-table').DataTable({
       dom: 'Bfrtip',
@@ -332,6 +367,7 @@
         'selectAll',
         {
           text: 'Delete',
+          enabled: false,
           action: function () {
             var rows = $.map(table4.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -357,6 +393,10 @@
       order: [[ 1, 'asc' ]]
     });
     table4.column( 1 ).visible( false );
+    table4.on( 'select deselect', function () {
+        var selectedRows = table4.rows( { selected: true } ).count();
+        table4.button( 1 ).enable( selectedRows > 0 );
+    } );
 
     var table6 = $('#scheduledtasks-table').DataTable({
       dom: 'Bfrtip',
@@ -365,6 +405,7 @@
         'selectAll',
         {
           text: 'Delete',
+          enabled: false,
           action: function () {
             var rows = $.map(table6.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -390,6 +431,10 @@
       order: [[ 1, 'asc' ]]
     });
     table6.column( 1 ).visible( false );
+    table6.on( 'select deselect', function () {
+        var selectedRows = table6.rows( { selected: true } ).count();
+        table6.button( 1 ).enable( selectedRows > 0 );
+    } );
   });
 </script>
 {% endif %}

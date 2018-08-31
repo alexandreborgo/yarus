@@ -26,6 +26,7 @@
               <th>ID</th>
               <th>Distribution</th>
               <th>Release</th>
+              <th>Architecture</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -36,6 +37,7 @@
                 <td>{{ linkrcs.ID }}</td>
                 <td>{{ linkrcs.distribution }}</a></td>
                 <td>{{ linkrcs.release }}</td>
+                <td>{{ linkrcs.architecture }}</td>
                 <td><a href="{{ url_for('see_object', object_name='linkrcs', object_id=linkrcs.ID) }}"><i class="fas fa-eye"></i></a></td>
               </tr>
             {% endfor %}
@@ -58,6 +60,7 @@
         'selectNone',
         {
           text: 'Delete',
+          enabled: false,
           action: function () {
             var rows = $.map(table.rows( { selected: true } ).data(), function (item) {
                 return item[1]
@@ -83,6 +86,10 @@
       order: [[ 1, 'asc' ]]
     });
     table.column( 1 ).visible( false );
+    table.on( 'select deselect', function () {
+        var selectedRows = table.rows( { selected: true } ).count();
+        table.button( 2 ).enable( selectedRows > 0 );
+    } );
   } );
 </script>
 {% endblock %}
