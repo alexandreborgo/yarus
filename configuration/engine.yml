@@ -1,15 +1,15 @@
 database:
   host: localhost
   user: yarus
-  password: fN8enm*5s~4}dPDK
+  password: 
   database: yarus
 
 proxy:
-  host: proxy.reseau.ratp
-  port: 80
+  host: 
+  port: 
   username: 
   password: 
 
 engine:
-  address: 155.6.102.161
+  address: localhost
   port: 6821

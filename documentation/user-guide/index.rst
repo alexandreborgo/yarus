@@ -9,6 +9,7 @@ Les pages suivantes expliquent comment se servir de YARUS via sa Webui.
     repositories/index
     channels/index
     systems/index
+    rules/index
     groups/index
     tasks/index
     scheduler/index

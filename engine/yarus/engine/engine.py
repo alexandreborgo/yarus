@@ -284,15 +284,15 @@ def create_object(object_name):
 
                 # check if we can reach the remote url
                 try:
-                    if APP_ENGINE.config.px_host != "" and APP_ENGINE.config.px_host != "":
+                    if APP_ENGINE.config.px_host != None and APP_ENGINE.config.px_port != None:
                         proxies = {
                             "http"  : str(APP_ENGINE.config.px_host) + ":" + str(APP_ENGINE.config.px_port)
                         }
+                        if requests.get(new_object.URL, proxies=proxies).status_code != 200:
+                            return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})
                     else:
-                        proxies = None
-
-                    if requests.get(new_object.URL, proxies=proxies).status_code != 200:
-                        return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})
+                        if requests.get(new_object.URL).status_code != 200:
+                            return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})                    
 
                 except requests.ConnectionError as error:
                     return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + ". " + str(error)})
@@ -454,7 +454,7 @@ def create_object(object_name):
 
         # new user
         elif object_name == 'user':
-            msg = MIMEText("An administrator created an account on YARUS for you. You login information are the following: \n Username: " + new_object.name + "\n Password: " + password + "\n You can connect to YARUS from this address: https://" + SERVER + "/")
+            msg = MIMEText("An administrator created an account on YARUS for you. You login information are the following: \n Username: " + new_object.name + "\n Password: " + password + "\n You can connect to YARUS from this address: https://" + request.remote_addr + "/")
             msg['Subject'] = "Your YARUS account information"
             adrs = "yarus@yarus.net"
             msg['From'] = adrs
@@ -506,15 +506,15 @@ def update_object(object_name, object_id):
 
                 # check if we can reach the remote url
                 try:
-                    if APP_ENGINE.config.px_host != "":
+                    if APP_ENGINE.config.px_host != None and APP_ENGINE.config.px_port != None:
                         proxies = {
-                            "http"  : APP_ENGINE.config.px_host + ":" + str(APP_ENGINE.config.px_port)
+                            "http"  : str(APP_ENGINE.config.px_host) + ":" + str(APP_ENGINE.config.px_port)
                         }
+                        if requests.get(new_object.URL, proxies=proxies).status_code != 200:
+                            return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})
                     else:
-                        proxies = None
-
-                    if requests.get(object_inst.URL, proxies=proxies).status_code != 200:
-                        return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + object_inst.URL + "."})
+                        if requests.get(new_object.URL).status_code != 200:
+                            return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + new_object.URL + "."})
 
                 except requests.ConnectionError as error:
                     return jsonify({"status": 1, "message": "YARSU can't connect to the remote URL " + object_inst.URL + ". " + str(error)})
