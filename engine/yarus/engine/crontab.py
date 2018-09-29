@@ -37,13 +37,13 @@ class Crontab():
             if cron['day_place'] == 'first':
                 cronline += "[ `date +\%d` -le 7 ] && "
             elif cron['day_place'] == 'second':
-                cronline += "[ `date +\%d` -gt 7 ] && [ `date +\%d` -le 14 ] && "
+                cronline += "[ `date +\%d` -ge 8 ] && [ `date +\%d` -le 14 ] && "
             elif cron['day_place'] == 'third':
-                cronline += "[ `date +\%d` -gt 15 ] && [ `date +\%d` -le 21 ] && "
+                cronline += "[ `date +\%d` -ge 15 ] && [ `date +\%d` -le 21 ] && "
             elif cron['day_place'] == 'fourth':
-                cronline += "[ `date +\%d` -gt 22 ] && [ `date +\%d` -le 28 ] && "
+                cronline += "[ `date +\%d` -ge 22 ] && [ `date +\%d` -le 28 ] && "
             elif cron['day_place'] == 'fifth':
-                cronline += "[ `date +\%d` -gt 29 ] && "
+                cronline += "[ `date +\%d` -ge 29 ] && "
 
             # command
             cronline += self.scheduler_script + " --scheduled-task-id " + cron['ID'] + " >> /opt/yarus/log/scheduler.log"
