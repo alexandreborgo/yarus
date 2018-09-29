@@ -19,4 +19,5 @@ tasksmanager/yarus/__pycache__/*
 tasksmanager/yarus/common/__pycache__/*
 documentation/_build/*
 _build/*
-.vscode/
+.vscode/*
+.vs/*
