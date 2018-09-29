@@ -1028,9 +1028,14 @@ def disapproveupgradable(object_type, object_id):
     finally:
         APP_ENGINE.database.close()
 
-@APP.route('/api/register/<string:name>/<string:ip>/<string:distribution>/<string:release>/<string:architecture>/<string:ctype>/<string:manager>/<int:force>', methods=['GET'])
-def register(name, ip, distribution, release, architecture, ctype, manager, force):
+@APP.route('/api/register/<string:group_id>/<string:name>/<string:ip>/<string:distribution>/<string:release>/<string:architecture>/<string:ctype>', methods=['GET'])
+def register(group_id, name, ip, distribution, release, architecture, ctype):
     try:
+        # get the group
+        group = getobject(APP_ENGINE, "group", group_id)
+        if not group:
+            return jsonify({"status": 103, "message": "No group found with the given ID (" + group_id + ")."})
+        
         new_object = Client()
         new_object.setID(getnewid())
         new_object.setIP(ip)
@@ -1040,25 +1045,47 @@ def register(name, ip, distribution, release, architecture, ctype, manager, forc
         new_object.setType(ctype)
         new_object.setDistribution(distribution)
         new_object.setArchitecture(architecture)
-        new_object.setManagerID(1)
+        new_object.setManagerID(group.manager_id)
         new_object.setCreationDate()
 
         # check if the client already exist in the database
         old_client = getclientbyip(APP_ENGINE, new_object.IP)
-        if old_client and not force:
-            return jsonify({"status": 1, "message": "System with the IP " + new_object.IP + " already exists in the database use -f to force (dekete the old and insert the new)."})
-
-        elif old_client and force:
+        if old_client:
             old_client.delete(APP_ENGINE.database)
 
         # push the new object to the database
         new_object.insert(APP_ENGINE.database)
 
-        # create link
+        # add the client to the group
+        # create the bind
+        new_grouped = Grouped(new_object.ID, group.ID)
+        # push the bind to the database
+        new_grouped.insert(APP_ENGINE.database)
 
+        # autolink
+        # check if there is a corresponding configuration
+        linkrcs = getlinkrcsbyinfo(APP_ENGINE, new_object.distribution, new_object.version, new_object.architecture)
+        
+        if not linkrcs:
+            return jsonify({"status": 0, "message": "The " + name + " was successfully created but wasn't link with any channel (no configuration find)."})            
 
+        channels = getlinkrcschannels(APP_ENGINE, linkrcs.channels.split(';'))
         
-        
+        if not channels:
+            return jsonify({"status": 0, "message": "The " + name + " was successfully created but wasn't link with any channel (no channel in the configuration)."})
+
+        linked_channels = ""
+        for channel_info in channels:
+            # create the bind
+            new_bind = Bind(new_object.ID, channel_id=channel_info['ID'])
+            # push the bind to the database
+            new_bind.insert(APP_ENGINE.database)
+            linked_channels += channel_info['name'] + ", "
+
+        if not linked_channels:
+            return jsonify({"status": 0, "message": "The " + name + " was successfully created but wasn't link with any channel."})
+        return jsonify({"status": 0, "message": "The " + name + " was successfully created and is linked to the following channel: " + linked_channels})
+
     except InvalidValueException as error:
         APP_ENGINE.log.debug(str(error))
         return jsonify({"status": 100, "message": str(error)})
