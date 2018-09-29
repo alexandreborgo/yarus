@@ -33,13 +33,13 @@ def getDir_rsync(app, url, local):
 		rsync_cmd = "rsync -zvrtL " + new_url + " " + local
 		
 		# if proxy set in the config file
-		if app.config.px_host != "":
+		if app.config.px_host != "" and app.config.px_host != None:
 			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
+			# execute the command with the proxy
+			process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env, bufsize=1, universal_newlines=True)
 		else:
-			env = None
-
-		# execute the command
-		process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env, bufsize=1, universal_newlines=True)
+			# execute the command without proxy
+			process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1, universal_newlines=True)
 
 		# log the output
 		for line in process.stdout:
@@ -70,13 +70,13 @@ def getFile_rsync(app, url, local, file):
 		rsync_cmd = "rsync -zvrtL " + new_url + file + " " + local
 		
 		# if proxy set in the config file
-		if app.config.px_host != "":
+		if app.config.px_host != "" and app.config.px_host != None:
 			env = {'RSYNC_PROXY': app.config.px_host + ":" + str(app.config.px_port)}
+			# execute the command with proxy
+			process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env, bufsize=1, universal_newlines=True)
 		else:
-			env = None
-			
-		# execute the command
-		process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env, bufsize=1, universal_newlines=True)
+			# execute the command without proxy
+			process = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1, universal_newlines=True)		
 
 		# get the final result of rsync
 		result = process.wait()
