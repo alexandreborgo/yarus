@@ -100,17 +100,17 @@ if args.group:
 
         if args.distribution == "centos" or args.distribution == "rhel":
             ctype = "YUM" 
-        if args.distribution == "debian" or args.distribution == "ubuntu":
+        elif args.distribution == "debian" or args.distribution == "ubuntu":
             ctype = "APT" 
         else:
-            printf("Error: distribution is not supported.")
+            print("Error: distribution is not supported.")
             sys.exit(0)
 
         if args.version:
             if args.architecture:
                 params = args.group + "/" + name + "/" + args.ip + "/" + args.distribution + "/" + args.version + "/" + args.architecture + "/" + ctype
-                print("http://" + args.server + ":6821/api/register/" + params)
-                # result = urllib.open("http://" + args.server + ":6821/api/register/" + params).read()
+                result = urllib.urlopen("http://" + args.server + ":6821/api/register/" + params).read()
+                print(result)
             else:
                 print("Missing architecture")
         else:
