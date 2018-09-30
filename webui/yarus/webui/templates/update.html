@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Update{% endblock %}
+{% block pagetitle %}<i class="fas fa-wrench"></i> Update{% endblock %}
+
+{% block content %}
+
+{% if result.data %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Update's information
+  </div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+
+  <table class="table">
+      <tr>
+        <td style="font-weight: bold;">ID</td>
+        <td>{{ result.data.ID }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Date</td>
+        <td>{{ result.data.date }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Object type</td>
+        <td>{{ result.data.object_type }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Object</td>
+        <td><i class="fas fa-external-link"></i> <a href="{{ url_for('see_object', object_name=result.data.object_type, object_id=result.data.object_info.ID) }}">{{ result.data.object_info.name }}</a></td>
+      </tr>
+  </table>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">List of updated packages</div>
+  <div class="panel-body">
+    <div class="row" style="padding:15px;">
+        <table id="upgradables-table">
+          <thead>
+            <tr>
+              <td>Package</td>
+              <td>Version</td>
+              <td>Release</td>
+              <td>Summary</td>
+              <td>From</td>
+              <td>Approved</td>
+            </tr>
+          </thead>
+          <tbody>
+            {% for package in result.data.upgraded %}
+              <tr>
+                <td>{{ package.name }}</td>
+                <td>{{ package.version }}</td>
+                <td>{{ package.release }}</td>
+                <td>{{ package.summary }}</td>
+                <td>{{ package.component }}</td>
+                <td>
+                  {% if package.approved == 0 %}
+                    <span class="label label-danger">No</span>
+                  {% elif package.approved == 1 %}
+                    <span class="label label-success">Yes</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block pagejs %}
+{% if result.data %}
+<script>
+  $(document).ready( function () {
+    var table1 = $('#upgradables-table').DataTable();
+  });
+</script>
+{% endif %}
+{% endblock %}

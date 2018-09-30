@@ -313,6 +313,9 @@ def see_object(object_name, object_id, status=0, message=""):
         if 'creation_date' in result['data']:
             result['data']['creation_date'] = str(datetime.datetime.fromtimestamp(int(result['data']['creation_date'])))
 
+        if 'date' in result['data']:
+            result['data']['date'] = str(datetime.datetime.fromtimestamp(int(result['data']['date'])))
+
         if 'last_sync' in result['data']:
             if result['data']['last_sync'] != "0":
                 result['data']['last_sync'] = str(datetime.datetime.fromtimestamp(int(result['data']['last_sync'])))
@@ -475,6 +478,14 @@ def see_object(object_name, object_id, status=0, message=""):
 
     if object_name == 'repository':
         return render_template('repository.html', result=result, connected='1')
+    elif object_name == 'update':
+        result2 = callapi("get", "/see/" + result['data']['object_type'] + "/" + result['data']['object_id'])
+        if 'data' in result2:
+            result['data']['object_info'] = result2['data']
+        result2 = callapi("get", "/update/" + object_id + "/list/upgraded")    
+        if 'data' in result2:
+            result['data']['upgraded'] = result2['data']
+        return render_template('update.html', result=result, connected='1')
     elif object_name == 'channel':
         if result['status'] == 0:
             # get list of all repositories linked to this channel

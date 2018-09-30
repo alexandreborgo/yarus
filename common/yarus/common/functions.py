@@ -47,6 +47,8 @@ def getobject(app, object_name, object_id):
 	try:
 		if object_name == 'repository':
 			return Repository().load(app.database, object_id)
+		elif object_name == 'update':
+			return Update().load(app.database, object_id)
 		elif object_name == 'channel':
 			return Channel().load(app.database, object_id)
 		elif object_name == 'client':

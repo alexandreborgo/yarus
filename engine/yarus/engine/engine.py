@@ -647,6 +647,9 @@ def object_list(object_name, object_id, info_list):
             elif info_list == 'group':
                 data = APP_ENGINE.database.get_client_group(object_data.ID)
                 APP_ENGINE.log.log(data)
+        elif object_name == 'update':
+            if info_list == 'upgraded':
+                data = APP_ENGINE.database.get_upgraded(object_id)
         elif object_name == 'group':
             if info_list == 'clients':
                 data = APP_ENGINE.database.get_groupeds(object_data.ID)

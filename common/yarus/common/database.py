@@ -39,11 +39,16 @@ class Mysql:
 	def get_object_what(self, what, object_id, object_type):
 		request = "SELECT * FROM yarus_" + what + " WHERE object_id=%s AND object_type=%s"
 		data = (object_id, object_type)
-		return self.get_all(request, data)	
+		return self.get_all(request, data)
+	
+	def get_upgraded(self, update_id):
+		request = "SELECT * FROM yarus_upgraded INNER JOIN yarus_package ON yarus_upgraded.package_id=yarus_package.ID WHERE update_id=%s"
+		data = (update_id,)
+		return self.get_all(request, data)
 	
 
 	def get_upgradables(self, object_id, object_type):
-		select = "yarus_upgradable.ID, yarus_upgradable.approved, yarus_package.name, yarus_package.release, yarus_package.version, yarus_package.summary, yarus_package.component, yarus_package.type"
+		select = "yarus_upgradable.ID, yarus_upgradable.package_id, yarus_upgradable.approved, yarus_package.name, yarus_package.release, yarus_package.version, yarus_package.summary, yarus_package.component, yarus_package.type"
 		request = "SELECT " + select + " FROM yarus_upgradable INNER JOIN yarus_package ON yarus_upgradable.package_id=yarus_package.ID WHERE object_id=%s AND object_type=%s"
 		data = (object_id, object_type)
 		return self.get_all(request, data)

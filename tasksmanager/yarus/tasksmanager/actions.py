@@ -1040,7 +1040,7 @@ def all_update_client(app, task, client_id):
 
 	# insert all package that have been updated
 	for package in upgradables:
-		upgraded = Upgraded(package['ID'], update.ID)
+		upgraded = Upgraded(package['package_id'], update.ID)
 		upgraded.insert(app.database)
 
 	# update the database (delete all upgradables that are up to date now)
