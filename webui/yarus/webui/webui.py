@@ -12,7 +12,6 @@ import json.decoder
 
 from flask import Flask, json, request, session, render_template, redirect, url_for
 
-
 def parseaction(action):
 	if action == 'sync_repo':
 		return "Sync repository"
@@ -489,6 +488,9 @@ def see_object(object_name, object_id, status=0, message=""):
         return render_template('user.html', result=result, connected='1')
     elif object_name == 'client':
         if result['status'] == 0:
+            # get his group
+            result2 = callapi("get", "/client/" + object_id + "/list/group")
+            result['data']['group'] = result2['data']
             # list linked channels/repositories
             result2 = callapi("get", "/client/" + object_id + "/list/rc")
             result['data']['linked'] = result2['data']
@@ -895,7 +897,6 @@ def import_upgradable(object_type, object_id, update_id):
 def reset_password(user_id):
     result = callapi("get", "/reset/" + user_id)
     return see_object('user', user_id, result['status'], result['message'])
-
 
 if __name__ == "__main__":
     APP.run(debug=True, host='0.0.0.0', port=8000)

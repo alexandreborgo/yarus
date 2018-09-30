@@ -68,9 +68,6 @@ class Mysql:
 		request = "SELECT ID FROM yarus_user WHERE name=%s"
 		data = (name,)
 		return self.get_one(request,data)
-
-
-
 	
 	def get_links(self, channel_id):
 		request = "SELECT * FROM yarus_link INNER JOIN yarus_repository ON yarus_link.repo_id=yarus_repository.ID WHERE yarus_link.channel_id='" + channel_id + "' "
@@ -314,3 +311,8 @@ class Mysql:
 		request = "DELETE FROM yarus_upgradable WHERE object_id=%s AND object_type=%s"
 		data = (client_id,object_type)
 		return self.execute(request, data)
+
+	def get_client_group(self, client_id):
+		request = "SELECT * FROM yarus_grouped INNER JOIN yarus_group ON yarus_grouped.group_id=yarus_group.ID WHERE client_id=%s"
+		data = (client_id,)
+		return self.get_one(request, data)

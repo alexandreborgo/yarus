@@ -644,6 +644,9 @@ def object_list(object_name, object_id, info_list):
                 data =  APP_ENGINE.database.get_object_what('scheduled', object_data.ID, object_name)
             elif info_list == 'update':
                 data = APP_ENGINE.database.get_object_what('update', object_data.ID, object_name)
+            elif info_list == 'group':
+                data = APP_ENGINE.database.get_client_group(object_data.ID)
+                APP_ENGINE.log.log(data)
         elif object_name == 'group':
             if info_list == 'clients':
                 data = APP_ENGINE.database.get_groupeds(object_data.ID)
