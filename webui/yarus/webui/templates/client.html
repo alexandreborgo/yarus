@@ -322,6 +322,12 @@
         {% else %}
         No package to update. Start the task "List upgradable packages" to find packages that need an update.
         {% endif %}
+        <form style="display: hidden" action="{{ url_for('approveupgradables', object_id=result.data.ID, object_type='client') }}" method="POST" id="formapprov">
+          <textarea style="display:none;" id="approvedupgrade" name="approvedupgrade"></textarea>
+        </form>
+        <form style="display: hidden" action="{{ url_for('disapproveupgradables', object_id=result.data.ID, object_type='client') }}" method="POST" id="formdisapprov">
+          <textarea style="display:none;" id="disapprovedupgrade" name="disapprovedupgrade"></textarea>
+        </form>
     </div>
   </div>
 </div>
@@ -460,8 +466,8 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('approveupgradables', object_id=result.data.ID, object_type='client', upgradable_id='') }}" + id
-            $(location).attr('href', url);
+            $("#approvedupgrade").val(id);
+            $("#formapprov").submit();
           }
         },
         {
@@ -475,8 +481,8 @@
             $.each(rows, function(key, value) {
               id += value + ",";
             });
-            url = "{{ url_for('disapproveupgradables', object_id=result.data.ID, object_type='client', upgradable_id='') }}" + id
-            $(location).attr('href', url);
+            $("#disapprovedupgrade").val(id);
+            $("#formdisapprov").submit();
           }
         },
       ],
@@ -655,7 +661,7 @@
         table10.button( 1 ).enable( selectedRows > 0 );
     } );
 
-    var importtable = $('#import-table').DataTable({      
+    var importtable = $('#import-table').DataTable({
       order: [[ 3, 'desc' ]],
       "autoWidth": true
     });
