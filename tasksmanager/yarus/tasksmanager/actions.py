@@ -816,6 +816,9 @@ def config_client(app, task, client_id):
 	app.log.logtask("Generating configuration file for client " + client.name + "(" + client.IP + ")")
 
 	repo_file = generatingconfigfile(app, client)
+	with open(repo_file) as rfile:
+		for line in rfile:
+			app.log.logtask(line.strip("\n"))
 
 	if not repo_file:
 		app.log.logtask("Error during the generation of the repository file.")

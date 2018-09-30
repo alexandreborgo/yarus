@@ -1,4 +1,3 @@
-
 # create /opt/yarus and all sub directories
 mkdir /opt
 mkdir /opt/yarus
@@ -14,7 +13,6 @@ mkdir /opt/yarus/www/keys
 mkdir /opt/yarus/www/doc
 mkdir /opt/yarus/repositories
 mkdir /opt/yarus/cert
-
 
 # copy configuration files
 cp -f configuration/httpd.conf /etc/httpd/conf/
