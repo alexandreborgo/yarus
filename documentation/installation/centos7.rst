@@ -149,8 +149,8 @@ Télécharger les sources de YARUS::
 Exécuter le script d'installation de YARUS::
 
     $ cd yarus
-    $ chmod +x install.sh
-    $ sudo ./install.sh
+    $ chmod +x yarus-install.sh
+    $ sudo ./yarus-install.sh
 
 .. warning::
 

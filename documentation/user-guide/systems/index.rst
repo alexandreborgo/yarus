@@ -51,10 +51,19 @@ Pour enregistrer manuellement un système allez dans ``Systems`` et cliquez sur 
 Automatiquement
 ^^^^^^^^^^^^^^^
 
-Pour enregistrer automatiquement le système, il suffit d'exécuter le script ``register_system.py`` sur le système en lui passant 
+Pour enregistrer automatiquement le système, il suffit d'exécuter le script ``config-system.py`` sur le système en lui passant 
 l'adresse du serveur YARUS avec l'option ``--server`` ::
 
-$ ./register_system.py --server ADRESSE_IP_SERVEUR_YARUS
+$ python config-system.py --server ADRESSE_IP_SERVEUR_YARUS --config --group ID_DU_GROUPE -d DISTRIBUTION -v VERSION -a ARCHITECTURE --ip IP_CLIENT
+
+L'option ``--config`` permet de configurer le client pour la communication avec Ansible. Le client doit être ajouté à un groupe lors de l'enregistrement. Pour cela l'identifiant
+du groupe doit être donner au script avec l'option ``--group``. Les options ``-d``, ``-v``, ``-a`` et ``--ip`` sont à utiliser pour l'enregistrement du système.
+
+.. warning::
+
+    Sans ces options (``-d``, ``-v``, ``-a`` et ``--ip``) le script essayera de récupérer ces informations sur le système.
+
+    Cependant cette méthode n'est pas assez fiable et est donc déconseillée.
 
 .. note::
 
