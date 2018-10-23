@@ -9,6 +9,7 @@ import sys
 import requests
 import yaml
 import json.decoder
+import subprocess as sub
 
 from flask import Flask, json, request, session, render_template, redirect, url_for
 
@@ -161,7 +162,13 @@ def home():
 
     if not checksession():
         return render_template('login.html')
-    return render_template('home.html', connected='1')
+    p = sub.Popen(['ps', 'aux'],stdout=sub.PIPE,stderr=sub.PIPE)
+    output, errors = p.communicate()
+    if "/opt/yarus/env/bin/python /opt/yarus/env/bin/yarus-tasks-manager" in output.decode('ascii'):
+        output = 1
+    else:
+        output = 0
+    return render_template('home.html', connected='1', taskmanager=output)
 
 @APP.route('/logout', methods=['GET'])
 def logout():

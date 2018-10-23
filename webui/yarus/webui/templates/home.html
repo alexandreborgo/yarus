@@ -6,8 +6,17 @@
 
 {% if connected %}
 <div class="alert alert-success" role="alert">
-  You're connected.
+  You're connected.  
 </div>
+  {% if taskmanager %}
+    <div class="alert alert-success" role="alert">
+      Yarus task manager is running.  
+    </div>
+    {% else %}
+    <div class="alert alert-danger" role="alert">
+      Yarus task manager is not running ! You need to start it with : 'sudo systemctl start yarustaskmanager' on the Yarus server.  
+    </div>
+  {% endif %}
 {% else %}
 <div class="alert alert-warning" role="alert">
   You're not connected.
