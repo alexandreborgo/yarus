@@ -5,7 +5,11 @@ import argparse
 import sys
 import os
 import subprocess
-import urllib
+
+if sys.version_info >= (3,0):
+    import urllib.request as urllib
+else:
+    import urllib
 
 if os.geteuid() != 0:
     print("Error: need to run as root.")
@@ -58,6 +62,12 @@ if args.config:
         print("Error: couldn't add yarus to the sudoers file.")
         sys.exit(0)
 
+    if not os.path.isfile("/usr/bin/python"):
+        pythonpath = subprocess.check_output(['whereis', 'python']).decode('utf-8').strip('\n')
+        if os.system("ln -s " + pythonpath.split()[1] + " /usr/bin/python"):
+            print("Error: /usr/bin/python")
+            sys.exit(0)
+
 if args.group:
     
     # aller chercher les infos automatiquement n'est pas fiable
@@ -94,7 +104,7 @@ if args.group:
     # -v --version version
     # -a --architecture architecture
 
-    name = subprocess.check_output(['hostname']).strip('\n')
+    name = subprocess.check_output(['hostname']).decode('utf-8').strip('\n')
 
     if args.distribution:
 
@@ -103,14 +113,19 @@ if args.group:
         elif args.distribution == "debian" or args.distribution == "ubuntu":
             ctype = "APT" 
         else:
-            print("Error: distribution is not supported.")
+            print("Error: distribution is not supported (centos, rhel, debian, ubuntu are supported).")
             sys.exit(0)
 
         if args.version:
             if args.architecture:
                 params = args.group + "/" + name + "/" + args.ip + "/" + args.distribution + "/" + args.version + "/" + args.architecture + "/" + ctype
                 result = urllib.urlopen("http://" + args.server + ":6821/api/register/" + params).read()
-                print(result)
+                print(result.decode('utf-8'))
+
+                if "successfully" in result.decode('utf-8'):
+                    print("ALL OK !")
+                else:
+                    print("Error see previous message.")
             else:
                 print("Missing architecture")
         else:
