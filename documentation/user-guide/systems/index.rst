@@ -51,19 +51,53 @@ Pour enregistrer manuellement un système allez dans ``Systems`` et cliquez sur 
 Automatiquement
 ^^^^^^^^^^^^^^^
 
-Pour enregistrer automatiquement le système, il suffit d'exécuter le script ``config-system.py`` sur le système en lui passant 
-l'adresse du serveur YARUS avec l'option ``--server`` ::
+Le script config-system.py (python 2.7 et plus) permet de configurer et d'enregistrer un système sur un serveur YARUS.
 
-$ python config-system.py --server ADRESSE_IP_SERVEUR_YARUS --config --group ID_DU_GROUPE -d DISTRIBUTION -v VERSION -a ARCHITECTURE --ip IP_CLIENT
+Pour configurer le système le script doit être lancer avec les options ``--config`` et ``--server``.
+Pour enregistrer le système le script doit être lancer avec les options ``--group``, ``--server``, ``-d``, ``-v``, ``-a`` et ``--ip``.
 
-L'option ``--config`` permet de configurer le client pour la communication avec Ansible. Le client doit être ajouté à un groupe lors de l'enregistrement. Pour cela l'identifiant
-du groupe doit être donner au script avec l'option ``--group``. Les options ``-d``, ``-v``, ``-a`` et ``--ip`` sont à utiliser pour l'enregistrement du système.
+ * ``--group`` suivit de l'ID du group dans lequel le système sera placé (à chercher sur YARUS)
+ * ``-d`` suivit de la distribution du système (debian, centos, ubuntu, rhel)
+ * ``-v`` suivit de la version du système (stretch, bionic, 7.5, ...)
+ * ``-a`` suivit de l'architecture du système (amd64, x86_64, ...)
+ * ``--ip`` suivit de l'adresse IP du système (10.0.4.1, ...)
+
+Pour Debian et Ubuntu les options ``-d``, ``-v`` et ``-a`` ne sont pas obligatoires.
+Pour CentOS et RHEL les options ``-v`` et ``-a`` sont obligatoires sinon la version et l'architecture enregistrer sur le server YARUS ne seront pas bonnes.
+
+Commandes pour configuer et enregistrer automatiquement les systèmes :
+
+::
+
+ $ python config-system.py --server ADRESSE_IP_SERVEUR_YARUS --config --group ID_DU_GROUPE -d DISTRIBUTION -v VERSION -a ARCHITECTURE --ip IP_CLIENT
+
+Exemples :
+
+ * Server YARUS :  10.0.2.42
+ * Distribution :  debian 
+ * Version :       stretch 
+ * Architecture :  amd64
+ * IP système :    10.0.2.1
+
+::
+
+$ python config-system.py --server 10.0.2.42 --config --group ID_DU_GROUPE -d debian -v stretch -a amd64 --ip 10.0.2.1
+
+ * Server YARUS :  10.0.2.42
+ * Distribution :  centos 
+ * Version :       7.5 
+ * Architecture :  x64
+ * IP système :    10.0.2.1
+
+::
+
+ $ python config-system.py --server 10.0.2.42 --config --group ID_DU_GROUPE -d centos -v 7.5 -a x64 --ip 10.0.2.1
 
 .. warning::
 
     Sans ces options (``-d``, ``-v``, ``-a`` et ``--ip``) le script essayera de récupérer ces informations sur le système.
 
-    Cependant cette méthode n'est pas assez fiable et est donc déconseillée.
+    Cependant cette méthode n'est pas assez fiable (et pas du tout sur CentOS et RHEL) et est donc fortement déconseillée.
 
 .. note::
 
