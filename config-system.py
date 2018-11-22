@@ -16,7 +16,7 @@ if os.geteuid() != 0:
     sys.exit(1)
 
 parser = argparse.ArgumentParser()
-# adresse IP du server yarus
+# adresse IP du server yarus    
 parser.add_argument('--server', action='store')
 # pour configurer ce système
 parser.add_argument('--config', action='store_true')
@@ -54,7 +54,7 @@ if args.config:
         sys.exit(0)
     if os.system("sudo -V"):
         # rhel and centos come with sudo
-        # debian and ubuntu doesn't install it all the time
+        # debian and ubuntu don't install it all the time
         if os.system("apt install -y sudo"):
             print("Error: couldn't install sudo.")
             sys.exit(0)
@@ -69,34 +69,23 @@ if args.config:
             sys.exit(0)
 
 if args.group:
-    
-    # aller chercher les infos automatiquement n'est pas fiable
-    # pour centos et rhel on ne peut pas récupérer la version précise
-    # on peut avoir 7 mais pas 7.5.1804
-    # pour debian et ubuntu possible
 
-    """
     dist = ""
     version = ""
     arch = ""
-    ctype = "YUM"
+    ctype = ""
+
     osrelease = open('/etc/os-release', 'r')
     lines = osrelease.readlines()
     for line in lines:
         tmp = line.split('=')
         if tmp[0] == 'ID':
-            dist = tmp[1].strip('\n')
+            dist = tmp[1].strip('\n').replace("\"", "")
         elif tmp[0] == 'VERSION':
             version = tmp[1].split('(')[1].split(')')[0]
 
     arch = subprocess.check_output(['uname', '-r']).split('-')[-1].strip('\n')
     name = subprocess.check_output(['hostname']).strip('\n')
-
-    print(name, dist, version, arch, ctype)
-    params = ""
-    result = urllib.open("http://" + args.server + ":6821/api/register/" + params).read()
-    print(result)
-    """
 
     # donner les informations en params du script
     # avec les options :
@@ -104,31 +93,30 @@ if args.group:
     # -v --version version
     # -a --architecture architecture
 
-    name = subprocess.check_output(['hostname']).decode('utf-8').strip('\n')
-
     if args.distribution:
+        dist = args.distribution
 
-        if args.distribution == "centos" or args.distribution == "rhel":
-            ctype = "YUM" 
-        elif args.distribution == "debian" or args.distribution == "ubuntu":
-            ctype = "APT" 
-        else:
-            print("Error: distribution is not supported (centos, rhel, debian, ubuntu are supported).")
-            sys.exit(0)
-
-        if args.version:
-            if args.architecture:
-                params = args.group + "/" + name + "/" + args.ip + "/" + args.distribution + "/" + args.version + "/" + args.architecture + "/" + ctype
-                result = urllib.urlopen("http://" + args.server + ":6821/api/register/" + params).read()
-                print(result.decode('utf-8'))
-
-                if "successfully" in result.decode('utf-8'):
-                    print("ALL OK !")
-                else:
-                    print("Error see previous message.")
-            else:
-                print("Missing architecture")
-        else:
-            print("Missing version")
+    if dist == "centos" or dist == "rhel":
+        ctype = "YUM" 
+    elif dist == "debian" or dist == "ubuntu":
+        ctype = "APT" 
     else:
-        print("Missing distribution")
+        print("Error: distribution is not supported (centos, rhel, debian, ubuntu are supported).")
+        sys.exit(0)
+
+    if args.version:
+        version = args.version
+
+    if args.architecture:
+        arch = args.architecture
+
+    print(name, dist, version, arch, ctype)
+
+    params = args.group + "/" + name + "/" + args.ip + "/" + dist + "/" + version + "/" + architecture + "/" + ctype
+    result = urllib.urlopen("http://" + args.server + ":6821/api/register/" + params).read()
+    print(result.decode('utf-8'))
+
+    if "successfully" in result.decode('utf-8'):
+        print("ALL OK !")
+    else:
+        print("Error see previous message.")
