@@ -17,14 +17,7 @@ Content
     :maxdepth: 3
 
     installation/index
+    update
+    prise-en-main
     user-guide/index
     developer
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
