@@ -1,4 +1,4 @@
-Instructions pour CentOS 7
+Instructions pour CentOS 8 
 ==========================
 
 Créer un répertoire pour l'installation ::
@@ -13,56 +13,13 @@ Mettre à jour le système ::
 
     $ sudo yum update -y
 
-Python 3.6
-----------
+Paquêts nécéssaires
+-------------------
 
-Installer les logiciels nécessaires pour la compilation de Python 3.6 ::
+Les commandes suivantes installeront les paquêts nécéssaire à l'installation de Yarus ::
 
     $ sudo yum groupinstall -y development
-
-    $ sudo yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel make wget
-
-Télécharger Python 3 ::
-
-    $ wget https://www.python.org/ftp/python/3.6.6/Python-3.6.6.tar.xz
-
-.. note::
-
-    La version stable (actuel) de Python est la 3.6.6 téléchargable à partir du lien suivant : https://www.python.org/ftp/python/3.6.6/Python-3.6.6.tar.xz.
-
-    Pour une autre version de Python : https://www.python.org/downloads/.
-
-    YARUS a été développé avec la version 3.6.0.
-
-Décompresser l'archive ::
-
-    $ tar xf Python-3.6.6.tar.xz
-
-Configurer l'installation ::
-
-    $ cd Python-3.6.6
-    $ sudo ./configure --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
-
-Installer ::
-    
-    $ sudo make
-    $ sudo make altinstall
-
-Vérifier que Python a correctement été installé en ouvrant l'interpréteur ::
-
-    $ python3.6
-    >>> exit()
-
-.. admonition:: Optionnel
-
-    Mettre à jour Pypi ::
-    
-        $ sudo python3.6 -m pip install --upgrade pip
-
-Supprimer les fichiers liés à l'installation::
-    
-    $ sudo make clean
-    $ cd ..
+    $ sudo yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel make wget redhat-rpm-config python3-devel
 
 Apache HTTP Server
 ------------------
@@ -98,8 +55,12 @@ YARUS utilise un base de données MySQL 8 pour stocker ses données.
 
 Installer les dépôts de MySQL::
 
-    $ wget https://dev.mysql.com/get/mysql80-community-release-el7-1.noarch.rpm
-    $ sudo rpm -ivh mysql80-community-release-el7-1.noarch.rpm
+    $ wget https://dev.mysql.com/get/mysql80-community-release-el8-1.noarch.rpm
+    $ sudo yum localinstall mysql80-community-release-el8-1.noarch.rpm 
+
+Disable les dépôts MySQL qui ne sont pas les dépôts officiels ::
+
+    $ sudo yum module disable mysql -y
 
 Installer MySQL Server::
 
@@ -177,9 +138,14 @@ Démarer le serveur Apache::
 
     $ systemctl start httpd.service
     $ systemctl enable httpd.service
+    $ systemctl status httpd.service
+
+Vérifier que le service HTTPD a bien démarré.
 
 Démarer YARUS Task Manager::
 
     $ systemctl start yarustaskmanager.service
     $ systemctl enable yarustaskmanager.service
+    $ systemctl status yarustaskmanager.service
 
+Vérifier que le service HTTPD a bien démarré.

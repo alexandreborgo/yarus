@@ -52,13 +52,13 @@ Par défaut les ports utilisés par YARUS Engine et YARUS Webui sont :
 
 * 80 Apache HTTP pour servir les dépôts
 * 443 Apache HTTP Server pour la Webui
-* 6128 Apache HTTP Server pour l'Engine
+* 6821 Apache HTTP Server pour l'Engine
 
 Il est donc requis d'ouvrir les ports du système. Par exemple pour ``firewalld``::
     
     $ sudo firewall-cmd --permanent --add-port=80/tcp
     $ sudo firewall-cmd --permanent --add-port=443/tcp
-    $ sudo firewall-cmd --permanent --add-port=6128/tcp
+    $ sudo firewall-cmd --permanent --add-port=6821/tcp
     $ sudo firewall-cmd --reload
 
 Il n'y a actuellement pas de politique pour SELinux, donc ce dernier doit être désactiver pour le bon fonctionnement des services ::
@@ -72,3 +72,4 @@ Instructions
     :maxdepth: 2
 
     centos7
+    centos8

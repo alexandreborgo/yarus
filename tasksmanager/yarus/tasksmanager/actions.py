@@ -274,9 +274,11 @@ def generatingconfigfile(app, client):
 
 		if client.type == 'YUM':			
 			repo_dir_name = repository.name.replace(' ', '_').replace('/', '_').lower()
+			repo_version = repository.release
+			repo_major = repository.release.split('.')[0]
 			config_file.write("[" + repo_dir_name + "]\n")
 			config_file.write("name=Yarus - " + repository.name + "\n")
-			baseurl = "baseurl=http://" + app.config.sv_address + "/yum/" + repository.distribution + "/" + repo_dir_name + "/"
+			baseurl = "baseurl=http://" + app.config.sv_address + "/yum/" + repository.distribution + "/" + repo_major + "/" + repo_version + "/" + repo_dir_name + "/"
 			config_file.write(baseurl + "\n")
 			config_file.write("gpgcheck=0\n")
 			#config_file.write("gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7\n\n")
@@ -577,8 +579,13 @@ def sync_repo(app, task, repo_id):
 		repo_dir_name = repository.name.replace(' ', '_').replace('/', '_').lower()
 		if repo_dir_name[0] == '.':
 			repo_dir_name = repo_dir_name[1:]
-		local = app.config.rp_folder + "/yum/" + repository.distribution + "/" + repo_dir_name + "/"
 
+		repo_version = repository.release
+		repo_major = repository.release.split('.')[0]
+
+		local = app.config.rp_folder + "/yum/" + repository.distribution + "/" + repo_major + "/" + repo_version + "/" + repo_dir_name + "/"
+
+		app.log.logtask("Release: " + repo_version + ' ' + repo_major)
 		app.log.logtask("Remote root URL: " + remote)
 		app.log.logtask("Local root directory: " + local)
 
@@ -807,6 +814,10 @@ def check_client(app, task, client_id):
 	return True
 
 def config_client(app, task, client_id):
+	#repo_version = repository.release
+	#repo_major = repository.release.split('.')[0]
+	#local = app.config.rp_folder + "/yum/" + repository.distribution + "/" + repo_major + "/" + repo_version + "/" + repo_dir_name + "/"
+	
 	# check if client exists
 	client = getobject(app, 'client', client_id)        
 	if not client:

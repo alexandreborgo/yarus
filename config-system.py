@@ -18,11 +18,11 @@ if os.geteuid() != 0:
 parser = argparse.ArgumentParser()
 # adresse IP du server yarus    
 parser.add_argument('--server', action='store')
-# pour configurer ce système
+# pour configurer ce systÃ¨me
 parser.add_argument('--config', action='store_true')
-# pour ajouter le système au groupe donner (ID DU GROUPE !!!)
+# pour ajouter le systÃ¨me au groupe donner (ID DU GROUPE !!!)
 parser.add_argument('--group', action='store')
-# infor sur le système
+# infor sur le systÃ¨me
 parser.add_argument('-d', '--distribution', action='store')
 parser.add_argument('-v', '--version', action='store')
 parser.add_argument('-a', '--architecture', action='store')
@@ -84,8 +84,8 @@ if args.group:
         elif tmp[0] == 'VERSION':
             version = tmp[1].split('(')[1].split(')')[0]
 
-    arch = subprocess.check_output(['uname', '-r']).split('-')[-1].strip('\n')
-    name = subprocess.check_output(['hostname']).strip('\n')
+    arch = subprocess.check_output(['uname', '-r']).split(b'-')[-1].strip(b'\n')
+    name = subprocess.check_output(['hostname']).strip(b'\n')
 
     # donner les informations en params du script
     # avec les options :
@@ -112,11 +112,13 @@ if args.group:
 
     print(name, dist, version, arch, ctype)
 
-    params = args.group + "/" + name + "/" + args.ip + "/" + dist + "/" + version + "/" + architecture + "/" + ctype
-    result = urllib.urlopen("http://" + args.server + ":6821/api/register/" + params).read()
+    params = str(args.group) + "/" + name.decode('utf-8') + "/" + str(args.ip) + "/" + str(dist) + "/" + str(version) + "/" + str(arch) + "/" + str(ctype)
+    print("http://" + str(args.server) + ":6821/api/register/" + str(params))
+    result = urllib.urlopen("http://" + str(args.server) + ":6821/api/register/" + str(params)).read()
     print(result.decode('utf-8'))
 
     if "successfully" in result.decode('utf-8'):
         print("ALL OK !")
     else:
         print("Error see previous message.")
+
