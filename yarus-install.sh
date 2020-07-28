@@ -55,7 +55,7 @@ chmod -R 755 /opt/yarus
 
 # generate key for yarus to connect to systems
 echo "Generating SSL keys for Ansible..."
-sudo -u yarus ssh-keygen -t rsa -b 4096
+sudo -u yarus ssh-keygen -t rsa -b 4096 -f /home/yarus/.ssh/id_rsa -N ''
 cp /home/yarus/.ssh/id_rsa.pub /opt/yarus/www/keys/authorized_keys
 
 # create all sql tables

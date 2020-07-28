@@ -19,7 +19,7 @@ Paquêts nécéssaires
 Les commandes suivantes installeront les paquêts nécéssaire à l'installation de Yarus ::
 
     $ sudo yum groupinstall -y development
-    $ sudo yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel make wget redhat-rpm-config python3-devel
+    $ sudo yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel xz-devel expat-devel make wget redhat-rpm-config python3-devel
 
 Apache HTTP Server
 ------------------
@@ -99,9 +99,16 @@ Nous devons maintenant créer un utilisateur et une base de données que YARUS p
 YARUS
 -----
 
+
 Installer les dernières dépendances de YARUS::
 
     $ yum install -y ansible rsync git
+
+.. note::
+
+    Ansible n'est plus disponible dans les dépôts de CentOS8 pour le moment. Il est disponible dans les dépôts EPEL8 (https://fedoraproject.org/wiki/EPEL).
+    Pour installer le dépôt rapidement utiliser la commande suivante::
+	$ yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 Télécharger les sources de YARUS::
 
